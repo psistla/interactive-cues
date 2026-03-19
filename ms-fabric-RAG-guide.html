@@ -59,6 +59,80 @@
             --m-transition-base: 200ms ease;
         }
 
+        /* ─── DARK MODE ─────────────────────────────── */
+        .dark {
+            --m-bg: #0D0F12;
+            --m-surface: #16191D;
+            --m-border: #343A40;
+            --m-border-subtle: #212529;
+            --m-text: #E9ECEF;
+            --m-text-secondary: #ADB5BD;
+            --m-text-tertiary: #868E96;
+            --m-primary-50: rgba(79, 70, 229, 0.1);
+            --m-primary-100: rgba(79, 70, 229, 0.15);
+            --m-primary-200: rgba(129, 140, 248, 0.2);
+            --m-primary-600: #818CF8;
+            --m-primary-700: #A5B4FC;
+            --m-primary-800: #C7D2FE;
+            --m-primary-900: #E0E7FF;
+            --m-accent-50: rgba(251, 191, 36, 0.08);
+            --m-accent-700: #FBBF24;
+            --m-accent-800: #FCD34D;
+            --m-neutral-200: #343A40;
+            --m-neutral-300: #495057;
+            --m-neutral-700: #868E96;
+            --m-neutral-800: #E9ECEF;
+            --m-neutral-900: #F1F3F5;
+            --m-neutral-950: #0D0F12;
+            --m-success: #4ade80;
+            --m-success-bg: rgba(21, 128, 61, 0.12);
+            --m-warning: #fb923c;
+            --m-warning-bg: rgba(234, 136, 12, 0.1);
+            --m-error: #f87171;
+            --m-error-bg: rgba(220, 38, 38, 0.1);
+            --m-info: #60a5fa;
+            --m-info-bg: rgba(37, 99, 235, 0.1);
+            --m-shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+            --m-shadow-md: 0 2px 8px rgba(0,0,0,0.3);
+            --m-shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+            color-scheme: dark;
+        }
+
+        .dark ::selection {
+            background: #3730A3;
+            color: #E0E7FF;
+        }
+
+        .dark .code-block {
+            background: #0a0c0f;
+            border: 1px solid #343A40;
+        }
+
+        .dark .verify-gate {
+            border-color: rgba(74, 222, 128, 0.2);
+        }
+
+        .dark .verify-checkbox {
+            background: #16191D;
+            border-color: #495057;
+        }
+
+        .dark .pattern-card.selected {
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .dark .step-card {
+            background: #16191D;
+        }
+
+        .dark .nav-item:hover {
+            background: #212529;
+        }
+
+        .dark .nav-item.active {
+            background: rgba(79, 70, 229, 0.1);
+        }
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -673,6 +747,48 @@
             border-radius: 9999px;
             background: var(--m-primary-400);
         }
+        /* ─── THEME TOGGLE ─────────────────────────── */
+        .theme-toggle-wrap {
+            padding: 12px 20px;
+            border-top: 1px solid var(--m-border);
+            margin-top: auto;
+        }
+
+        .theme-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--m-border);
+            border-radius: var(--m-radius-md);
+            background: var(--m-bg);
+            color: var(--m-text-secondary);
+            font-family: var(--m-font-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--m-transition-fast);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--m-surface);
+            color: var(--m-text);
+            border-color: var(--m-primary-600);
+        }
+
+        .theme-icon { font-size: 16px; }
+
+        /* ─── FOOTNOTE ────────────────────────────────── */
+        .footnote {
+            padding: 8px 20px 4px;
+            font-size: 10px;
+            font-family: var(--m-font-code);
+            color: var(--m-text-tertiary);
+            letter-spacing: 0.02em;
+            text-align: center;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -693,6 +809,18 @@
             </div>
 
             <nav class="nav-section" id="navSection"></nav>
+
+            <div class="theme-toggle-wrap">
+                <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+                    <span class="theme-icon" id="themeIcon">☀️</span>
+                    <span id="themeLabel">Light Mode</span>
+                </button>
+                <button class="theme-toggle-btn" style="margin-top: 6px; color: var(--m-error);" onclick="resetProject()" aria-label="Reset all progress">
+                    <span class="theme-icon">↺</span>
+                    <span>Reset Progress</span>
+                </button>
+            </div>
+            <div class="footnote">Built for scale by Prasanth Sistla</div>
         </aside>
 
         <!-- ═══ MAIN CONTENT ═══ -->
@@ -1224,6 +1352,40 @@ embedded.write.format(<span class="str">'delta'</span>) \\
             setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
         });
     }
+
+    // ═══════════════════════════════════════════════════
+    // THEME TOGGLE
+    // ═══════════════════════════════════════════════════
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+        document.getElementById('themeLabel').textContent = isDark ? 'Dark Mode' : 'Light Mode';
+        try { localStorage.setItem('rag-theme', isDark ? 'dark' : 'light'); } catch(e) {}
+    }
+
+    function resetProject() {
+        if (!confirm('Reset all progress? This clears completed steps, verification checks, and pattern selection. Theme preference is kept.')) return;
+        state.completedSteps = new Set();
+        state.checkedItems = new Set();
+        state.selectedPattern = null;
+        state.activeSection = 'p0-pattern';
+        try { localStorage.removeItem('rag-project-state'); } catch(e) {}
+        renderNav();
+        renderContent();
+        updateProgress();
+    }
+
+    // Restore saved theme (default: light)
+    (function() {
+        try {
+            const saved = localStorage.getItem('rag-theme');
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').textContent = '🌙';
+                document.getElementById('themeLabel').textContent = 'Dark Mode';
+            }
+        } catch(e) {}
+    })();
 
     // ═══════════════════════════════════════════════════
     // INIT
