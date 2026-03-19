@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise RAG in Microsoft Fabric — Interactive Project Guide</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <style>
+        /* ═══════════════════════════════════════════════════
+           MERIDIAN DESIGN SYSTEM — LIGHT THEME
+           ═══════════════════════════════════════════════════ */
+        :root {
+            --m-bg: #FFFFFF;
+            --m-surface: #F8F9FA;
+            --m-border: #E9ECEF;
+            --m-border-subtle: #F1F3F5;
+            --m-text: #212529;
+            --m-text-secondary: #495057;
+            --m-text-tertiary: #868E96;
+            --m-primary-50: #EEF2FF;
+            --m-primary-100: #E0E7FF;
+            --m-primary-200: #C7D2FE;
+            --m-primary-400: #818CF8;
+            --m-primary-500: #6366F1;
+            --m-primary-600: #4F46E5;
+            --m-primary-700: #4338CA;
+            --m-primary-800: #3730A3;
+            --m-primary-900: #312E81;
+            --m-accent-50: #FFFBEB;
+            --m-accent-100: #FEF3C7;
+            --m-accent-400: #FBBF24;
+            --m-accent-500: #F59E0B;
+            --m-accent-700: #B45309;
+            --m-accent-800: #92400E;
+            --m-neutral-100: #F1F3F5;
+            --m-neutral-200: #E9ECEF;
+            --m-neutral-300: #DEE2E6;
+            --m-neutral-700: #343A40;
+            --m-neutral-800: #212529;
+            --m-neutral-900: #16191D;
+            --m-neutral-950: #0D0F12;
+            --m-success: #15803D;
+            --m-success-bg: #F0FDF4;
+            --m-warning: #EA580C;
+            --m-warning-bg: #FFF7ED;
+            --m-error: #DC2626;
+            --m-error-bg: #FEF2F2;
+            --m-info: #2563EB;
+            --m-info-bg: #EFF6FF;
+            --m-font-primary: 'Manrope', system-ui, sans-serif;
+            --m-font-code: 'JetBrains Mono', monospace;
+            --m-radius-sm: 4px;
+            --m-radius-md: 8px;
+            --m-radius-lg: 12px;
+            --m-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --m-shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+            --m-shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+            --m-transition-fast: 120ms ease;
+            --m-transition-base: 200ms ease;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--m-font-primary);
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--m-text);
+            background: var(--m-bg);
+        }
+
+        /* ═══════════════════════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════════════════════ */
+        .app-shell {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ─── SIDEBAR ─────────────────────────────────── */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--m-surface);
+            border-right: 1px solid var(--m-border);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--m-border);
+            margin-bottom: 16px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--m-primary-800);
+            letter-spacing: -0.015em;
+            line-height: 1.3;
+        }
+
+        .sidebar-header .subtitle {
+            font-size: 11px;
+            color: var(--m-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .progress-summary {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--m-border);
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-container {
+            height: 6px;
+            background: var(--m-neutral-200);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--m-primary-600), var(--m-primary-400));
+            border-radius: 9999px;
+            transition: width 0.4s ease;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--m-text-tertiary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .progress-count {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--m-primary-600);
+            margin-top: 2px;
+        }
+
+        .nav-section {
+            padding: 0 12px;
+        }
+
+        .nav-phase {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--m-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 8px 8px 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 8px;
+            border-radius: var(--m-radius-md);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--m-text-secondary);
+            transition: all var(--m-transition-fast);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-item:hover { background: var(--m-neutral-200); color: var(--m-text); }
+        .nav-item.active { background: var(--m-primary-50); color: var(--m-primary-700); font-weight: 600; }
+        .nav-item.completed .nav-check { color: var(--m-success); }
+
+        .nav-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 9999px;
+            border: 2px solid var(--m-neutral-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+            transition: all var(--m-transition-fast);
+        }
+
+        .nav-item.completed .nav-check {
+            border-color: var(--m-success);
+            background: var(--m-success-bg);
+        }
+
+        /* ─── MAIN CONTENT ────────────────────────────── */
+        .main-content {
+            flex: 1;
+            max-width: 860px;
+            padding: 40px 48px;
+        }
+
+        /* ─── TYPOGRAPHY ──────────────────────────────── */
+        .page-title {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            color: var(--m-text);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 15px;
+            color: var(--m-text-secondary);
+            margin-bottom: 32px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: var(--m-text);
+            margin: 32px 0 12px;
+        }
+
+        h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--m-text);
+            margin: 24px 0 8px;
+        }
+
+        p { margin-bottom: 12px; }
+
+        /* ─── PHASE SECTIONS ──────────────────────────── */
+        .phase-section {
+            display: none;
+        }
+
+        .phase-section.active {
+            display: block;
+        }
+
+        .phase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+        }
+
+        .phase-badge.p0 { background: var(--m-neutral-100); color: var(--m-text-secondary); }
+        .phase-badge.p1 { background: var(--m-primary-50); color: var(--m-primary-700); }
+        .phase-badge.p2 { background: var(--m-accent-50); color: var(--m-accent-700); }
+        .phase-badge.p3 { background: var(--m-info-bg); color: var(--m-info); }
+        .phase-badge.p4 { background: var(--m-success-bg); color: var(--m-success); }
+        .phase-badge.p5 { background: var(--m-warning-bg); color: var(--m-warning); }
+        .phase-badge.p6 { background: var(--m-error-bg); color: var(--m-error); }
+
+        /* ─── STEP CARDS ──────────────────────────────── */
+        .step-card {
+            background: var(--m-bg);
+            border: 1px solid var(--m-border);
+            border-radius: var(--m-radius-lg);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: box-shadow var(--m-transition-base);
+        }
+
+        .step-card:hover { box-shadow: var(--m-shadow-md); }
+
+        .step-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            background: var(--m-primary-50);
+            color: var(--m-primary-600);
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .step-card.completed .step-number {
+            background: var(--m-success-bg);
+            color: var(--m-success);
+        }
+
+        .step-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--m-text);
+            flex: 1;
+        }
+
+        .step-chevron {
+            color: var(--m-text-tertiary);
+            transition: transform var(--m-transition-fast);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .step-card.expanded .step-chevron { transform: rotate(90deg); }
+
+        .step-body {
+            display: none;
+            margin-top: 16px;
+            padding-left: 40px;
+        }
+
+        .step-card.expanded .step-body { display: block; }
+
+        .step-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--m-border-subtle);
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ─── CODE BLOCKS ─────────────────────────────── */
+        .code-block {
+            background: var(--m-neutral-950);
+            color: #E9ECEF;
+            border-radius: var(--m-radius-md);
+            padding: 16px;
+            font-family: var(--m-font-code);
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 12px 0;
+            position: relative;
+        }
+
+        .code-block .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #ADB5BD;
+            font-size: 11px;
+            font-family: var(--m-font-primary);
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: var(--m-radius-sm);
+            cursor: pointer;
+            transition: all var(--m-transition-fast);
+        }
+
+        .code-block .copy-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .code-block .copy-btn.copied { color: #4ade80; }
+
+        .code-block .kw { color: #818CF8; }
+        .code-block .str { color: #4ade80; }
+        .code-block .cmt { color: #868E96; font-style: italic; }
+        .code-block .fn { color: #FBBF24; }
+
+        /* ─── CALLOUT BOXES ───────────────────────────── */
+        .callout {
+            border-left: 3px solid;
+            border-radius: 0 var(--m-radius-md) var(--m-radius-md) 0;
+            padding: 12px 16px;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
+        .callout-title {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .callout.info { border-color: var(--m-info); background: var(--m-info-bg); }
+        .callout.info .callout-title { color: var(--m-info); }
+        .callout.warning { border-color: var(--m-warning); background: var(--m-warning-bg); }
+        .callout.warning .callout-title { color: var(--m-warning); }
+        .callout.critical { border-color: var(--m-error); background: var(--m-error-bg); }
+        .callout.critical .callout-title { color: var(--m-error); }
+        .callout.success { border-color: var(--m-success); background: var(--m-success-bg); }
+        .callout.success .callout-title { color: var(--m-success); }
+
+        /* ─── VERIFY GATE ─────────────────────────────── */
+        .verify-gate {
+            background: var(--m-success-bg);
+            border: 1px solid rgba(21, 128, 61, 0.2);
+            border-radius: var(--m-radius-lg);
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+
+        .verify-gate-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--m-success);
+            margin-bottom: 8px;
+        }
+
+        .verify-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 14px;
+        }
+
+        .verify-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--m-neutral-300);
+            border-radius: var(--m-radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--m-transition-fast);
+            flex-shrink: 0;
+            background: var(--m-bg);
+        }
+
+        .verify-checkbox.checked {
+            background: var(--m-success);
+            border-color: var(--m-success);
+            color: white;
+            font-size: 11px;
+        }
+
+        /* ─── DECISION TABLE ──────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            color: var(--m-text-secondary);
+            padding: 8px 12px;
+            border-bottom: 2px solid var(--m-border);
+            background: var(--m-surface);
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--m-border-subtle);
+            color: var(--m-text);
+        }
+
+        tr:hover td { background: var(--m-surface); }
+
+        /* ─── BUTTONS ─────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 14px;
+            border-radius: var(--m-radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--m-font-primary);
+            cursor: pointer;
+            transition: all var(--m-transition-fast);
+            border: 1px solid;
+            min-height: 32px;
+        }
+
+        .btn-primary {
+            background: var(--m-primary-600);
+            color: white;
+            border-color: var(--m-primary-600);
+        }
+
+        .btn-primary:hover { background: var(--m-primary-700); border-color: var(--m-primary-700); }
+
+        .btn-outline {
+            background: var(--m-bg);
+            color: var(--m-text-secondary);
+            border-color: var(--m-border);
+        }
+
+        .btn-outline:hover { background: var(--m-surface); color: var(--m-text); }
+
+        .btn-success {
+            background: var(--m-success);
+            color: white;
+            border-color: var(--m-success);
+        }
+
+        /* ─── PATTERN SELECTOR ────────────────────────── */
+        .pattern-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .pattern-card {
+            border: 2px solid var(--m-border);
+            border-radius: var(--m-radius-lg);
+            padding: 16px;
+            cursor: pointer;
+            transition: all var(--m-transition-base);
+        }
+
+        .pattern-card:hover { border-color: var(--m-primary-200); box-shadow: var(--m-shadow-md); }
+        .pattern-card.selected { border-color: var(--m-primary-600); background: var(--m-primary-50); }
+
+        .pattern-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--m-text);
+            margin-bottom: 4px;
+        }
+
+        .pattern-card-desc {
+            font-size: 13px;
+            color: var(--m-text-secondary);
+            line-height: 1.4;
+        }
+
+        .pattern-card-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+        }
+
+        .badge-ga { background: var(--m-success-bg); color: var(--m-success); }
+        .badge-preview { background: var(--m-warning-bg); color: var(--m-warning); }
+        .badge-recommended { background: var(--m-primary-50); color: var(--m-primary-700); }
+
+        /* ─── METRIC CARDS ────────────────────────────── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .metric-card {
+            background: var(--m-surface);
+            border-radius: var(--m-radius-lg);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--m-primary-600);
+        }
+
+        .metric-value.accent { color: var(--m-accent-700); }
+        .metric-value.success { color: var(--m-success); }
+
+        .metric-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            color: var(--m-text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* ─── FLOW DIAGRAM ────────────────────────────── */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+            padding: 16px;
+            background: var(--m-surface);
+            border-radius: var(--m-radius-lg);
+        }
+
+        .flow-node {
+            padding: 8px 14px;
+            border-radius: var(--m-radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid var(--m-border);
+            background: var(--m-bg);
+        }
+
+        .flow-node.highlight {
+            border-color: var(--m-primary-600);
+            background: var(--m-primary-50);
+            color: var(--m-primary-700);
+        }
+
+        .flow-node.accent-node {
+            border-color: var(--m-accent-700);
+            background: var(--m-accent-50);
+            color: var(--m-accent-800);
+        }
+
+        .flow-arrow { color: var(--m-text-tertiary); font-size: 16px; }
+
+        /* ─── RESPONSIVE ──────────────────────────────── */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content { padding: 24px 20px; }
+            .pattern-cards, .metrics-row { grid-template-columns: 1fr; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--m-primary-600);
+            outline-offset: 2px;
+            border-radius: inherit;
+        }
+
+        ::selection {
+            background: var(--m-primary-100);
+            color: var(--m-primary-900);
+        }
+
+        ul { list-style: none; padding-left: 0; }
+        ul li { padding: 3px 0 3px 20px; position: relative; font-size: 14px; }
+        ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 11px;
+            width: 6px;
+            height: 6px;
+            border-radius: 9999px;
+            background: var(--m-primary-400);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>Enterprise RAG<br>in Microsoft Fabric</h1>
+                <div class="subtitle">Interactive Project Guide</div>
+            </div>
+
+            <div class="progress-summary">
+                <div class="progress-text">Project Progress</div>
+                <div class="progress-count" id="progressCount">0 / 25 steps</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <nav class="nav-section" id="navSection"></nav>
+        </aside>
+
+        <!-- ═══ MAIN CONTENT ═══ -->
+        <main class="main-content" id="mainContent"></main>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════════
+    // DATA: All phases, sections, and steps
+    // ═══════════════════════════════════════════════════
+    const PROJECT_DATA = {
+        phases: [
+            {
+                id: 'p0', label: 'Phase 0', name: 'Prerequisites & Tenant Readiness', badge: 'p0',
+                sections: [
+                    {
+                        id: 'p0-pattern', title: 'Pattern Selection',
+                        content: `<p>Choose the RAG pattern that best fits your enterprise requirements. This decision drives every subsequent step.</p>
+                        <div class="pattern-cards">
+                            <div class="pattern-card" data-pattern="1" onclick="selectPattern(1)">
+                                <span class="pattern-card-badge badge-recommended">Recommended</span>
+                                <div class="pattern-card-title">Azure AI Search + Fabric</div>
+                                <div class="pattern-card-desc">Hybrid search + semantic ranking + agentic retrieval. Best for unstructured docs at scale.</div>
+                            </div>
+                            <div class="pattern-card" data-pattern="2" onclick="selectPattern(2)">
+                                <span class="pattern-card-badge badge-ga">Vector: GA</span>
+                                <div class="pattern-card-title">Eventhouse Native</div>
+                                <div class="pattern-card-desc">KQL vector search + local SLM embeddings. Best at 10M+ embeddings with real-time data.</div>
+                            </div>
+                            <div class="pattern-card" data-pattern="3" onclick="selectPattern(3)">
+                                <span class="pattern-card-badge badge-preview">Preview</span>
+                                <div class="pattern-card-title">Data Agent + Copilot Studio</div>
+                                <div class="pattern-card-desc">Multi-agent orchestration via MCP. Best for structured data NL queries + BI augmentation.</div>
+                            </div>
+                        </div>
+                        <table>
+                            <thead><tr><th>Dimension</th><th>P1: AI Search</th><th>P2: Eventhouse</th><th>P3: Data Agent</th></tr></thead>
+                            <tbody>
+                                <tr><td>Latency</td><td>200–500ms / 1–3s agentic</td><td>50–200ms</td><td>2–5s</td></tr>
+                                <tr><td>Scale</td><td>Billions of documents</td><td>Optimized 10M+ embeddings</td><td>Semantic model size</td></tr>
+                                <tr><td>Min SKU</td><td>F32 (Spark chunking)</td><td>F2 (autoscale)</td><td>F2 (AOAI-powered)</td></tr>
+                                <tr><td>Security</td><td>Doc-level ACLs</td><td>Workspace RBAC, RLS</td><td>Inherits Fabric governance</td></tr>
+                            </tbody>
+                        </table>`,
+                        verify: []
+                    },
+                    {
+                        id: 'p0-capacity', title: 'Fabric Capacity Check',
+                        content: `<p>Verify your Fabric capacity meets the minimum requirements for your chosen pattern.</p>
+                        <div class="callout critical">
+                            <div class="callout-title">Critical</div>
+                            Trial SKUs do NOT support Copilot or the built-in Azure OpenAI endpoint. You must have a paid F2 or higher capacity.
+                        </div>
+                        <ul>
+                            <li>Navigate to <strong>Admin Portal → Capacity settings</strong></li>
+                            <li>Confirm SKU is F2+ (paid, not trial) — F64+ recommended for production</li>
+                            <li>Note the capacity region (needed for AOAI region alignment)</li>
+                        </ul>`,
+                        verify: ['Fabric capacity is F2+ (paid, not trial)', 'Capacity region noted for AOAI alignment']
+                    },
+                    {
+                        id: 'p0-tenant', title: 'Tenant Admin Settings',
+                        content: `<p>The following settings must be enabled by a Fabric Administrator. Navigate to <strong>Admin Portal → Tenant settings</strong>.</p>
+                        <ul>
+                            <li><strong>Copilot and Azure OpenAI Service</strong> — Toggle ON</li>
+                            <li><strong>Cross-geo processing for AI</strong> — Toggle ON</li>
+                            <li><strong>Cross-geo storing for AI</strong> — Toggle ON (for Data Agent conversation history)</li>
+                            <li><strong>XMLA endpoints</strong> — Toggle ON (Pattern 3: semantic model sources)</li>
+                            <li><strong>Fabric Data Agent</strong> — Toggle ON (Pattern 3)</li>
+                        </ul>
+                        <div class="callout info">
+                            <div class="callout-title">Note</div>
+                            These settings apply tenant-wide or to specific security groups. Work with your Fabric admin to scope appropriately.
+                        </div>`,
+                        verify: ['Copilot and Azure OpenAI Service enabled', 'Cross-geo processing for AI enabled', 'Cross-geo storing enabled', 'XMLA endpoints enabled (if Pattern 3)', 'Data Agent tenant setting enabled (if Pattern 3)']
+                    },
+                    {
+                        id: 'p0-azure', title: 'Azure Resource Provisioning',
+                        content: `<p>Provision the required Azure resources based on your pattern selection.</p>
+                        <table>
+                            <thead><tr><th>Resource</th><th>Required For</th><th>SKU</th></tr></thead>
+                            <tbody>
+                                <tr><td>Azure AI Search</td><td>Pattern 1 only</td><td>Standard S2+ (production)</td></tr>
+                                <tr><td>Azure OpenAI Service</td><td>Patterns 1 & 2 (optional)</td><td>S0, deploy text-embedding-3-large + GPT-4o</td></tr>
+                                <tr><td>Azure Key Vault</td><td>All patterns</td><td>Standard</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="callout info">
+                            <div class="callout-title">Fabric-Native AOAI</div>
+                            If using only the built-in Fabric AOAI endpoint (no separate Azure OpenAI resource), all usage is billed against your Fabric capacity. Recommended for Pattern 3 and prototyping.
+                        </div>`,
+                        verify: ['Azure AI Search provisioned (Pattern 1)', 'Azure OpenAI deployed with required models', 'Key Vault configured for secret management']
+                    },
+                    {
+                        id: 'p0-workspace', title: 'Workspace Setup',
+                        content: `<p>Create and configure the Fabric workspace for the RAG project.</p>
+                        <ul>
+                            <li><strong>Workspaces → New workspace</strong> — Name: <code>rag-enterprise</code></li>
+                            <li>Assign to Fabric capacity (Workspace Settings → License info)</li>
+                            <li>Create items:</li>
+                        </ul>
+                        <table>
+                            <thead><tr><th>Item</th><th>Name</th><th>Purpose</th></tr></thead>
+                            <tbody>
+                                <tr><td>Lakehouse</td><td>rag-lakehouse</td><td>Raw docs + chunked/embedded data</td></tr>
+                                <tr><td>Notebook</td><td>01-data-preparation</td><td>Chunking pipeline</td></tr>
+                                <tr><td>Notebook</td><td>02-embedding-generation</td><td>Embedding pipeline</td></tr>
+                                <tr><td>Notebook</td><td>03-index-sync</td><td>Push to vector store</td></tr>
+                                <tr><td>Notebook</td><td>04-evaluation</td><td>RAG quality scoring</td></tr>
+                                <tr><td>Eventhouse</td><td>rag-eventhouse</td><td>Pattern 2 only</td></tr>
+                            </tbody>
+                        </table>`,
+                        verify: ['Workspace created and assigned to capacity', 'Lakehouse rag-lakehouse created', 'All 4 notebooks created', 'Eventhouse created (if Pattern 2)', 'Workspace roles assigned']
+                    }
+                ]
+            },
+            {
+                id: 'p1', label: 'Phase 1', name: 'Data Ingestion & Chunking', badge: 'p1',
+                sections: [
+                    {
+                        id: 'p1-ingest', title: 'Ingest Documents into OneLake',
+                        content: `<p>Upload source documents to the Lakehouse and create a metadata tracking table.</p>
+                        <ul>
+                            <li>Upload to <code>rag-lakehouse → Files → raw-documents/</code></li>
+                            <li>Supported: PDF, DOCX, TXT, HTML, Markdown, CSV</li>
+                            <li>For scale: Use Data Factory Copy activity from SharePoint, Blob, S3, or on-prem</li>
+                        </ul>
+                        <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><span class="cmt"># Create metadata table in Notebook 01</span>
+<span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> *
+
+schema = StructType([
+    StructField(<span class="str">'document_id'</span>, StringType()),
+    StructField(<span class="str">'source_path'</span>, StringType()),
+    StructField(<span class="str">'document_type'</span>, StringType()),
+    StructField(<span class="str">'department'</span>, StringType()),
+    StructField(<span class="str">'classification'</span>, StringType()),
+    StructField(<span class="str">'content'</span>, StringType()),
+])
+
+spark.createDataFrame([], schema).write \\
+    .format(<span class="str">'delta'</span>).mode(<span class="str">'overwrite'</span>) \\
+    .save(<span class="str">'Tables/raw_documents'</span>)</div>`,
+                        verify: ['Documents uploaded to raw-documents/', 'raw_documents Delta table created with metadata columns']
+                    },
+                    {
+                        id: 'p1-chunk', title: 'Run Chunking Pipeline',
+                        content: `<p>512-token chunks with 25% overlap and sentence boundary preservation. This is the optimal configuration per Microsoft benchmarking.</p>
+                        <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><span class="cmt"># Notebook 01 — Chunking pipeline</span>
+<span class="kw">from</span> synapse.ml.featurize.text <span class="kw">import</span> PageSplitter
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
+
+raw_docs = spark.read.format(<span class="str">'delta'</span>).load(<span class="str">'Tables/raw_documents'</span>)
+
+splitter = (
+    PageSplitter()
+    .setInputCol(<span class="str">'content'</span>)
+    .setOutputCol(<span class="str">'chunks'</span>)
+    .setMaximumPageLength(<span class="fn">2000</span>)    <span class="cmt"># ~512 tokens</span>
+    .setMinimumPageLength(<span class="fn">200</span>)
+    .setPageOverlapLength(<span class="fn">500</span>)     <span class="cmt"># ~25% overlap</span>
+)
+
+chunked = splitter.transform(raw_docs)
+
+result = (
+    chunked.select(
+        <span class="str">'document_id'</span>, <span class="str">'source_path'</span>,
+        <span class="str">'department'</span>, <span class="str">'classification'</span>,
+        F.posexplode(<span class="str">'chunks'</span>).alias(
+            <span class="str">'chunk_index'</span>, <span class="str">'chunk_text'</span>)
+    )
+    .withColumn(<span class="str">'chunk_id'</span>,
+        F.concat(F.col(<span class="str">'document_id'</span>),
+                 F.lit(<span class="str">'_'</span>),
+                 F.col(<span class="str">'chunk_index'</span>)))
+)
+
+result.write.format(<span class="str">'delta'</span>) \\
+    .mode(<span class="str">'overwrite'</span>) \\
+    .save(<span class="str">'Tables/chunked_documents'</span>)</div>
+                        <div class="callout critical">
+                            <div class="callout-title">Critical</div>
+                            Never skip the department and classification columns. These enable document-level ACL filtering at retrieval time.
+                        </div>`,
+                        verify: ['chunked_documents table created', 'Chunk count is reasonable (3-8 per doc)', 'No empty or micro-chunks (< 50 chars)', 'All metadata columns preserved']
+                    }
+                ]
+            },
+            {
+                id: 'p2', label: 'Phase 2', name: 'Embedding Generation', badge: 'p2',
+                sections: [
+                    {
+                        id: 'p2-embed', title: 'Generate Vector Embeddings',
+                        content: `<p>Generate embeddings using Fabric-native AOAI (recommended) or bring-your-own-key.</p>
+                        <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button><span class="cmt"># Notebook 02 — Fabric-native AOAI</span>
+<span class="kw">from</span> synapse.ml.services.openai <span class="kw">import</span> OpenAIEmbedding
+
+chunks = spark.read.format(<span class="str">'delta'</span>).load(
+    <span class="str">'Tables/chunked_documents'</span>)
+
+embedding = (
+    OpenAIEmbedding()
+    .setTextCol(<span class="str">'chunk_text'</span>)
+    .setOutputCol(<span class="str">'embedding'</span>)
+    .setDeploymentName(<span class="str">'text-embedding-3-large'</span>)
+    .setModel(<span class="str">'text-embedding-3-large'</span>)
+    <span class="cmt"># No API key needed with Fabric-native</span>
+)
+
+embedded = embedding.transform(chunks)
+embedded.write.format(<span class="str">'delta'</span>) \\
+    .mode(<span class="str">'overwrite'</span>) \\
+    .save(<span class="str">'Tables/embedded_chunks'</span>)</div>
+                        <div class="callout warning">
+                            <div class="callout-title">Performance</div>
+                            For 100K+ documents, batch in groups of 10,000 with 2-second pauses between batches to avoid AOAI throttling (429 errors).
+                        </div>`,
+                        verify: ['embedded_chunks table exists with embedding column', 'Embedding dimension is consistent', 'No null embeddings', 'Sample similarity test passes']
+                    }
+                ]
+            },
+            {
+                id: 'p3', label: 'Phase 3', name: 'Vector Store Configuration', badge: 'p3',
+                sections: [
+                    {
+                        id: 'p3-index', title: 'Configure Vector Store (Pattern-Specific)',
+                        content: `<p>This step varies by pattern. See the project document for full code.</p>
+                        <h3>Pattern 1: Azure AI Search</h3>
+                        <div class="flow-diagram">
+                            <span class="flow-node">embedded_chunks</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Create Index</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Push Documents</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node accent-node">Validate Search</span>
+                        </div>
+                        <h3>Pattern 2: Eventhouse</h3>
+                        <div class="flow-diagram">
+                            <span class="flow-node">embedded_chunks</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Create KQL Table</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Set Vector16 Encoding</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node accent-node">Validate KQL Query</span>
+                        </div>
+                        <h3>Pattern 3: Data Agent</h3>
+                        <div class="flow-diagram">
+                            <span class="flow-node">Lakehouse / Semantic Model</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Create Data Agent</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Publish</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node accent-node">Connect Copilot Studio</span>
+                        </div>`,
+                        verify: ['Vector store created and populated', 'Test query returns relevant results', 'ACL filtering verified', 'Document count matches source']
+                    }
+                ]
+            },
+            {
+                id: 'p4', label: 'Phase 4', name: 'Retrieval & Generation', badge: 'p4',
+                sections: [
+                    {
+                        id: 'p4-pipeline', title: 'Build Query Pipeline',
+                        content: `<p>Configure the complete query-time flow: question processing → retrieval → generation.</p>
+                        <div class="flow-diagram">
+                            <span class="flow-node">User Query</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Hybrid Search</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node highlight">Semantic Rerank</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node accent-node">LLM Generation</span>
+                            <span class="flow-arrow">→</span>
+                            <span class="flow-node">Cited Answer</span>
+                        </div>
+                        <div class="callout info">
+                            <div class="callout-title">Agentic Retrieval (Preview)</div>
+                            For complex queries, agentic retrieval decomposes questions into subqueries using an LLM, executes them in parallel, and combines results. Use API version 2025-11-01-preview with Knowledge Base objects.
+                        </div>
+                        <ul>
+                            <li>Set <code>temperature=0.1</code> for factual grounding</li>
+                            <li>System prompt: "Answer ONLY from provided context"</li>
+                            <li>Always include ACL filter in every search query</li>
+                            <li>Require citations back to source documents</li>
+                        </ul>`,
+                        verify: ['Hybrid search returns relevant results', 'Semantic reranker score > 2.0 for top results', 'Generated answers cite source documents', 'Out-of-scope queries return "insufficient information"']
+                    }
+                ]
+            },
+            {
+                id: 'p5', label: 'Phase 5', name: 'Evaluation Pipeline', badge: 'p5',
+                sections: [
+                    {
+                        id: 'p5-eval', title: 'RAG Quality Evaluation',
+                        content: `<p>Automated quality scoring using LLM-as-judge. Run after every index update.</p>
+                        <div class="metrics-row">
+                            <div class="metric-card">
+                                <div class="metric-value">≥ 4.0</div>
+                                <div class="metric-label">Groundedness</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value accent">≥ 3.5</div>
+                                <div class="metric-label">Relevance</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value success">≥ 3.5</div>
+                                <div class="metric-label">Similarity</div>
+                            </div>
+                        </div>
+                        <ul>
+                            <li>Create a test suite of 50+ question-answer pairs</li>
+                            <li>Cover: factual, multi-hop, out-of-scope, ambiguous, ACL-filtered queries</li>
+                            <li>Implement LLM-as-judge in Notebook 04-evaluation</li>
+                            <li>Run automatically after every index update</li>
+                        </ul>
+                        <div class="callout warning">
+                            <div class="callout-title">Non-Negotiable</div>
+                            60% of new RAG deployments now include evaluation from day 1 (up from &lt;30% in 2025). Skip this and you ship a demo, not a product.
+                        </div>`,
+                        verify: ['Test suite has 50+ QA pairs', 'Groundedness avg ≥ 4.0', 'Relevance avg ≥ 3.5', 'Similarity avg ≥ 3.5', 'P95 latency < 5 seconds']
+                    }
+                ]
+            },
+            {
+                id: 'p6', label: 'Phase 6', name: 'Production Hardening', badge: 'p6',
+                sections: [
+                    {
+                        id: 'p6-security', title: 'Security & Monitoring',
+                        content: `<p>Final hardening steps before production deployment.</p>
+                        <h3>Security</h3>
+                        <ul>
+                            <li>Replace ALL API keys with <strong>Managed Identity</strong></li>
+                            <li>Configure <strong>Private Endpoints</strong> for AI Search + AOAI</li>
+                            <li>Enforce <strong>document-level ACLs</strong> as filterable fields in every query</li>
+                            <li>Enable <strong>Purview</strong> for data lineage and classification</li>
+                        </ul>
+                        <h3>Monitoring</h3>
+                        <ul>
+                            <li>Deploy <strong>Fabric Capacity Metrics app</strong> for CU tracking</li>
+                            <li>Set <strong>Activator rules</strong>: groundedness drops, latency spikes, throttling events</li>
+                            <li>Implement <strong>embedding drift detection</strong></li>
+                        </ul>
+                        <h3>Cost Optimization</h3>
+                        <ul>
+                            <li>Use embedding dimensions of 1024 (not 3072) — 66% storage savings, &lt;5% accuracy loss</li>
+                            <li>Use <code>slm_embeddings_fl()</code> in Eventhouse for zero-cost local embeddings</li>
+                            <li>Use <code>gpt-4o-mini</code> for query planning (10x cheaper than gpt-4o)</li>
+                        </ul>`,
+                        verify: ['Zero API keys in production (all Managed Identity)', 'Private Endpoints configured', 'Monitoring dashboard deployed', 'Activator alerting rules active', 'Incremental re-indexing pipeline tested', 'Cost projection documented']
+                    }
+                ]
+            }
+        ]
+    };
+
+    // ═══════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════
+    let state = {
+        activeSection: 'p0-pattern',
+        completedSteps: new Set(),
+        checkedItems: new Set(),
+        selectedPattern: null,
+    };
+
+    // Load from localStorage
+    try {
+        const saved = localStorage.getItem('rag-project-state');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            state.completedSteps = new Set(parsed.completedSteps || []);
+            state.checkedItems = new Set(parsed.checkedItems || []);
+            state.selectedPattern = parsed.selectedPattern || null;
+        }
+    } catch(e) {}
+
+    function saveState() {
+        try {
+            localStorage.setItem('rag-project-state', JSON.stringify({
+                completedSteps: [...state.completedSteps],
+                checkedItems: [...state.checkedItems],
+                selectedPattern: state.selectedPattern,
+            }));
+        } catch(e) {}
+    }
+
+    // ═══════════════════════════════════════════════════
+    // RENDER
+    // ═══════════════════════════════════════════════════
+    function getAllSections() {
+        return PROJECT_DATA.phases.flatMap(p => p.sections);
+    }
+
+    function renderNav() {
+        const nav = document.getElementById('navSection');
+        nav.innerHTML = PROJECT_DATA.phases.map(phase => {
+            const items = phase.sections.map(s => {
+                const isActive = s.id === state.activeSection;
+                const isCompleted = state.completedSteps.has(s.id);
+                return `<button class="nav-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}"
+                            onclick="navigateTo('${s.id}')">
+                    <span class="nav-check">${isCompleted ? '✓' : ''}</span>
+                    ${s.title}
+                </button>`;
+            }).join('');
+            return `<div class="nav-phase">${phase.label}: ${phase.name}</div>${items}`;
+        }).join('');
+    }
+
+    function renderContent() {
+        const main = document.getElementById('mainContent');
+        const allSections = getAllSections();
+        const section = allSections.find(s => s.id === state.activeSection);
+        if (!section) return;
+
+        const phase = PROJECT_DATA.phases.find(p => p.sections.some(s => s.id === section.id));
+        const isCompleted = state.completedSteps.has(section.id);
+
+        let verifyHTML = '';
+        if (section.verify && section.verify.length > 0) {
+            const items = section.verify.map((v, i) => {
+                const key = `${section.id}-v${i}`;
+                const checked = state.checkedItems.has(key);
+                return `<div class="verify-item">
+                    <span class="verify-checkbox ${checked ? 'checked' : ''}"
+                          onclick="toggleCheck('${key}')">${checked ? '✓' : ''}</span>
+                    <span>${v}</span>
+                </div>`;
+            }).join('');
+            verifyHTML = `<div class="verify-gate">
+                <div class="verify-gate-title">✅ Verification Gate</div>
+                ${items}
+            </div>`;
+        }
+
+        main.innerHTML = `
+            <span class="phase-badge ${phase.badge}">${phase.label}: ${phase.name}</span>
+            <h1 class="page-title">${section.title}</h1>
+            <div style="margin-bottom: 24px;">${section.content}</div>
+            ${verifyHTML}
+            <div style="margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
+                ${!isCompleted ?
+                    `<button class="btn btn-success" onclick="markComplete('${section.id}')">✓ Mark Step Complete</button>` :
+                    `<button class="btn btn-outline" onclick="markIncomplete('${section.id}')">↩ Mark Incomplete</button>`
+                }
+                ${getNextSection(section.id) ?
+                    `<button class="btn btn-primary" onclick="navigateTo('${getNextSection(section.id).id}')">Next Step →</button>` : ''
+                }
+                ${getPrevSection(section.id) ?
+                    `<button class="btn btn-outline" onclick="navigateTo('${getPrevSection(section.id).id}')">← Previous</button>` : ''
+                }
+            </div>
+        `;
+    }
+
+    function getNextSection(currentId) {
+        const all = getAllSections();
+        const idx = all.findIndex(s => s.id === currentId);
+        return idx < all.length - 1 ? all[idx + 1] : null;
+    }
+
+    function getPrevSection(currentId) {
+        const all = getAllSections();
+        const idx = all.findIndex(s => s.id === currentId);
+        return idx > 0 ? all[idx - 1] : null;
+    }
+
+    function updateProgress() {
+        const total = getAllSections().length;
+        const done = state.completedSteps.size;
+        const pct = Math.round((done / total) * 100);
+        document.getElementById('progressCount').textContent = `${done} / ${total} steps`;
+        document.getElementById('progressBarFill').style.width = pct + '%';
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ACTIONS
+    // ═══════════════════════════════════════════════════
+    function navigateTo(sectionId) {
+        state.activeSection = sectionId;
+        renderNav();
+        renderContent();
+        window.scrollTo(0, 0);
+    }
+
+    function markComplete(sectionId) {
+        state.completedSteps.add(sectionId);
+        saveState();
+        renderNav();
+        renderContent();
+        updateProgress();
+    }
+
+    function markIncomplete(sectionId) {
+        state.completedSteps.delete(sectionId);
+        saveState();
+        renderNav();
+        renderContent();
+        updateProgress();
+    }
+
+    function toggleCheck(key) {
+        if (state.checkedItems.has(key)) {
+            state.checkedItems.delete(key);
+        } else {
+            state.checkedItems.add(key);
+        }
+        saveState();
+        renderContent();
+    }
+
+    function selectPattern(num) {
+        state.selectedPattern = num;
+        saveState();
+        document.querySelectorAll('.pattern-card').forEach(c => {
+            c.classList.toggle('selected', parseInt(c.dataset.pattern) === num);
+        });
+    }
+
+    function copyCode(btn) {
+        const block = btn.parentElement;
+        const code = block.textContent.replace('Copy', '').replace('Copied!', '').trim();
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════
+    renderNav();
+    renderContent();
+    updateProgress();
+    if (state.selectedPattern) {
+        setTimeout(() => {
+            document.querySelectorAll('.pattern-card').forEach(c => {
+                c.classList.toggle('selected', parseInt(c.dataset.pattern) === state.selectedPattern);
+            });
+        }, 100);
+    }
+    </script>
+</body>
+</html>
