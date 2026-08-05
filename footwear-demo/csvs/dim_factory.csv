@@ -1,0 +1,41 @@
+﻿id,name,country,region,grid_kg_co2e_per_kwh,renewable_energy_pct,zero_waste_certified
+1,"Rodriguez, Figueroa and Sanchez",ITALY,EUROPE,0.25,22.32,FALSE
+2,Doyle Ltd,ITALY,EUROPE,0.09,42.19,TRUE
+3,"Mcclain, Miller and Henderson",INDONESIA,ASIA,0.04,19.88,FALSE
+4,Davis and Sons,PORTUGAL,EUROPE,0.51,80.94,TRUE
+5,"Guzman, Hoffman and Baldwin",MEXICO,AMERICA,0.3,15.55,FALSE
+6,"Gardner, Robinson and Lawrence",CHINA,ASIA,0.1,84.75,FALSE
+7,Blake and Sons,MEXICO,AMERICA,0.47,97.31,TRUE
+8,"Henderson, Ramirez and Lewis",PORTUGAL,EUROPE,0.53,86.17,FALSE
+9,Garcia-James,ITALY,EUROPE,0.21,28.94,TRUE
+10,Abbott-Munoz,INDONESIA,ASIA,0.25,63.57,TRUE
+11,Blair PLC,CHINA,ASIA,0.24,93.67,FALSE
+12,Dudley Group,PORTUGAL,EUROPE,0.63,16.34,TRUE
+13,Arnold Ltd,ETHIOPIA,AFRICA,0.48,68.46,FALSE
+14,"Mcclure, Ward and Lee",MEXICO,AMERICA,0.05,31.55,TRUE
+15,Williams and Sons,INDONESIA,ASIA,0.75,31.47,FALSE
+16,Galloway-Wyatt,INDIA,ASIA,0.4,26.49,TRUE
+17,James Group,PORTUGAL,EUROPE,0.51,89.78,TRUE
+18,"Flowers, Martin and Kelly",INDONESIA,ASIA,0.44,9.09,TRUE
+19,"Adams, Zuniga and Wong",VIETNAM,ASIA,0.68,42.22,TRUE
+20,"Reid, Ferguson and Sanchez",INDIA,ASIA,0.46,97.11,FALSE
+21,Gray-Mayo,VIETNAM,ASIA,0.59,53.7,TRUE
+22,"Watts, Robinson and Nguyen",ITALY,EUROPE,0.38,45.37,FALSE
+23,Perez Inc,ETHIOPIA,AFRICA,0.44,17.87,FALSE
+24,Morales-Jones,MEXICO,AMERICA,0.55,60.9,TRUE
+25,"Walter, Edwards and Rios",MEXICO,AMERICA,0.67,53.04,TRUE
+26,Wilkerson-Day,CHINA,ASIA,0.79,87.87,FALSE
+27,Baker and Sons,CHINA,ASIA,0.75,94.69,TRUE
+28,"Hoffman, Baker and Richards",INDIA,ASIA,0.65,76.58,TRUE
+29,"Ross, Robinson and Bright",INDIA,ASIA,0.24,87.24,TRUE
+30,"Snyder, Campos and Callahan",INDONESIA,ASIA,0.63,20.12,TRUE
+31,Burton Ltd,ETHIOPIA,AFRICA,0.38,51.76,TRUE
+32,Carlson-Cruz,INDONESIA,ASIA,0.51,23.01,TRUE
+33,"Ferrell, Rice and Maddox",VIETNAM,ASIA,0.21,90.54,FALSE
+34,Frazier Inc,VIETNAM,ASIA,0.58,21.42,TRUE
+35,"Dyer, Potter and Mack",ETHIOPIA,AFRICA,0.41,78.46,FALSE
+36,Rodriguez-Graham,INDONESIA,ASIA,0.38,42.36,TRUE
+37,Smith-Bowen,ITALY,EUROPE,0.84,9.84,TRUE
+38,"Baker, Mason and White",CHINA,ASIA,0.23,19.02,TRUE
+39,Harrell LLC,INDIA,ASIA,0.23,92.33,TRUE
+40,"Romero, Gonzalez and Brooks",MEXICO,AMERICA,0.06,99.93,FALSE
