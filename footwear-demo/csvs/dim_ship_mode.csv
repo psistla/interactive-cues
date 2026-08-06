@@ -1,7 +1,0 @@
-﻿id,mode,kg_co2e_per_tonne_km
-1,AIR,1.05
-2,SEA,0.012
-3,ROAD,0.11
-4,RAIL,0.028
-5,LAST_MILE_EV,0.035
-6,LAST_MILE_CARGO_BIKE,0.0
