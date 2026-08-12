@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-level="plain">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delta Table Maintenance, Explained</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg:#F7F9FA; --surface:#FFFFFF; --ink:#1B2430; --ink-soft:#5A6675; --line:#E3E8ED;
+    --accent:#0F766E; --accent-soft:#E6F2F0;
+    --warn:#B45309; --warn-soft:#FDF0E0;
+    --danger:#B42318; --danger-soft:#FBEAE8;
+    --ghost:#94A3B2;
+    --tile-small:#E9B96B; --tile-large:#5FB3A1; --tile-edge:rgba(27,36,48,.25);
+    --radius:12px; --radius-sm:8px;
+    --shadow:0 1px 2px rgba(27,36,48,.05), 0 4px 16px rgba(27,36,48,.06);
+  }
+  [data-theme="dark"]{
+    --bg:#12181F; --surface:#1A222B; --ink:#EDF1F5; --ink-soft:#9AA7B4; --line:#2A3540;
+    --accent:#3DBFAE; --accent-soft:#173230;
+    --warn:#E5A24C; --warn-soft:#33270F;
+    --danger:#E5675C; --danger-soft:#3A1714;
+    --ghost:#5A6875;
+    --tile-small:#C79A4F; --tile-large:#3E9C89; --tile-edge:rgba(237,241,245,.25);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *,*::before,*::after{transition:none !important; animation:none !important} }
+
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:'Instrument Sans', system-ui, sans-serif;
+    font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'Spline Sans Mono', ui-monospace, monospace}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:var(--surface); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; flex-wrap:wrap;
+  }
+  .topbar .brand{
+    font-family:'Bricolage Grotesque', sans-serif; font-weight:800; font-size:.95rem;
+    letter-spacing:.01em; margin-right:auto; white-space:nowrap;
+  }
+  .seg{
+    display:flex; background:var(--bg); border:1px solid var(--line);
+    border-radius:999px; padding:2px; gap:2px;
+  }
+  .seg button{
+    border:0; background:transparent; color:var(--ink-soft);
+    font:inherit; font-size:.78rem; font-weight:600;
+    padding:5px 11px; border-radius:999px; cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{ background:var(--accent); color:#fff }
+  .icon-btn{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    border-radius:999px; width:34px; height:34px; cursor:pointer; font-size:.95rem;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  button:focus-visible, input:focus-visible, a:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+
+  /* ---------- health strip ---------- */
+  .health{
+    position:sticky; top:55px; z-index:40;
+    background:var(--surface); border-bottom:1px solid var(--line);
+    padding:7px 12px; display:flex; gap:14px; overflow-x:auto;
+    font-family:'Spline Sans Mono', monospace; font-size:.72rem;
+    scrollbar-width:none;
+  }
+  .health::-webkit-scrollbar{display:none}
+  .health .stat{white-space:nowrap; color:var(--ink-soft)}
+  .health .stat b{color:var(--ink); font-weight:500}
+  .health .stat.hot b{color:var(--warn)}
+  .health .speedwrap{display:flex; align-items:center; gap:6px; white-space:nowrap; color:var(--ink-soft)}
+  .health .reset{
+    position:sticky; right:0; margin-left:auto; flex-shrink:0;
+    border:1px solid var(--line); background:var(--surface);
+    color:var(--ink); border-radius:999px; font:inherit; font-size:.74rem; font-weight:500;
+    padding:6px 14px; min-height:32px; cursor:pointer;
+    box-shadow:-10px 0 10px var(--surface);
+  }
+  .health .reset:hover{color:var(--danger); border-color:var(--danger)}
+  .speedbar{width:64px; height:6px; border-radius:3px; background:var(--line); overflow:hidden}
+  .speedbar i{display:block; height:100%; background:var(--accent); border-radius:3px; transition:width .4s, background .4s}
+
+  /* ---------- layout ---------- */
+  main{max-width:660px; margin:0 auto; padding:0 18px 90px}
+  .hero{padding:56px 0 30px}
+  .eyebrow{
+    font-family:'Spline Sans Mono', monospace; font-size:.72rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:14px;
+  }
+  h1{
+    font-family:'Bricolage Grotesque', sans-serif; font-weight:800;
+    font-size:clamp(1.9rem, 6vw, 2.9rem); line-height:1.12; letter-spacing:-.015em;
+  }
+  h1 .soft{color:var(--ink-soft); font-weight:400}
+  .hero p.lede{margin-top:16px; color:var(--ink-soft); font-size:1.02rem; max-width:52ch}
+  .hero .hint{
+    margin-top:20px; display:inline-flex; align-items:center; gap:8px;
+    background:var(--accent-soft); color:var(--accent);
+    border-radius:999px; padding:7px 14px; font-size:.82rem; font-weight:600;
+  }
+
+  .toc{display:flex; flex-wrap:wrap; gap:8px; padding:6px 0 40px}
+  .toc a{
+    text-decoration:none; color:var(--ink-soft); font-size:.78rem; font-weight:600;
+    border:1px solid var(--line); background:var(--surface);
+    border-radius:999px; padding:5px 11px;
+  }
+  .toc a:hover{border-color:var(--accent); color:var(--accent)}
+  .toc a .n{font-family:'Spline Sans Mono', monospace; color:var(--accent); margin-right:5px; font-weight:500}
+
+  /* ---------- concept cards ---------- */
+  section.concept{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:24px 22px; margin:0 0 26px;
+    scroll-margin-top:110px;
+  }
+  .c-head{display:flex; align-items:baseline; gap:12px; margin-bottom:8px}
+  .c-num{
+    font-family:'Spline Sans Mono', monospace; color:var(--accent);
+    font-size:.8rem; font-weight:500; flex-shrink:0;
+  }
+  h2{
+    font-family:'Bricolage Grotesque', sans-serif; font-weight:600;
+    font-size:1.28rem; line-height:1.25; letter-spacing:-.01em;
+  }
+  .plain{font-size:1rem; max-width:58ch}
+
+  .layers{margin-top:14px; display:flex; flex-direction:column; gap:10px}
+  .layer{border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden}
+  .layer > button{
+    width:100%; text-align:left; border:0; background:transparent; color:var(--ink);
+    font:inherit; font-size:.82rem; font-weight:600; cursor:pointer;
+    padding:10px 14px; display:flex; align-items:center; gap:8px;
+  }
+  .layer > button .chev{transition:transform .2s; color:var(--ink-soft); font-size:.7rem}
+  .layer.open > button .chev{transform:rotate(90deg)}
+  .layer .body{display:none; padding:0 14px 14px; color:var(--ink-soft); font-size:.92rem}
+  .layer.open .body{display:block}
+  .layer .body p + p{margin-top:8px}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+  .chip{
+    font-family:'Spline Sans Mono', monospace; font-size:.7rem; color:var(--accent);
+    background:var(--accent-soft); border-radius:6px; padding:3px 8px;
+  }
+
+  /* ---------- interactive panels ---------- */
+  .panel{
+    margin-top:18px; background:var(--bg); border:1px solid var(--line);
+    border-radius:var(--radius-sm); padding:16px 14px;
+  }
+  .panel .p-label{
+    font-family:'Spline Sans Mono', monospace; font-size:.68rem; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-soft); margin-bottom:12px;
+  }
+  .controls{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px}
+  .btn{
+    border:0; border-radius:var(--radius-sm); cursor:pointer; font:inherit;
+    font-size:.85rem; font-weight:600; padding:9px 15px; min-height:40px;
+    background:var(--accent); color:#fff;
+    transition:transform .12s, opacity .2s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.secondary{background:var(--surface); color:var(--ink); border:1px solid var(--line)}
+  .btn.warn{background:var(--warn); color:#fff}
+  .btn.danger{background:var(--danger); color:#fff}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+
+  .tiles{display:flex; flex-wrap:wrap; gap:5px; align-items:flex-end; min-height:56px}
+  .tile{
+    border-radius:4px; border:1px solid var(--tile-edge); position:relative;
+    transition:opacity .3s, transform .3s;
+  }
+  .tile.large{width:44px; height:44px; background:var(--tile-large)}
+  .tile.small{width:15px; height:15px; background:var(--tile-small)}
+  .tile.ghost{opacity:.28; border-style:dashed; background:transparent}
+  .tile.ghost.large{border-color:var(--ghost)} .tile.ghost.small{border-color:var(--ghost)}
+  .tile .dv{
+    position:absolute; top:-4px; right:-4px; width:11px; height:11px; border-radius:50%;
+    background:var(--danger); border:2px solid var(--surface);
+  }
+  .tiles .more{font-size:.72rem; color:var(--ink-soft); align-self:center; font-family:'Spline Sans Mono',monospace}
+  .legend{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; font-size:.72rem; color:var(--ink-soft)}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .swatch{width:11px; height:11px; border-radius:3px; border:1px solid var(--tile-edge); display:inline-block}
+
+  .readout{
+    margin-top:12px; font-family:'Spline Sans Mono', monospace; font-size:.76rem;
+    color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:6px 16px;
+  }
+  .readout b{color:var(--ink); font-weight:500}
+
+  .toast{
+    margin-top:12px; border-radius:var(--radius-sm); padding:10px 13px;
+    font-size:.85rem; display:none;
+  }
+  .toast.show{display:block}
+  .toast.ok{background:var(--accent-soft); color:var(--accent)}
+  .toast.warn{background:var(--warn-soft); color:var(--warn)}
+  .toast.bad{background:var(--danger-soft); color:var(--danger)}
+
+  /* diary / timeline */
+  .diary{display:flex; flex-direction:column; gap:6px; max-height:190px; overflow-y:auto}
+  .entry{
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:7px 11px; font-size:.8rem;
+  }
+  .entry .v{font-family:'Spline Sans Mono',monospace; color:var(--accent); font-size:.72rem; flex-shrink:0; width:34px}
+  .entry .what{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .entry .age{font-family:'Spline Sans Mono',monospace; color:var(--ink-soft); font-size:.68rem; flex-shrink:0}
+  .entry.gone{opacity:.4}
+  .entry.gone .what{text-decoration:line-through}
+  .entry .rw{
+    border:1px solid var(--line); background:var(--bg); color:var(--ink);
+    border-radius:6px; font-size:.68rem; font-weight:600; padding:4px 8px; cursor:pointer; flex-shrink:0;
+  }
+  .entry.gone .rw{color:var(--danger); border-color:var(--danger)}
+
+  .sliderrow{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap}
+  .sliderrow label{font-size:.8rem; font-weight:600}
+  input[type="range"]{accent-color:var(--accent); flex:1; min-width:140px; height:28px}
+  .slideval{font-family:'Spline Sans Mono',monospace; font-size:.8rem; color:var(--accent); min-width:64px}
+
+  /* skipping demo */
+  .skipfiles{display:flex; flex-direction:column; gap:5px}
+  .skipfile{
+    display:flex; align-items:center; gap:10px; font-family:'Spline Sans Mono',monospace; font-size:.7rem;
+    transition:opacity .25s;
+  }
+  .skipfile .bar-wrap{flex:1; height:16px; background:var(--surface); border:1px solid var(--line); border-radius:5px; position:relative}
+  .skipfile .range{position:absolute; top:0; bottom:0; background:var(--tile-large); border-radius:4px; opacity:.85}
+  .skipfile.skipped{opacity:.25}
+  .skipfile .tag{width:64px; color:var(--ink-soft); flex-shrink:0; text-align:right}
+
+  /* rows-in-file (deletes) */
+  .rowgrid{display:grid; grid-template-columns:repeat(auto-fill, 20px); gap:5px; margin-bottom:4px}
+  .rowdot{
+    width:20px; height:20px; border-radius:5px; background:var(--tile-large);
+    border:1px solid var(--tile-edge); cursor:pointer; position:relative;
+  }
+  .rowdot.del{background:var(--surface)}
+  .rowdot.del::after{
+    content:'✕'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:var(--danger); font-size:.7rem; font-weight:700;
+  }
+  .rowhint{font-size:.74rem; color:var(--ink-soft); margin-bottom:10px}
+
+  /* diagnose */
+  .verdict{
+    margin-top:12px; border-left:3px solid var(--accent); background:var(--surface);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:12px 14px; font-size:.9rem; display:none;
+  }
+  .verdict.show{display:block}
+  .verdict ul{margin:6px 0 0 18px}
+  .verdict li{margin-top:4px}
+
+  /* cadence */
+  .cadence-chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px}
+  .cadence-chips button{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    border-radius:999px; font:inherit; font-size:.78rem; font-weight:600;
+    padding:7px 13px; cursor:pointer; min-height:38px;
+  }
+  .cadence-chips button[aria-pressed="true"]{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .runbook{
+    background:var(--surface); border:1px dashed var(--line); border-radius:var(--radius-sm);
+    padding:13px 15px; font-size:.88rem; color:var(--ink-soft); min-height:52px;
+  }
+  .runbook b{color:var(--ink)}
+
+  footer{
+    max-width:660px; margin:30px auto 0; padding:20px 18px 40px;
+    border-top:1px solid var(--line); color:var(--ink-soft); font-size:.75rem; line-height:1.7;
+  }
+
+  @media (max-width:480px){
+    .topbar .brand{font-size:.82rem}
+    .health{top:96px}
+    section.concept{padding:20px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand">Delta Table Maintenance</span>
+  <div class="seg" role="group" aria-label="Reading depth">
+    <button data-lv="plain" aria-pressed="true">Plain</button>
+    <button data-lv="practitioner" aria-pressed="false">Practitioner</button>
+    <button data-lv="deep" aria-pressed="false">Deep</button>
+  </div>
+  <button class="icon-btn" id="themeBtn" aria-label="Switch to dark theme">◐</button>
+</div>
+
+<div class="health" id="health" aria-label="Live table health">
+  <span class="stat">files <b id="hFiles">0</b></span>
+  <span class="stat">avg size <b id="hAvg">–</b></span>
+  <span class="stat">on disk <b id="hDisk">0</b></span>
+  <span class="stat">versions <b id="hVer">0</b></span>
+  <span class="stat">marked deletes <b id="hDv">0</b></span>
+  <span class="speedwrap">query speed <span class="speedbar"><i id="hSpeed" style="width:100%"></i></span></span>
+  <button class="reset" id="btnReset" type="button" aria-label="Reset the table to its starting state">↺ reset</button>
+</div>
+
+<main>
+
+<div class="hero">
+  <div class="eyebrow">A hands-on explainer · works on any Delta platform</div>
+  <h1>A table is files plus a diary.<br><span class="soft">Everything else follows.</span></h1>
+  <p class="lede">Nine ideas explain why data tables slow down over time and how to keep them fast. You'll build a table on this page, wreck it, diagnose it, and repair it. The strip above is its live health monitor.</p>
+  <div class="hint">↑ Set your depth: Plain, Practitioner, or Deep. Cards can also open individually.</div>
+</div>
+
+<nav class="toc" aria-label="Concepts">
+  <a href="#c1"><span class="n">1</span>Files + diary</a>
+  <a href="#c2"><span class="n">2</span>Tables get messy</a>
+  <a href="#c3"><span class="n">3</span>Compaction</a>
+  <a href="#c4"><span class="n">4</span>Cleanup</a>
+  <a href="#c5"><span class="n">5</span>Rewind vs cleanup</a>
+  <a href="#c6"><span class="n">6</span>Layout</a>
+  <a href="#c7"><span class="n">7</span>Deletes</a>
+  <a href="#c8"><span class="n">8</span>Measure</a>
+  <a href="#c9"><span class="n">9</span>Hygiene</a>
+</nav>
+
+<!-- 1 -->
+<section class="concept" id="c1">
+  <div class="c-head"><span class="c-num">01</span><h2>A table is files plus a diary</h2></div>
+  <p class="plain">Your table isn't one thing. It's a folder of data files, plus a diary that records every change ever made. Every maintenance question is a question about one or the other.</p>
+  <div class="panel">
+    <div class="p-label">Your table · tap the diary to see which files each change touched</div>
+    <div class="tiles" id="tiles1"></div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--tile-large)"></i> healthy file</span>
+      <span><i class="swatch" style="background:var(--tile-small)"></i> tiny file</span>
+      <span><i class="swatch" style="border-style:dashed; background:transparent"></i> old copy on disk</span>
+    </div>
+    <div style="margin-top:14px" class="p-label">The diary</div>
+    <div class="diary" id="diary1"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>The diary is the transaction log: an ordered record of commits, each listing files added and files removed. Readers use the log, not the folder listing, to know which files are "the table" right now.</p>
+      <div class="chips"><span class="chip">transaction log</span><span class="chip">_delta_log</span><span class="chip">commit</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Commits are JSON entries; periodic checkpoints summarize them so readers don't replay the whole history. Files are immutable: a change never edits a file, it writes new ones and logs the swap. That immutability is what makes everything else on this page possible.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="concept" id="c2">
+  <div class="c-head"><span class="c-num">02</span><h2>Tables get messy by default</h2></div>
+  <p class="plain">Every write adds files. Frequent small writes add lots of tiny files, and reading many tiny files is slow. Nothing is broken; results stay correct. The table just quietly decays. Try it.</p>
+  <div class="panel">
+    <div class="p-label">Decay lab · watch the health strip above</div>
+    <div class="controls">
+      <button class="btn" id="btnWrite">Write a small batch</button>
+      <button class="btn secondary" id="btnWrite5">Write 5 batches</button>
+    </div>
+    <div class="tiles" id="tiles2"></div>
+    <div class="readout">
+      <span>tiny files <b id="r2small">0</b></span>
+      <span>query reads <b id="r2reads">0 files</b></span>
+    </div>
+    <div class="toast warn" id="toast2"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>This is the small file problem. Each file read carries fixed overhead (open, footer, metadata), so 800 files of 1&nbsp;MB cost far more than 8 files of 100&nbsp;MB. Streaming appends, trickle loads, and per-key writes are the usual culprits.</p>
+      <div class="chips"><span class="chip">small file problem</span><span class="chip">file overhead</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Healthy target: roughly 128&nbsp;MB–1&nbsp;GB per file depending on table size. Some engines reduce decay at write time (pre-write bin packing, automatic compaction), trading write cost for read health. Decay rate is a design property of your ingestion pattern, not bad luck.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="concept" id="c3">
+  <div class="c-head"><span class="c-num">03</span><h2>Compaction: merge small into large</h2></div>
+  <p class="plain">The fix is simple: combine many tiny files into a few big ones. Same rows, fewer files, faster reads. One command does it.</p>
+  <div class="panel">
+    <div class="p-label">Repair lab · needs tiny files from step 02</div>
+    <div class="controls">
+      <button class="btn" id="btnCompact">Compact the table</button>
+    </div>
+    <div class="toast" id="toast3"></div>
+    <div class="readout">
+      <span>note: <b>disk usage didn't drop</b> — old copies remain until cleanup (04)</span>
+    </div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>This is bin-compaction, the OPTIMIZE command. It writes new large files, then logs a commit that swaps them in. The old small files stay on disk as history — which is why compaction improves speed but not storage.</p>
+      <div class="chips"><span class="chip">OPTIMIZE</span><span class="chip">bin-compaction</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Compaction can be scoped (only recent partitions or files needing work) to avoid rewriting the whole table. On very large tables, unscoped compaction is itself a cost problem; modern engines select only unhealthy files. Run it after heavy ingestion, not after every write.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="concept" id="c4">
+  <div class="c-head"><span class="c-num">04</span><h2>Cleanup reclaims space</h2></div>
+  <p class="plain">Old copies pile up on disk so you can rewind (next card). Cleanup deletes copies older than a retention window you choose. Space back; oldest history gone.</p>
+  <div class="panel">
+    <div class="p-label">Cleanup lab</div>
+    <div class="sliderrow">
+      <label for="retSlider">Keep history for</label>
+      <input type="range" id="retSlider" min="0" max="14" value="7" step="1" aria-label="Retention days">
+      <span class="slideval" id="retVal">7 days</span>
+    </div>
+    <div class="controls">
+      <button class="btn danger" id="btnVacuum">Clean up old copies</button>
+    </div>
+    <div class="toast" id="toast4"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>This is VACUUM with a retention period. It removes files no longer referenced by the current table and older than retention. Common default: 7 days. Platforms often guard against shorter windows, because deleting files a running query still needs corrupts reads.</p>
+      <div class="chips"><span class="chip">VACUUM</span><span class="chip">retention</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Retention below the guardrail usually requires explicitly disabling a safety check — a deliberate friction. Anything that pins an old version (a long-running reader, a downstream cache, a snapshot-based consumer) must be accounted for before shrinking retention. Cleanup is the one maintenance command that destroys.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 5 -->
+<section class="concept" id="c5">
+  <div class="c-head"><span class="c-num">05</span><h2>Rewind and cleanup are in tension</h2></div>
+  <p class="plain">Because old copies stay on disk, you can rewind the table to any past version — until cleanup deletes the files that version needs. How far you can go back is exactly what you haven't thrown away.</p>
+  <div class="panel">
+    <div class="p-label">Time travel lab · try rewinding, then clean up in 04 and try again</div>
+    <div class="diary" id="diary5"></div>
+    <div class="toast" id="toast5"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>This is time travel: query a version or timestamp, or restore the table to it. It's your undo, audit trail, and reproducibility tool. Retention is therefore a contract: the cleanup schedule defines the recovery window.</p>
+      <div class="chips"><span class="chip">time travel</span><span class="chip">VERSION AS OF</span><span class="chip">RESTORE</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>The diary entry may still exist after cleanup, but the files it points to don't — rewinding then fails. Decide retention from recovery needs ("we must be able to undo a bad load within N days"), write it down, and treat any change to it as a policy change, not a tuning knob.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="concept" id="c6">
+  <div class="c-head"><span class="c-num">06</span><h2>Layout: keep similar rows together</h2></div>
+  <p class="plain">If rows with similar values sit in the same files, a query can skip whole files that can't contain its answer. Skipped files are free. Compare a messy layout with a sorted one.</p>
+  <div class="panel">
+    <div class="p-label">File skipping lab · each bar is one file's value range</div>
+    <div class="sliderrow">
+      <label for="skipSlider">Find value</label>
+      <input type="range" id="skipSlider" min="0" max="100" value="42" aria-label="Query value">
+      <span class="slideval" id="skipVal">42</span>
+    </div>
+    <div class="controls">
+      <button class="btn secondary" id="btnLayout" aria-pressed="false">Layout: messy</button>
+    </div>
+    <div class="skipfiles" id="skipfiles"></div>
+    <div class="readout"><span>this query reads <b id="skipReads">–</b></span></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>Each file stores min/max statistics per column; the engine skips files whose range excludes the filter. Layout techniques — clustering, partitioning, multi-column ordering — exist to make those ranges narrow and non-overlapping on the columns you filter by most.</p>
+      <div class="chips"><span class="chip">data skipping</span><span class="chip">clustering</span><span class="chip">partitioning</span><span class="chip">Z-order</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Choose 1–4 real filter columns; more dilutes the benefit. Directory-style partitioning suits huge tables with low-cardinality lifecycle keys but creates tiny-file explosions on high-cardinality ones; modern clustering avoids that and can be changed later. Small tables often need no layout strategy at all — measure before adding one.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="concept" id="c7">
+  <div class="c-head"><span class="c-num">07</span><h2>Deletes are bookmarks first</h2></div>
+  <p class="plain">Files can't be edited, so deleting a row doesn't rewrite the file. The row gets a bookmark that says "ignore me." Fast — but bookmarks accumulate. Eventually you tidy up for real.</p>
+  <div class="panel">
+    <div class="p-label">Delete lab · tap rows in this file to delete them</div>
+    <div class="rowgrid" id="rowgrid"></div>
+    <div class="rowhint">✕ = deleted-by-bookmark. Readers filter these out on every query.</div>
+    <div class="controls">
+      <button class="btn warn" id="btnPurge">Tidy up for real</button>
+    </div>
+    <div class="toast" id="toast7"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>Bookmarks are deletion vectors: sidecar files marking dead rows, applied at read time ("merge-on-read"). They make UPDATE, DELETE, and MERGE much faster. The tidy-up rewrite is a purge; compaction typically purges heavily bookmarked files automatically.</p>
+      <div class="chips"><span class="chip">deletion vectors</span><span class="chip">merge-on-read</span><span class="chip">PURGE</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>One consequence matters legally: bookmarked data still exists in the file. Compliance deletes (right-to-be-forgotten) require an explicit purge rewrite followed by cleanup of the old files — a bookmark alone does not remove the bytes.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="concept" id="c8">
+  <div class="c-head"><span class="c-num">08</span><h2>Measure, don't guess</h2></div>
+  <p class="plain">Two questions diagnose almost everything: what does the table look like right now, and what has been happening to it? Ask them before and after every intervention. Ask them about the table you built on this page.</p>
+  <div class="panel">
+    <div class="p-label">Diagnosis lab</div>
+    <div class="controls"><button class="btn" id="btnDiag">Diagnose my table</button></div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>The two questions have names: DESCRIBE DETAIL (file count, sizes, current state) and DESCRIBE HISTORY (the diary itself: operations, versions, timestamps). A rough smell test: hundreds of files averaging well under ~32&nbsp;MB is a compaction candidate.</p>
+      <div class="chips"><span class="chip">DESCRIBE DETAIL</span><span class="chip">DESCRIBE HISTORY</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Trend beats snapshot: file count growing linearly with time means ingestion is producing decay faster than maintenance removes it — fix the write pattern, not just the symptom. Never assert an effect you didn't measure; before/after numbers are what make maintenance a discipline instead of a ritual.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section class="concept" id="c9">
+  <div class="c-head"><span class="c-num">09</span><h2>Hygiene, not firefighting</h2></div>
+  <p class="plain">Maintenance is scheduled, like backups — not a reaction to a slow dashboard. Pick a cadence, write it down, automate it. Assemble a starter policy:</p>
+  <div class="panel">
+    <div class="p-label">Runbook builder · toggle what applies</div>
+    <div class="cadence-chips" id="cadChips">
+      <button data-cad="compact" aria-pressed="false">Compact after big loads</button>
+      <button data-cad="vacuum" aria-pressed="false">Clean up weekly</button>
+      <button data-cad="layout" aria-pressed="false">Cluster on filter columns</button>
+      <button data-cad="purge" aria-pressed="false">Purge for compliance deletes</button>
+      <button data-cad="measure" aria-pressed="false">Measure before &amp; after</button>
+    </div>
+    <div class="runbook" id="runbook">Your runbook appears here.</div>
+  </div>
+  <div class="layers">
+    <div class="layer" data-layer="precise"><button><span class="chev">▶</span>More precise</button><div class="body">
+      <p>A reasonable default on any platform: compact after major ingestion or when small files accumulate; clean up weekly with retention set from your recovery contract; revisit layout when query filters change. Automate via whatever scheduler your platform gives you — notebook jobs, pipelines, or APIs.</p>
+      <div class="chips"><span class="chip">cadence</span><span class="chip">automation</span></div>
+    </div></div>
+    <div class="layer" data-layer="deep"><button><span class="chev">▶</span>Under the hood</button><div class="body">
+      <p>Cadence has consumers. Compaction invalidates downstream caches briefly (cold-read penalty, then faster steady state); cleanup interacts with anything pinned to an old version. Schedule maintenance in the quiet windows of the systems that read the table, and note the dependency in the runbook itself.</p>
+    </div></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><b>Scope note.</b> Everything above is platform-agnostic Delta Lake behavior; command names follow the open-source project, and vendors add their own write-time optimizations and scheduling tools on top. The table on this page is a simulation built for intuition: rewind here is a feasibility check, and sizes are illustrative. Verified against vendor documentation, August 2026.</p>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ shared table state ============ */
+  var S = {
+    files: [],        // {id, size(MB), small, live, removedDay, dvRows}
+    versions: [],     // {v, what, day, filesRef:[ids live at that version]}
+    day: 0,
+    nextId: 1,
+    retention: 7,
+    oldestRecoverableDay: 0
+  };
+
+  function liveFiles(){ return S.files.filter(function(f){return f.live}); }
+  function diskFiles(){ return S.files.filter(function(f){return !f.vacuumed}); }
+  function smallLive(){ return liveFiles().filter(function(f){return f.small}); }
+  function totalDv(){ return liveFiles().reduce(function(a,f){return a+f.dvRows},0); }
+
+  function addVersion(what){
+    S.day += 1;
+    var ref = liveFiles().map(function(f){return f.id});
+    S.versions.push({v:S.versions.length, what:what, day:S.day, filesRef:ref});
+  }
+
+  function newFile(sizeMB, small){
+    var f = {id:S.nextId++, size:sizeMB, small:!!small, live:true, removedDay:null, vacuumed:false, dvRows:0};
+    S.files.push(f); return f;
+  }
+
+  /* seed: three healthy files + diary */
+  function seed(){
+    S.files = []; S.versions = []; S.day = 0; S.nextId = 1;
+    S.retention = 7; S.oldestRecoverableDay = 0;
+    newFile(120); addVersion("Created table · 1 file");
+    newFile(96);  addVersion("Loaded January data · 1 file");
+    newFile(110); addVersion("Loaded February data · 1 file");
+  }
+  seed();
+
+  /* ============ rendering ============ */
+  var TILE_CAP = 90;
+
+  function renderTiles(el, highlightIds){
+    el.innerHTML = "";
+    var shown = 0;
+    var ordered = S.files.slice().sort(function(a,b){
+      return (b.live?1:0)-(a.live?1:0) || (a.small?1:0)-(b.small?1:0) || a.id-b.id;
+    });
+    for(var i=0;i<ordered.length;i++){
+      var f = ordered[i];
+      if(f.vacuumed) continue;
+      if(shown >= TILE_CAP){
+        var more = document.createElement("span");
+        more.className="more";
+        more.textContent="+"+(diskFiles().length - shown)+" more";
+        el.appendChild(more); break;
+      }
+      var d = document.createElement("div");
+      d.className = "tile " + (f.small?"small":"large") + (f.live?"":" ghost");
+      if(highlightIds && highlightIds.indexOf(f.id)>=0){ d.style.outline = "2px solid var(--accent)"; d.style.outlineOffset="2px"; }
+      if(f.live && f.dvRows>0){ var dv=document.createElement("span"); dv.className="dv"; d.appendChild(dv); }
+      d.title = (f.live?"live":"old copy")+" · "+f.size+" MB"+(f.dvRows?(" · "+f.dvRows+" bookmarked deletes"):"");
+      el.appendChild(d); shown++;
+    }
+  }
+
+  function ageLabel(day){
+    var a = S.day - day;
+    return a===0 ? "today" : a+"d ago";
+  }
+
+  function renderDiary(el, withRewind){
+    el.innerHTML = "";
+    var vs = S.versions.slice().reverse();
+    vs.forEach(function(ver){
+      var gone = ver.filesRef.some(function(id){
+        var f = S.files.find(function(x){return x.id===id});
+        return f && f.vacuumed;
+      });
+      var row = document.createElement("div");
+      row.className = "entry" + (gone?" gone":"");
+      row.innerHTML = '<span class="v">v'+ver.v+'</span><span class="what"></span><span class="age">'+ageLabel(ver.day)+'</span>';
+      row.querySelector(".what").textContent = ver.what;
+      if(withRewind){
+        var b = document.createElement("button");
+        b.className = "rw"; b.type="button";
+        b.textContent = gone ? "gone" : "try rewind";
+        (function(vv, isGone){
+          b.addEventListener("click", function(){
+            var t = document.getElementById("toast5");
+            if(isGone){
+              show(t, "bad", "Can't rewind to v"+vv.v+". Cleanup already deleted files that version needs. The diary remembers; the disk doesn't.");
+            } else {
+              show(t, "ok", "Rewind to v"+vv.v+" is possible — every file it references is still on disk. That's all time travel is.");
+            }
+          });
+        })(ver, gone);
+        row.appendChild(b);
+      } else {
+        row.style.cursor = "pointer";
+        (function(vv){
+          row.addEventListener("click", function(){
+            renderTiles(document.getElementById("tiles1"), vv.filesRef);
+          });
+        })(ver);
+      }
+      el.appendChild(row);
+    });
+  }
+
+  function show(toastEl, kind, msg){
+    toastEl.className = "toast show " + kind;
+    toastEl.textContent = msg;
+  }
+
+  function renderHealth(){
+    var lf = liveFiles(), df = diskFiles(), sm = smallLive();
+    var avg = lf.length ? Math.round(lf.reduce(function(a,f){return a+f.size},0)/lf.length) : 0;
+    document.getElementById("hFiles").textContent = lf.length;
+    document.getElementById("hAvg").textContent = lf.length ? (avg+" MB") : "–";
+    document.getElementById("hDisk").textContent = df.length;
+    document.getElementById("hVer").textContent = S.versions.length;
+    document.getElementById("hDv").textContent = totalDv();
+    var avgStat = document.getElementById("hAvg").parentElement;
+    avgStat.classList.toggle("hot", lf.length>0 && avg < 32);
+    /* speed: penalty per small file */
+    var speed = Math.max(8, 100 - sm.length*1.6);
+    var bar = document.getElementById("hSpeed");
+    bar.style.width = speed + "%";
+    bar.style.background = speed < 45 ? "var(--warn)" : "var(--accent)";
+    /* section readouts */
+    document.getElementById("r2small").textContent = sm.length;
+    document.getElementById("r2reads").textContent = lf.length + " files";
+  }
+
+  function renderAll(){
+    renderTiles(document.getElementById("tiles1"), null);
+    renderTiles(document.getElementById("tiles2"), null);
+    renderDiary(document.getElementById("diary1"), false);
+    renderDiary(document.getElementById("diary5"), true);
+    renderHealth();
+  }
+
+  /* ============ actions ============ */
+  document.getElementById("btnWrite").addEventListener("click", function(){ writeBatch(1); });
+  document.getElementById("btnWrite5").addEventListener("click", function(){ writeBatch(5); });
+
+  function writeBatch(n){
+    var added = 0;
+    for(var b=0;b<n;b++){
+      var count = 6 + Math.floor(Math.random()*4);
+      for(var i=0;i<count;i++){ newFile(1 + Math.floor(Math.random()*3), true); added++; }
+      addVersion("Small write · "+count+" tiny files");
+    }
+    renderAll();
+    var sm = smallLive().length;
+    if(sm >= 30){
+      show(document.getElementById("toast2"), "warn",
+        "Every result is still correct. But a query now opens "+liveFiles().length+" files to answer. This is decay: no error, just drag.");
+    }
+  }
+
+  document.getElementById("btnCompact").addEventListener("click", function(){
+    var sm = smallLive();
+    var t3 = document.getElementById("toast3");
+    if(sm.length < 4){
+      show(t3, "warn", "Not much to compact — write some small batches in 02 first.");
+      return;
+    }
+    var groups = 0, i = 0;
+    while(i < sm.length){
+      var chunk = sm.slice(i, i+8);
+      if(chunk.length < 2) break;
+      var size = chunk.reduce(function(a,f){return a+f.size},0);
+      var dv = chunk.reduce(function(a,f){return a+f.dvRows},0);
+      chunk.forEach(function(f){ f.live=false; f.removedDay = S.day+1; });
+      var nf = newFile(Math.max(size, 40), false);
+      nf.dvRows = 0; /* compaction purges bookmarks in rewritten files */
+      groups++; i += 8;
+      void dv;
+    }
+    addVersion("Compacted · merged small files into "+groups);
+    renderAll();
+    show(t3, "ok", "Merged into "+groups+" healthy file"+(groups>1?"s":"")+". Query speed recovered — check the strip. The old small files are now ghost tiles: still on disk, no longer the table.");
+  });
+
+  var retSlider = document.getElementById("retSlider");
+  retSlider.addEventListener("input", function(){
+    S.retention = parseInt(retSlider.value,10);
+    document.getElementById("retVal").textContent = S.retention + " day" + (S.retention===1?"":"s");
+  });
+
+  document.getElementById("btnVacuum").addEventListener("click", function(){
+    var t4 = document.getElementById("toast4");
+    var cutoff = S.day - S.retention;
+    var removed = 0;
+    S.files.forEach(function(f){
+      if(!f.live && !f.vacuumed && f.removedDay !== null && f.removedDay <= cutoff){
+        f.vacuumed = true; removed++;
+      }
+    });
+    if(S.retention < 7 && removed > 0){
+      show(t4, "bad", "Removed "+removed+" old cop"+(removed===1?"y":"ies")+" with only "+S.retention+"-day retention. Real platforms guard against windows this short: a still-running query needing those files would now fail. You just felt why.");
+    } else if(removed > 0){
+      show(t4, "ok", "Removed "+removed+" old cop"+(removed===1?"y":"ies")+" older than "+S.retention+" days. Disk reclaimed. Now try rewinding in 05.");
+    } else {
+      show(t4, "warn", "Nothing to remove: no old copies are older than "+S.retention+" days yet. Old copies appear after compaction (03) or tidy-ups (07), and age as you take more actions.");
+    }
+    S.oldestRecoverableDay = Math.max(S.oldestRecoverableDay, cutoff);
+    renderAll();
+  });
+
+  /* ============ 06 skipping demo (independent axis) ============ */
+  var messy = [], sorted = [];
+  (function(){
+    for(var i=0;i<10;i++){
+      var a = Math.floor(Math.random()*70);
+      var b = a + 18 + Math.floor(Math.random()*22);
+      messy.push([a, Math.min(b,100)]);
+      sorted.push([i*10, i*10+11]);
+    }
+  })();
+  var clustered = false;
+  var btnLayout = document.getElementById("btnLayout");
+  var skipSlider = document.getElementById("skipSlider");
+
+  function renderSkip(){
+    var v = parseInt(skipSlider.value,10);
+    document.getElementById("skipVal").textContent = v;
+    var set = clustered ? sorted : messy;
+    var wrap = document.getElementById("skipfiles");
+    wrap.innerHTML = "";
+    var reads = 0;
+    set.forEach(function(r, idx){
+      var hit = v >= r[0] && v <= r[1];
+      if(hit) reads++;
+      var row = document.createElement("div");
+      row.className = "skipfile" + (hit ? "" : " skipped");
+      row.innerHTML = '<span class="tag">file_'+(idx+1)+'</span>'+
+        '<span class="bar-wrap"><span class="range" style="left:'+r[0]+'%; width:'+(r[1]-r[0])+'%"></span></span>'+
+        '<span class="tag">'+r[0]+'–'+r[1]+'</span>';
+      wrap.appendChild(row);
+    });
+    document.getElementById("skipReads").textContent = reads + " of " + set.length + " files";
+  }
+  skipSlider.addEventListener("input", renderSkip);
+  btnLayout.addEventListener("click", function(){
+    clustered = !clustered;
+    btnLayout.textContent = "Layout: " + (clustered ? "sorted" : "messy");
+    btnLayout.setAttribute("aria-pressed", clustered ? "true" : "false");
+    renderSkip();
+  });
+  renderSkip();
+
+  /* ============ 07 deletes ============ */
+  var ROWS = 24;
+  var delState = []; for(var i=0;i<ROWS;i++) delState.push(false);
+  var dvFile = null; /* attach bookmarks to one live large file */
+  function ensureDvFile(){
+    if(dvFile && dvFile.live) return dvFile;
+    dvFile = liveFiles().filter(function(f){return !f.small})[0] || liveFiles()[0] || newFile(100,false);
+    return dvFile;
+  }
+  function renderRows(){
+    var g = document.getElementById("rowgrid");
+    g.innerHTML = "";
+    delState.forEach(function(d, idx){
+      var b = document.createElement("button");
+      b.type="button";
+      b.className = "rowdot" + (d?" del":"");
+      b.setAttribute("aria-label", "row "+(idx+1)+(d?" deleted":""));
+      b.addEventListener("click", function(){
+        delState[idx] = !delState[idx];
+        var f = ensureDvFile();
+        f.dvRows = delState.filter(Boolean).length;
+        renderRows(); renderAll();
+      });
+      g.appendChild(b);
+    });
+  }
+  document.getElementById("btnPurge").addEventListener("click", function(){
+    var t7 = document.getElementById("toast7");
+    var n = delState.filter(Boolean).length;
+    if(n===0){ show(t7,"warn","No bookmarks to purge — tap some rows first."); return; }
+    var f = ensureDvFile();
+    f.live = false; f.removedDay = S.day+1;
+    var nf = newFile(Math.max(f.size-2, 20), false); nf.dvRows = 0;
+    for(var i=0;i<ROWS;i++) delState[i]=false;
+    dvFile = nf;
+    addVersion("Purged · rewrote 1 file, removed "+n+" bookmarked rows");
+    renderRows(); renderAll();
+    show(t7,"ok","Rewrote the file without the "+n+" deleted rows. The bookmarks are gone — and note the new ghost tile: the old file, bytes intact, until cleanup removes it. That's why compliance deletes need purge + cleanup.");
+  });
+  renderRows();
+
+  /* ============ 08 diagnose ============ */
+  document.getElementById("btnDiag").addEventListener("click", function(){
+    var v = document.getElementById("verdict");
+    var lf = liveFiles(), sm = smallLive(), df = diskFiles();
+    var old = df.length - lf.length;
+    var dv = totalDv();
+    var findings = [];
+    if(sm.length >= 12) findings.push("<b>"+sm.length+" tiny files</b> — compaction (03) would cut read overhead sharply.");
+    else if(sm.length >= 4) findings.push(sm.length+" tiny files — early decay; compact after the next big load.");
+    if(old >= 10) findings.push("<b>"+old+" old copies on disk</b> — cleanup (04) would reclaim space, at the cost of the oldest rewind points.");
+    if(dv >= 8) findings.push("<b>"+dv+" bookmarked deletes</b> — a tidy-up (07) will restore full read speed on that file.");
+    if(findings.length === 0) findings.push("Healthy: files are large, disk is tidy, no bookmark buildup. Whatever you did — that's the maintained state. Keep the cadence.");
+    v.className = "verdict show";
+    v.innerHTML = "<b>Diagnosis</b><ul>" + findings.map(function(x){return "<li>"+x+"</li>"}).join("") + "</ul>";
+  });
+
+  /* ============ 09 runbook ============ */
+  var cadTexts = {
+    compact: "compact after major loads",
+    vacuum: "clean up weekly (retention = our recovery window)",
+    layout: "keep data clustered on our main filter columns",
+    purge: "purge, then clean up, for compliance deletes",
+    measure: "record file count and sizes before and after every run"
+  };
+  var cadOn = {};
+  document.querySelectorAll("#cadChips button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var k = b.getAttribute("data-cad");
+      cadOn[k] = !cadOn[k];
+      b.setAttribute("aria-pressed", cadOn[k] ? "true" : "false");
+      var parts = Object.keys(cadTexts).filter(function(x){return cadOn[x]}).map(function(x){return cadTexts[x]});
+      var rb = document.getElementById("runbook");
+      rb.innerHTML = parts.length
+        ? "<b>Our table policy:</b> we " + parts.join("; ") + "."
+        : "Your runbook appears here.";
+    });
+  });
+
+  /* ============ depth levels ============ */
+  var levelBtns = document.querySelectorAll(".seg button");
+  function applyLevel(lv){
+    document.documentElement.setAttribute("data-level", lv);
+    levelBtns.forEach(function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-lv")===lv ? "true":"false"); });
+    document.querySelectorAll(".layer").forEach(function(l){
+      var kind = l.getAttribute("data-layer");
+      var open = (lv==="deep") || (lv==="practitioner" && kind==="precise");
+      l.classList.toggle("open", open);
+    });
+  }
+  levelBtns.forEach(function(b){
+    b.addEventListener("click", function(){ applyLevel(b.getAttribute("data-lv")); });
+  });
+  document.querySelectorAll(".layer > button").forEach(function(b){
+    b.addEventListener("click", function(){ b.parentElement.classList.toggle("open"); });
+  });
+
+  /* ============ reset ============ */
+  var resetBtn = document.getElementById("btnReset");
+  resetBtn.addEventListener("click", function(){
+    seed();
+    retSlider.value = 7;
+    document.getElementById("retVal").textContent = "7 days";
+    for(var i=0;i<ROWS;i++) delState[i] = false;
+    dvFile = null;
+    ["toast2","toast3","toast4","toast5","toast7"].forEach(function(id){
+      document.getElementById(id).className = "toast";
+    });
+    document.getElementById("verdict").className = "verdict";
+    renderRows(); renderAll();
+    resetBtn.textContent = "✓ fresh table";
+    setTimeout(function(){ resetBtn.textContent = "↺ reset"; }, 1400);
+  });
+
+  /* ============ theme ============ */
+  var themeBtn = document.getElementById("themeBtn");
+  themeBtn.addEventListener("click", function(){
+    var cur = document.documentElement.getAttribute("data-theme");
+    var next = cur === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    themeBtn.setAttribute("aria-label", "Switch to " + cur + " theme");
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>

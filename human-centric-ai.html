@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Human-Centric AI: An Interaction Problem (sourced edition)</title>
+<meta name="description" content="Human-centric AI as an interaction design problem: control, handoff, and calibrated trust, with every load-bearing claim attached to a verifiable source and labeled by evidence status.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --m-font-primary:'Manrope',system-ui,-apple-system,sans-serif;
+  --m-font-code:'JetBrains Mono','Fira Code','Consolas',monospace;
+
+  --m-text-xs:0.6875rem; --m-text-sm:0.8125rem; --m-text-base:0.9375rem;
+  --m-text-lg:1.0625rem; --m-text-xl:1.25rem; --m-text-2xl:1.5rem;
+  --m-text-3xl:1.875rem; --m-text-4xl:2.25rem; --m-text-5xl:3rem;
+
+  --m-weight-regular:400; --m-weight-medium:500; --m-weight-semibold:600;
+  --m-weight-bold:700; --m-weight-extrabold:800;
+
+  --m-leading-tight:1.25; --m-leading-snug:1.4; --m-leading-normal:1.6; --m-leading-relaxed:1.7;
+  --m-tracking-tight:-0.015em; --m-tracking-tighter:-0.025em; --m-tracking-tightest:-0.035em; --m-tracking-wide:0.04em;
+
+  --m-neutral-0:#FFFFFF; --m-neutral-50:#F8F9FA; --m-neutral-100:#F1F3F5;
+  --m-neutral-200:#E9ECEF; --m-neutral-300:#DEE2E6; --m-neutral-400:#ADB5BD;
+  --m-neutral-500:#868E96; --m-neutral-600:#495057; --m-neutral-700:#343A40;
+  --m-neutral-800:#212529; --m-neutral-900:#16191D; --m-neutral-950:#0D0F12;
+
+  --m-primary-50:#EEF2FF; --m-primary-100:#E0E7FF; --m-primary-200:#C7D2FE;
+  --m-primary-300:#A5B4FC; --m-primary-400:#818CF8; --m-primary-500:#6366F1;
+  --m-primary-600:#4F46E5; --m-primary-700:#4338CA; --m-primary-800:#3730A3; --m-primary-900:#312E81;
+
+  --m-accent-50:#FFFBEB; --m-accent-100:#FEF3C7; --m-accent-300:#FCD34D;
+  --m-accent-400:#FBBF24; --m-accent-500:#F59E0B; --m-accent-700:#B45309; --m-accent-900:#78350F;
+
+  --m-success:#15803D; --m-success-bg:#F0FDF4; --m-success-text:#14532D;
+  --m-warning:#EA580C; --m-warning-bg:#FFF7ED; --m-warning-text:#9A3412;
+  --m-error:#DC2626;   --m-error-bg:#FEF2F2;   --m-error-text:#991B1B;
+  --m-info:#2563EB;    --m-info-bg:#EFF6FF;    --m-info-text:#1E40AF;
+
+  --m-bg:var(--m-neutral-0);
+  --m-surface:var(--m-neutral-50);
+  --m-border:var(--m-neutral-200);
+  --m-border-subtle:var(--m-neutral-100);
+  --m-text:var(--m-neutral-800);
+  --m-text-secondary:var(--m-neutral-600);
+  --m-text-tertiary:var(--m-neutral-500);
+  --m-primary:var(--m-primary-600);
+  --m-primary-hover:var(--m-primary-700);
+  --m-primary-subtle:var(--m-primary-50);
+  --m-accent:var(--m-accent-700);
+  --m-accent-vivid:var(--m-accent-500);
+  --m-accent-subtle:var(--m-accent-50);
+
+  --m-space-1:0.25rem; --m-space-2:0.5rem; --m-space-3:0.75rem; --m-space-4:1rem;
+  --m-space-5:1.25rem; --m-space-6:1.5rem; --m-space-8:2rem; --m-space-10:2.5rem;
+  --m-space-12:3rem; --m-space-16:4rem; --m-space-20:5rem;
+
+  --m-radius-sm:4px; --m-radius-md:8px; --m-radius-lg:12px; --m-radius-xl:16px; --m-radius-full:9999px;
+
+  --m-shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --m-shadow-md:0 2px 8px rgba(0,0,0,0.06);
+  --m-shadow-lg:0 4px 16px rgba(0,0,0,0.08);
+
+  --m-ease-out-expo:cubic-bezier(0.16,1,0.3,1);
+  --m-ease-in-out:cubic-bezier(0.45,0,0.55,1);
+}
+
+.dark{
+  --m-bg:var(--m-neutral-950);
+  --m-surface:var(--m-neutral-900);
+  --m-border:var(--m-neutral-700);
+  --m-border-subtle:var(--m-neutral-800);
+  --m-text:var(--m-neutral-200);
+  --m-text-secondary:var(--m-neutral-400);
+  --m-text-tertiary:var(--m-neutral-500);
+  --m-primary:var(--m-primary-400);
+  --m-primary-hover:var(--m-primary-300);
+  --m-primary-subtle:var(--m-primary-900);
+  --m-accent:var(--m-accent-400);
+  --m-accent-vivid:var(--m-accent-300);
+  --m-accent-subtle:var(--m-accent-900);
+  --m-success:#4ADE80; --m-success-bg:rgba(74,222,128,0.10); --m-success-text:#86EFAC;
+  --m-warning:#FB923C; --m-warning-bg:rgba(251,146,60,0.10); --m-warning-text:#FDBA74;
+  --m-error:#F87171;   --m-error-bg:rgba(248,113,113,0.10);  --m-error-text:#FCA5A5;
+  --m-info:#60A5FA;    --m-info-bg:rgba(96,165,250,0.10);    --m-info-text:#93C5FD;
+  --m-shadow-sm:0 1px 2px rgba(0,0,0,0.2);
+  --m-shadow-md:0 2px 8px rgba(0,0,0,0.3);
+  --m-shadow-lg:0 4px 16px rgba(0,0,0,0.4);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:var(--m-font-primary);
+  font-size:var(--m-text-base);
+  line-height:var(--m-leading-normal);
+  color:var(--m-text);
+  background:var(--m-bg);
+  -webkit-font-smoothing:antialiased;
+  transition:background 200ms var(--m-ease-in-out),color 200ms var(--m-ease-in-out);
+}
+
+:focus-visible{outline:2px solid var(--m-primary);outline-offset:2px}
+::selection{background:var(--m-primary-100);color:var(--m-primary-900)}
+.dark ::selection{background:var(--m-primary-800);color:var(--m-primary-100)}
+
+a{color:var(--m-primary);text-decoration:none;border-bottom:1px solid transparent;transition:border-color 120ms var(--m-ease-in-out)}
+a:hover{border-bottom-color:var(--m-primary)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:0 var(--m-space-6)}
+
+/* Header */
+header.masthead{padding:var(--m-space-16) 0 var(--m-space-10)}
+.masthead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--m-space-6)}
+.overline{
+  font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+  font-weight:var(--m-weight-semibold);color:var(--m-accent);
+}
+h1{
+  font-size:var(--m-text-5xl);font-weight:var(--m-weight-extrabold);
+  letter-spacing:var(--m-tracking-tightest);line-height:1.05;
+  margin-top:var(--m-space-4);max-width:16ch;
+}
+h1 em{font-style:normal;color:var(--m-primary)}
+.deck{
+  font-size:var(--m-text-lg);color:var(--m-text-secondary);
+  line-height:var(--m-leading-snug);max-width:64ch;margin-top:var(--m-space-5);
+}
+.deck strong{color:var(--m-text);font-weight:var(--m-weight-semibold)}
+.byline{
+  margin-top:var(--m-space-6);font-size:var(--m-text-sm);color:var(--m-text-tertiary);
+  font-family:var(--m-font-code);
+}
+
+.theme-toggle{
+  display:inline-flex;align-items:center;gap:var(--m-space-2);
+  min-height:44px;padding:0 var(--m-space-4);flex-shrink:0;
+  font-family:var(--m-font-primary);font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);
+  color:var(--m-text-secondary);background:var(--m-surface);
+  border:1px solid var(--m-border);border-radius:var(--m-radius-md);cursor:pointer;
+  transition:all 120ms var(--m-ease-in-out);
+}
+.theme-toggle:hover{border-color:var(--m-primary);color:var(--m-primary)}
+.theme-toggle svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* Legend */
+.legend{
+  display:flex;flex-wrap:wrap;gap:var(--m-space-2);align-items:center;
+  margin-top:var(--m-space-8);padding:var(--m-space-4) var(--m-space-5);
+  background:var(--m-surface);border:1px solid var(--m-border);border-radius:var(--m-radius-lg);
+}
+.legend-lbl{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);font-weight:var(--m-weight-semibold);color:var(--m-text-tertiary);margin-right:var(--m-space-2)}
+.legend-note{font-size:var(--m-text-sm);color:var(--m-text-secondary);flex-basis:100%;margin-top:var(--m-space-2)}
+
+/* Tabs */
+.tabbar-outer{
+  position:sticky;top:0;z-index:200;background:var(--m-bg);
+  border-bottom:1px solid var(--m-border);
+  transition:background 200ms var(--m-ease-in-out);
+}
+.tablist{display:flex;gap:var(--m-space-1);overflow-x:auto;scrollbar-width:thin}
+.tab{
+  position:relative;flex:0 0 auto;
+  display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  min-height:56px;padding:var(--m-space-3) var(--m-space-4);
+  font-family:var(--m-font-primary);background:none;border:none;cursor:pointer;
+  color:var(--m-text-tertiary);white-space:nowrap;
+  transition:color 120ms var(--m-ease-in-out);
+}
+.tab-idx{font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:var(--m-weight-medium);letter-spacing:var(--m-tracking-wide)}
+.tab-name{font-size:var(--m-text-base);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight)}
+.tab:hover{color:var(--m-text-secondary)}
+.tab[aria-selected="true"]{color:var(--m-primary)}
+.tab[aria-selected="true"]::after{
+  content:"";position:absolute;left:var(--m-space-4);right:var(--m-space-4);bottom:-1px;
+  height:2px;background:var(--m-primary);border-radius:var(--m-radius-full);
+}
+
+/* Panels */
+.panel{padding:var(--m-space-12) 0 var(--m-space-16);animation:fade 250ms var(--m-ease-out-expo)}
+.panel[hidden]{display:none}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.claim{
+  font-size:var(--m-text-4xl);font-weight:var(--m-weight-bold);
+  letter-spacing:var(--m-tracking-tighter);line-height:var(--m-leading-tight);
+  max-width:24ch;margin-top:var(--m-space-3);
+}
+.lede{
+  font-size:var(--m-text-lg);line-height:var(--m-leading-relaxed);
+  color:var(--m-text-secondary);max-width:70ch;margin-top:var(--m-space-5);
+}
+.lede strong{color:var(--m-text);font-weight:var(--m-weight-semibold)}
+
+h3{
+  font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+  font-weight:var(--m-weight-semibold);color:var(--m-text-tertiary);margin-bottom:var(--m-space-3);
+}
+h4{font-size:var(--m-text-lg);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight);line-height:var(--m-leading-snug)}
+
+.grid{display:grid;gap:var(--m-space-5);margin-top:var(--m-space-10)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+
+.card{
+  background:var(--m-surface);border:1px solid var(--m-border);
+  border-radius:var(--m-radius-lg);padding:var(--m-space-6);
+  box-shadow:var(--m-shadow-sm);display:flex;flex-direction:column;
+}
+.card p{font-size:var(--m-text-base);color:var(--m-text-secondary);line-height:var(--m-leading-normal);margin-top:var(--m-space-3)}
+.card p strong{color:var(--m-text);font-weight:var(--m-weight-semibold)}
+.card .src-row{margin-top:auto;padding-top:var(--m-space-4)}
+
+.card-fail{background:var(--m-error-bg);border-color:transparent}
+.card-fail h3,.card-fail h4{color:var(--m-error-text)}
+.card-fail p{color:var(--m-text)}
+.dark .card-fail p{color:var(--m-neutral-200)}
+
+.card-mech{background:var(--m-info-bg);border-color:transparent}
+.card-mech h3,.card-mech h4{color:var(--m-info-text)}
+.card-mech p{color:var(--m-text)}
+.dark .card-mech p{color:var(--m-neutral-200)}
+
+.callout{
+  margin-top:var(--m-space-10);padding:var(--m-space-6) var(--m-space-6) var(--m-space-6) var(--m-space-8);
+  border-left:3px solid var(--m-accent-vivid);background:var(--m-accent-subtle);
+  border-radius:0 var(--m-radius-lg) var(--m-radius-lg) 0;
+}
+.callout .overline{color:var(--m-accent)}
+.dark .callout .overline{color:var(--m-accent-vivid)}
+.callout p{margin-top:var(--m-space-2);font-size:var(--m-text-lg);line-height:var(--m-leading-snug);max-width:72ch;color:var(--m-text)}
+.dark .callout p{color:var(--m-neutral-200)}
+.callout .src-row{margin-top:var(--m-space-4)}
+
+/* Source chips and status badges */
+.src-row{display:flex;flex-wrap:wrap;gap:var(--m-space-2);align-items:center}
+.src{
+  display:inline-flex;align-items:center;
+  font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:var(--m-weight-medium);
+  padding:3px var(--m-space-2);border-radius:var(--m-radius-sm);
+  background:var(--m-primary-subtle);color:var(--m-primary);border:none;
+}
+.dark .src{background:rgba(129,140,248,0.14)}
+a.src:hover{border-bottom:none;background:var(--m-primary-100)}
+.dark a.src:hover{background:rgba(129,140,248,0.26)}
+
+.badge{
+  display:inline-flex;align-items:center;gap:var(--m-space-2);
+  padding:4px var(--m-space-3);border-radius:var(--m-radius-full);
+  font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);
+  text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+}
+.badge::before{content:"";width:6px;height:6px;border-radius:var(--m-radius-full);background:currentColor;flex-shrink:0}
+.b-fact{background:var(--m-success-bg);color:var(--m-success-text)}
+.b-inf{background:var(--m-info-bg);color:var(--m-info-text)}
+.b-spec{background:var(--m-warning-bg);color:var(--m-warning-text)}
+
+/* Matrix */
+.matrix{display:grid;grid-template-columns:150px 1fr 1fr;gap:1px;background:var(--m-border);border:1px solid var(--m-border);border-radius:var(--m-radius-lg);overflow:hidden;margin-top:var(--m-space-8)}
+.mx{background:var(--m-bg);padding:var(--m-space-5)}
+.mx-h{background:var(--m-surface);font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);font-weight:var(--m-weight-semibold);color:var(--m-text-tertiary);display:flex;align-items:center}
+.mx-l{background:var(--m-surface);font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);color:var(--m-text);display:flex;align-items:center}
+.mx strong{display:block;font-size:var(--m-text-base);font-weight:var(--m-weight-semibold);color:var(--m-text);letter-spacing:var(--m-tracking-tight)}
+.mx span{display:block;margin-top:var(--m-space-2);font-size:var(--m-text-sm);color:var(--m-text-secondary);line-height:var(--m-leading-normal)}
+.mx-good strong{color:var(--m-success-text)}
+.mx-bad strong{color:var(--m-error-text)}
+.mx-warn strong{color:var(--m-warning-text)}
+.cap{margin-top:var(--m-space-3);font-size:var(--m-text-sm);color:var(--m-text-tertiary);line-height:var(--m-leading-normal);max-width:78ch}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;margin-top:var(--m-space-8)}
+th{
+  text-align:left;font-size:var(--m-text-xs);text-transform:uppercase;
+  letter-spacing:var(--m-tracking-wide);font-weight:var(--m-weight-semibold);
+  color:var(--m-text-tertiary);padding:var(--m-space-3) var(--m-space-4);
+  border-bottom:1px solid var(--m-border);
+}
+td{padding:var(--m-space-4);border-bottom:1px solid var(--m-border-subtle);font-size:var(--m-text-base);color:var(--m-text-secondary);vertical-align:top;line-height:var(--m-leading-normal)}
+td:first-child{color:var(--m-text);font-weight:var(--m-weight-semibold);width:22%}
+tr:last-child td{border-bottom:none}
+
+/* Data figure */
+.figure{margin-top:var(--m-space-8);border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-6);background:var(--m-surface)}
+.fig-title{font-size:var(--m-text-base);font-weight:var(--m-weight-semibold);color:var(--m-text);letter-spacing:var(--m-tracking-tight)}
+.bars{margin-top:var(--m-space-6);display:flex;flex-direction:column;gap:var(--m-space-4)}
+.bar-row{display:grid;grid-template-columns:230px 1fr;gap:var(--m-space-5);align-items:center}
+.bar-lbl{font-size:var(--m-text-sm);font-weight:var(--m-weight-medium);color:var(--m-text);line-height:var(--m-leading-snug)}
+.bar-track{position:relative;height:30px;background:var(--m-border-subtle);border-radius:var(--m-radius-sm);overflow:hidden}
+.bar-fill{height:100%;display:flex;align-items:center;padding:0 var(--m-space-3);font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);color:#FFFFFF;white-space:nowrap}
+.bar-a{background:var(--m-primary-600)}
+.bar-b{background:var(--m-accent-700)}
+.dark .bar-fill{color:var(--m-neutral-950)}
+.dark .bar-a{background:var(--m-primary-400)}
+.dark .bar-b{background:var(--m-accent-400)}
+
+/* Contract */
+.contract{margin-top:var(--m-space-8);border:1px solid var(--m-border);border-radius:var(--m-radius-lg);overflow:hidden}
+.contract-hd{background:var(--m-neutral-900);color:var(--m-neutral-100);padding:var(--m-space-3) var(--m-space-5);font-family:var(--m-font-code);font-size:var(--m-text-sm);font-weight:var(--m-weight-medium);display:flex;justify-content:space-between;gap:var(--m-space-4);flex-wrap:wrap}
+.dark .contract-hd{background:var(--m-neutral-800)}
+.contract-hd em{font-style:normal;color:var(--m-neutral-400);font-size:var(--m-text-xs)}
+.contract-row{display:flex;gap:var(--m-space-5);padding:var(--m-space-4) var(--m-space-5);border-top:1px solid var(--m-border-subtle);background:var(--m-bg)}
+.contract-row:first-of-type{border-top:none}
+.contract-key{font-family:var(--m-font-code);font-size:var(--m-text-sm);font-weight:var(--m-weight-medium);color:var(--m-primary);flex:0 0 168px}
+.contract-val{font-size:var(--m-text-base);color:var(--m-text-secondary);line-height:var(--m-leading-normal)}
+
+/* Notes */
+.note{
+  margin-top:var(--m-space-8);padding:var(--m-space-5);
+  border:1px dashed var(--m-border);border-radius:var(--m-radius-md);
+  font-size:var(--m-text-sm);color:var(--m-text-secondary);line-height:var(--m-leading-relaxed);
+}
+.note b{color:var(--m-text);font-weight:var(--m-weight-semibold)}
+.note p + p{margin-top:var(--m-space-3)}
+.note .src-row{margin-top:var(--m-space-3)}
+
+/* Reference list */
+ol.refs{margin-top:var(--m-space-6);padding-left:0;list-style:none;counter-reset:ref}
+ol.refs li{
+  counter-increment:ref;position:relative;
+  padding:var(--m-space-4) 0 var(--m-space-4) var(--m-space-10);
+  border-bottom:1px solid var(--m-border-subtle);
+  font-size:var(--m-text-sm);color:var(--m-text-secondary);line-height:var(--m-leading-relaxed);
+}
+ol.refs li::before{
+  content:counter(ref,decimal-leading-zero);position:absolute;left:0;top:var(--m-space-4);
+  font-family:var(--m-font-code);font-size:var(--m-text-xs);color:var(--m-text-tertiary);font-weight:var(--m-weight-medium);
+}
+ol.refs li b{color:var(--m-text);font-weight:var(--m-weight-semibold)}
+ol.refs li:last-child{border-bottom:none}
+
+footer{border-top:1px solid var(--m-border);padding:var(--m-space-10) 0 var(--m-space-16);margin-top:var(--m-space-10)}
+footer p{font-size:var(--m-text-sm);color:var(--m-text-tertiary);line-height:var(--m-leading-relaxed);max-width:80ch}
+footer p + p{margin-top:var(--m-space-3)}
+footer b{color:var(--m-text-secondary);font-weight:var(--m-weight-semibold)}
+.kbd{
+  display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;
+  font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:var(--m-weight-medium);
+  color:var(--m-text-secondary);background:var(--m-surface);border:1px solid var(--m-border);
+  border-bottom-width:2px;border-radius:var(--m-radius-sm);line-height:1;
+}
+
+@media (max-width:900px){
+  h1{font-size:var(--m-text-4xl)}
+  .claim{font-size:var(--m-text-2xl)}
+  .g2,.g3{grid-template-columns:1fr}
+  .matrix{grid-template-columns:1fr}
+  .mx-h{display:none}
+  .contract-row{flex-direction:column;gap:var(--m-space-1)}
+  .contract-key{flex:none}
+  .bar-row{grid-template-columns:1fr;gap:var(--m-space-2)}
+  .masthead-top{flex-direction:column-reverse;align-items:flex-start}
+  td:first-child{width:auto}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;transition-duration:0.01ms !important}
+  html{scroll-behavior:auto}
+}
+
+@media print{
+  .tabbar-outer,.theme-toggle{display:none}
+  .panel[hidden]{display:block !important}
+  .panel{break-before:page;padding:var(--m-space-8) 0}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="masthead-top">
+      <div>
+        <p class="overline">Interaction design · sourced edition</p>
+        <h1>Human-Centric AI is an <em>interaction problem</em></h1>
+      </div>
+      <button class="theme-toggle" id="themeBtn" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="themeLbl">Dark</span>
+      </button>
+    </div>
+    <p class="deck">The phrase hides three commitments that routinely conflict: <strong>human control</strong>, <strong>human benefit</strong>, and <strong>human legibility</strong>. Treating it as a values statement produces principle slides no one can act on. Treating it as interaction design produces decisions you can instrument and be wrong about. Every load-bearing claim below carries its source and its evidence status.</p>
+
+    <div class="legend">
+      <span class="legend-lbl">Claim status</span>
+      <span class="badge b-fact">Evidence</span>
+      <span class="badge b-inf">Inference</span>
+      <span class="badge b-spec">Practitioner</span>
+      <span class="legend-note"><b>Evidence</b> means a published empirical finding, cited. <b>Inference</b> means reasoned from cited findings but not itself tested. <b>Practitioner</b> means field judgment with no study behind it, offered as a hypothesis to instrument. Full references in section 06.</span>
+    </div>
+
+    <p class="byline">psistla.com · vendor-neutral · sources verified August 2026</p>
+  </header>
+</div>
+
+<div class="tabbar-outer">
+  <div class="wrap">
+    <div class="tablist" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true"><span class="tab-idx">01</span><span class="tab-name">Premise</span></button>
+      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1"><span class="tab-idx">02</span><span class="tab-name">Control</span></button>
+      <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1"><span class="tab-idx">03</span><span class="tab-name">Handoff</span></button>
+      <button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1"><span class="tab-idx">04</span><span class="tab-name">Calibration</span></button>
+      <button class="tab" role="tab" id="t5" aria-controls="p5" aria-selected="false" tabindex="-1"><span class="tab-idx">05</span><span class="tab-name">Patterns</span></button>
+      <button class="tab" role="tab" id="t6" aria-controls="p6" aria-selected="false" tabindex="-1"><span class="tab-idx">06</span><span class="tab-name">Evidence</span></button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- 01 PREMISE -->
+<section class="panel" role="tabpanel" id="p1" aria-labelledby="t1" tabindex="0">
+  <p class="overline">01 · Premise</p>
+  <h2 class="claim">Three commitments wear one label, and the evidence says they trade against each other.</h2>
+  <p class="lede">Control, benefit, and legibility are usually sold as a package. The largest meta-analysis of human plus AI systems to date found the package does not hold: across 106 experimental studies and 370 effect sizes, human plus AI combinations performed <strong>significantly worse on average than the better of human alone or AI alone</strong>, with losses concentrated in decision tasks and gains concentrated in content creation.</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <h3>Commitment one</h3>
+      <h4>Control</h4>
+      <p>The human can intervene: disregard, override, or reverse. This is not just a design goal; it is the operative language of Article 14(4)(d) of the EU AI Act for high-risk systems.</p>
+      <div class="src-row"><a class="src" href="https://artificialintelligenceact.eu/article/14/" target="_blank" rel="noopener">EU AI Act Art. 14</a></div>
+    </div>
+    <div class="card">
+      <h3>Commitment two</h3>
+      <h4>Benefit</h4>
+      <p>Outcomes measured on the people affected. The meta-analytic result is conditional and that conditionality is the whole argument: combinations gained when the human outperformed the AI alone, and <strong>lost when the AI outperformed the human alone</strong>.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><a class="src" href="https://doi.org/10.1038/s41562-024-02024-1" target="_blank" rel="noopener">Vaccaro et al. 2024</a></div>
+    </div>
+    <div class="card">
+      <h3>Commitment three</h3>
+      <h4>Legibility</h4>
+      <p>The human can form an accurate belief about how far to trust the system. The canonical framing is appropriate reliance, not maximal trust: reliance should track capability, in context.</p>
+      <div class="src-row"><a class="src" href="https://doi.org/10.1518/hfes.46.1.50_30392" target="_blank" rel="noopener">Lee &amp; See 2004</a></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p class="overline">Reframe</p>
+    <p>Stop asking "is there a human in the loop?" That question is answered yes by a checkbox. Ask: <strong>what does the human's presence change, and can you demonstrate it?</strong> Vaccaro and colleagues give you the shape of the expected answer: the human helps where the human is better, and hurts where the system is better and the human cannot tell which cases are the exceptions.</p>
+    <div class="src-row"><span class="badge b-inf">Inference</span></div>
+  </div>
+
+  <div class="note">
+    <p><b>Falsifier for this section.</b> Remove the human step, hold throughput constant, and measure outcome quality. If quality is statistically unchanged, the loop was decoration and the rest of this deck solves a problem you do not have.</p>
+    <p><b>Honest limit on the meta-analysis.</b> It covers experimental studies published from 2020 onward, mostly laboratory tasks with recruited participants. Whether the average effect transfers to production systems with trained operators and real stakes is not established by it. The conditional finding (gains where humans are stronger, losses where the system is stronger) is the durable part; the average effect size is the part most likely to move.</p>
+  </div>
+</section>
+
+<!-- 02 CONTROL -->
+<section class="panel" role="tabpanel" id="p2" aria-labelledby="t2" tabindex="0">
+  <p class="overline">02 · Control</p>
+  <h2 class="claim">Approve or reject is the weakest control surface, and it degrades into skimming.</h2>
+  <p class="lede">A binary gate lets the human say no. It does not let them say how, why not, or almost. And under real conditions the gate erodes. Interviewing developers who oversee software agents in professional work, researchers at FAccT 2026 found that oversight had settled into efficiency heuristics: <strong>plans became proxies for the agent's actual working, test results stood in for code correctness, and skimming became the main information processing mechanism.</strong></p>
+
+  <div class="grid g2">
+    <div class="card card-mech">
+      <h3>Mechanism</h3>
+      <h4>Grade control by reversibility, not by risk label</h4>
+      <p>Risk tiers are assigned by committee and drift toward caution, so everything becomes high risk and every gate becomes meaningless. Reversibility is a property of the action: observable, arguable, and it changes when the architecture changes.</p>
+      <div class="src-row"><span class="badge b-inf">Inference</span></div>
+    </div>
+    <div class="card card-fail">
+      <h3>Failure mode</h3>
+      <h4>Sustained monitoring degrades, and the record does not show it</h4>
+      <p>The vigilance decrement is one of the oldest replicated findings in human factors, confirmed meta-analytically across dozens of studies; review literature places the major portion of the decline within the first fifteen minutes of watch. The gate keeps producing approval records long after it stopped producing scrutiny.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><span class="src">See, Howe &amp; Warm 1995</span><a class="src" href="https://arxiv.org/abs/2606.05391" target="_blank" rel="noopener">Dhanorkar et al. 2026</a></div>
+    </div>
+  </div>
+
+  <div class="matrix">
+    <div class="mx mx-h"></div>
+    <div class="mx mx-h">Low cost of error</div>
+    <div class="mx mx-h">High cost of error</div>
+
+    <div class="mx mx-l">Reversible</div>
+    <div class="mx mx-good"><strong>Act, log it</strong><span>No interruption. The log is the control surface, so make it queryable rather than merely written.</span></div>
+    <div class="mx mx-warn"><strong>Act, offer undo</strong><span>A reversal window sized to detection time. Undo spends attention only on the case that was wrong; confirmation spends it on all of them.</span></div>
+
+    <div class="mx mx-l">Irreversible</div>
+    <div class="mx mx-warn"><strong>Stage, then commit</strong><span>Write to a provisional record and require a human commit step. Show the diff, not a summary of the diff.</span></div>
+    <div class="mx mx-bad"><strong>Gate, and make the gate carry evidence</strong><span>What changes, what breaks, what was considered and discarded. A gate showing only the output is a rubber stamp with extra latency.</span></div>
+  </div>
+  <p class="cap">This matrix is a design framework, not a research finding. Reversibility-tiered oversight and two-phase write staging appear in the 2026 architecture literature for regulated agentic systems, but as proposed tactics rather than measured ones. Treat the cells as hypotheses with named failure conditions, and see section 05 for where each breaks.</p>
+  <div class="src-row" style="margin-top:var(--m-space-3)"><span class="badge b-spec">Practitioner</span></div>
+
+  <div class="callout">
+    <p class="overline">The regulatory gap worth noticing</p>
+    <p>Article 14(4)(b) of the EU AI Act requires that overseers be enabled "to remain aware" of automation bias. The regulation correctly names the psychological failure mode, then asks awareness to solve it. Awareness is not a mechanism: the whole literature on automation bias describes a tendency that persists in people who know about it. A survey of 41 policies mandating human oversight of government algorithms concluded that people are largely unable to perform the oversight functions being asked of them, and that the mandates end up legitimizing deployment rather than constraining it.</p>
+    <div class="src-row"><span class="badge b-fact">Evidence</span><a class="src" href="https://artificialintelligenceact.eu/article/14/" target="_blank" rel="noopener">EU AI Act Art. 14(4)(b)</a><a class="src" href="https://www.sciencedirect.com/science/article/pii/S0267364922000292" target="_blank" rel="noopener">Green 2022</a></div>
+  </div>
+</section>
+
+<!-- 03 HANDOFF -->
+<section class="panel" role="tabpanel" id="p3" aria-labelledby="t3" tabindex="0">
+  <p class="overline">03 · Handoff</p>
+  <h2 class="claim">Systems fail at the boundary, and the boundary erodes the skill needed to cross it.</h2>
+  <p class="lede">Bainbridge stated the structural problem in 1983: automating the tractable parts leaves the operator only the hard parts, while removing the routine practice that built the competence to handle them. It is one of the most cited papers in human factors, and it was a theoretical argument. In 2025 it acquired a clinical measurement.</p>
+
+  <div class="figure">
+    <p class="fig-title">Unassisted adenoma detection rate, before and after three months of routine AI-assisted colonoscopy</p>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-lbl">Before AI exposure (n = 795)</span>
+        <div class="bar-track"><div class="bar-fill bar-a" style="width:71%">28.4%</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">After AI exposure (n = 648)</span>
+        <div class="bar-track"><div class="bar-fill bar-b" style="width:56%">22.4%</div></div>
+      </div>
+    </div>
+    <p class="cap">Nineteen experienced endoscopists across four centres in Poland, 1,443 non-AI-assisted colonoscopies. A 6 percentage point absolute and roughly 20 percent relative decline in unassisted detection, described by the authors as the first documentation of a potential deskilling effect from clinical AI. <b>Read the design carefully:</b> this is a retrospective observational comparison of two time periods, not a randomized test of deskilling. Secular trends, case mix, and operator behaviour changes are not fully excluded, and the finding drew published correspondence on exactly these points. It is the strongest evidence available and it is not conclusive.</p>
+    <div class="src-row" style="margin-top:var(--m-space-4)"><span class="badge b-fact">Evidence</span><a class="src" href="https://doi.org/10.1016/S2468-1253(25)00133-5" target="_blank" rel="noopener">Budzyń et al. 2025</a><a class="src" href="https://doi.org/10.1016/0005-1098(83)90046-8" target="_blank" rel="noopener">Bainbridge 1983</a></div>
+  </div>
+
+  <div class="contract">
+    <div class="contract-hd"><span>handoff_contract</span><em>practitioner pattern, not a validated standard</em></div>
+    <div class="contract-row"><div class="contract-key">attempted</div><div class="contract-val">What the system tried, in order, and what each attempt returned. Not a summary; the actual sequence.</div></div>
+    <div class="contract-row"><div class="contract-key">world_state</div><div class="contract-val">What has already changed as a side effect. The human needs to know what is now true, not only what was requested.</div></div>
+    <div class="contract-row"><div class="contract-key">uncertain_about</div><div class="contract-val">The specific unresolved thing, stated as a question a human can answer, rather than as a confidence score.</div></div>
+    <div class="contract-row"><div class="contract-key">would_do_next</div><div class="contract-val">The proposed continuation. This converts the human's job from authoring to judging.</div></div>
+    <div class="contract-row"><div class="contract-key">reversible_until</div><div class="contract-val">The window in which the human's decision can still be undone. Time pressure is legitimate information; hiding it is not kindness.</div></div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card card-fail">
+      <h3>Failure mode one</h3>
+      <h4>The handoff cliff</h4>
+      <p>A meta-analysis of 129 automated-driving studies found takeover time is driven heavily by what the human was doing beforehand: engagement in visual or manual secondary tasks lengthens it. The person is not idle when the escalation arrives; they are elsewhere, and the transfer has to pay for that.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><span class="src">Zhang et al. 2019</span></div>
+    </div>
+    <div class="card card-mech">
+      <h3>Counter-move</h3>
+      <h4>Budget practice as a cost, not as oversight</h4>
+      <p>The same meta-analysis found drivers responded about one second faster on their second takeover than their first: recent practice measurably helps. Routing a sampled slice of routine cases to humans at a rate tuned to maintain competence is a training expense, and should be budgeted as one rather than justified as error-catching.</p>
+      <div class="src-row"><span class="badge b-inf">Inference</span><span class="src">Zhang et al. 2019</span></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><b>What the deskilling evidence does and does not license.</b> One observational study in one specialty does not establish that every AI deployment erodes competence. What it does establish is that the question is answerable empirically and that at least one careful attempt found a decline. If your domain has a measurable unassisted-performance baseline, you can run the same comparison. If it does not, you are asserting that deskilling is not happening rather than knowing it.</p>
+  </div>
+</section>
+
+<!-- 04 CALIBRATION -->
+<section class="panel" role="tabpanel" id="p4" aria-labelledby="t4" tabindex="0">
+  <p class="overline">04 · Calibration</p>
+  <h2 class="claim">The target is not trust. It is trust that tracks reliability, and self-report will not tell you whether you have it.</h2>
+  <p class="lede">Over-trust and under-trust are the same failure wearing different clothes: a belief about the system that does not match the system. The sharpest available demonstration comes from a randomized controlled trial of experienced open-source developers working on their own repositories, where <strong>the direction of the effect and the direction of the perception were opposite.</strong></p>
+
+  <div class="figure">
+    <p class="fig-title">Expected, perceived, and measured effect of AI tools on task completion time (16 developers, 246 tasks, February to June 2025)</p>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-lbl">Forecast before the study</span>
+        <div class="bar-track"><div class="bar-fill bar-a" style="width:48%">24% faster (expected)</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Believed after the study</span>
+        <div class="bar-track"><div class="bar-fill bar-a" style="width:40%">20% faster (believed)</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">Measured</span>
+        <div class="bar-track"><div class="bar-fill bar-b" style="width:38%">19% slower (measured)</div></div>
+      </div>
+    </div>
+    <p class="cap">Confidence interval on the measured slowdown ran from +2% to +39%. <b>Read the update before you cite this.</b> METR ran a follow-up from August 2025 with 57 developers and 800+ tasks, and in February 2026 published that the newer data gives an unreliable signal: 30 to 50 percent of developers declined to submit tasks they did not want to do without AI, biasing the estimate downward. Their raw follow-up numbers point toward speedup (-18% for returning developers, -4% for new ones) but both intervals cross zero. <b>The honest current position is that the 2025 slowdown figure is historical and no reliable replacement estimate exists.</b> The finding that survives is the perception gap itself.</p>
+    <div class="src-row" style="margin-top:var(--m-space-4)"><span class="badge b-fact">Evidence</span><a class="src" href="https://arxiv.org/abs/2507.09089" target="_blank" rel="noopener">Becker et al. 2025</a><a class="src" href="https://metr.org/blog/2026-02-24-uplift-update/" target="_blank" rel="noopener">METR 2026 update</a></div>
+  </div>
+
+  <div class="matrix">
+    <div class="mx mx-h"></div>
+    <div class="mx mx-h">Human accepts</div>
+    <div class="mx mx-h">Human overrides</div>
+
+    <div class="mx mx-l">System correct</div>
+    <div class="mx mx-good"><strong>Appropriate reliance</strong><span>The only quadrant most products instrument, usually as an acceptance-rate dashboard.</span></div>
+    <div class="mx mx-warn"><strong>Under-reliance</strong><span>Capability paid for and not used. Invisible unless you record what the system would have done.</span></div>
+
+    <div class="mx mx-l">System wrong</div>
+    <div class="mx mx-bad"><strong>Over-reliance</strong><span>Error passes through with a human signature on it. The most expensive quadrant and the least visible.</span></div>
+    <div class="mx mx-good"><strong>Appropriate skepticism</strong><span>The behaviour oversight exists to produce. Rarely measured, so rarely rewarded.</span></div>
+  </div>
+  <p class="cap">The quadrants are a signal-detection reading of the appropriate-reliance framing in Lee and See. The framework is well established; the claim that most products instrument only the top-left is my observation, not a surveyed finding.</p>
+  <div class="src-row" style="margin-top:var(--m-space-3)"><span class="badge b-inf">Inference</span><a class="src" href="https://doi.org/10.1518/hfes.46.1.50_30392" target="_blank" rel="noopener">Lee &amp; See 2004</a></div>
+
+  <div class="grid g2">
+    <div class="card card-mech">
+      <h3>Intervention that works</h3>
+      <h4>Make people think, not trust</h4>
+      <p>Cognitive forcing functions, design interventions that interrupt the moment of acceptance and require engagement, reduced overreliance on AI in a controlled study where simply adding explanations did not. Explanations alone can leave overreliance intact.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><a class="src" href="https://doi.org/10.1145/3449287" target="_blank" rel="noopener">Buçinca et al. 2021</a></div>
+    </div>
+    <div class="card card-fail">
+      <h3>Why it rarely ships</h3>
+      <h4>The intervention that works tests worst</h4>
+      <p>In the same study, participants rated the cognitive forcing conditions less favourably than the simple explainable-AI conditions, reporting lower trust and higher perceived complexity, with the effect strongest among those most inclined to engage analytically. A satisfaction-optimizing product process will delete this feature.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><a class="src" href="https://doi.org/10.1145/3449287" target="_blank" rel="noopener">Buçinca et al. 2021</a></div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p class="overline">Falsifier</p>
+    <p>Plot override rate against genuine reliability regimes. If the line is flat, your confidence signal is not being read, whatever the satisfaction survey says about perceived transparency. The developer study is the warning: the people in the best position to know were confidently wrong about the direction of the effect.</p>
+    <div class="src-row"><span class="badge b-inf">Inference</span></div>
+  </div>
+</section>
+
+<!-- 05 PATTERNS -->
+<section class="panel" role="tabpanel" id="p5" aria-labelledby="t5" tabindex="0">
+  <p class="overline">05 · Patterns</p>
+  <h2 class="claim">Six patterns, each with its breaking condition and its evidence status.</h2>
+  <p class="lede">A pattern without a stated failure condition is a slogan. A pattern without a stated evidence status is a slogan with a citation. Both columns are here so you can tell which of these you are testing and which you are trusting.</p>
+
+  <table>
+    <thead><tr><th scope="col">Pattern</th><th scope="col">What it does</th><th scope="col">Where it breaks</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Reversibility budget</td>
+        <td>Treats irreversible actions as a scarce resource spent deliberately, rather than a category that gets labelled.</td>
+        <td>When reversibility is nominal: the record restores but the email already sent, the payment already cleared, the customer already told.</td>
+        <td><span class="badge b-spec">Practitioner</span></td>
+      </tr>
+      <tr>
+        <td>Stage then commit</td>
+        <td>Agent writes to a provisional record; a human commit step makes it authoritative. Preserves reversibility where the system of record has no undo.</td>
+        <td>When the diff exceeds working memory. Past roughly a screen, review reverts to skimming, which is what oversight of agents already degrades into.</td>
+        <td><span class="badge b-inf">Inference</span></td>
+      </tr>
+      <tr>
+        <td>Progressive autonomy</td>
+        <td>Scope expands as observed performance accumulates in a domain, so trust is earned per context rather than granted globally.</td>
+        <td>When the earning signal is acceptance rather than outcome. Acceptance tracks reviewer fatigue as readily as quality.</td>
+        <td><span class="badge b-spec">Practitioner</span></td>
+      </tr>
+      <tr>
+        <td>Cognitive forcing</td>
+        <td>Interrupts the moment of acceptance and requires engagement before the human can proceed. The one intervention with direct experimental support against overreliance.</td>
+        <td>When product metrics are satisfaction-weighted. Users rated it worse than plain explanations, so it loses internal arguments it deserves to win.</td>
+        <td><span class="badge b-fact">Evidence</span></td>
+      </tr>
+      <tr>
+        <td>Structured disagreement</td>
+        <td>Lets the human record why they overrode, in a form the system can act on, so correction compounds rather than evaporating.</td>
+        <td>When the taxonomy of reasons is authored by the builders. Reviewers pick the nearest option and the resulting data is confidently wrong.</td>
+        <td><span class="badge b-spec">Practitioner</span></td>
+      </tr>
+      <tr>
+        <td>Interruption accounting</td>
+        <td>Prices the human's attention before escalating, so the system interrupts only when expected value clears the cost.</td>
+        <td>When you price it in completion time. Interrupted work has been found to finish no slower and no worse, while costing significantly more stress, frustration, and effort. Time-based metrics make interruption look free.</td>
+        <td><span class="badge b-fact">Evidence</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="src-row" style="margin-top:var(--m-space-6)">
+    <a class="src" href="https://doi.org/10.1145/3449287" target="_blank" rel="noopener">Buçinca et al. 2021</a>
+    <a class="src" href="https://doi.org/10.1145/1357054.1357072" target="_blank" rel="noopener">Mark, Gudith &amp; Klocke 2008</a>
+    <a class="src" href="https://arxiv.org/abs/2606.05391" target="_blank" rel="noopener">Dhanorkar et al. 2026</a>
+  </div>
+
+  <div class="callout">
+    <p class="overline">Selection rule</p>
+    <p>Pick patterns by which failure you can actually detect. A control you cannot verify is operating is worse than no control, because it also removes the urgency to build one that works. That is the mechanism Green identifies in oversight mandates: the requirement is satisfied, the harm is not addressed, and accountability moves to whoever signed.</p>
+    <div class="src-row"><span class="badge b-inf">Inference</span><a class="src" href="https://www.sciencedirect.com/science/article/pii/S0267364922000292" target="_blank" rel="noopener">Green 2022</a></div>
+  </div>
+</section>
+
+<!-- 06 EVIDENCE -->
+<section class="panel" role="tabpanel" id="p6" aria-labelledby="t6" tabindex="0">
+  <p class="overline">06 · Evidence</p>
+  <h2 class="claim">The strongest argument against this framing, what would settle it, and where I was wrong.</h2>
+  <p class="lede">Human-centric design has a serious objection its advocates tend to skip: in a growing set of domains the human is the least reliable component in the chain. The meta-analytic evidence supports the objection directly. Inserting a human where the system is stronger produced losses, not gains.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <h3>The objection</h3>
+      <h4>Oversight can make outcomes worse and accountability murkier</h4>
+      <p>Where the system outperforms the reviewer and the reviewer cannot identify the exceptions, review adds noise, latency, and cost. Green's survey of 41 oversight policies argues this is the normal case rather than the edge case, and that the mandates function as legitimation: deployment proceeds, harm is unaddressed, responsibility shifts to the overseer.</p>
+      <div class="src-row"><span class="badge b-fact">Evidence</span><a class="src" href="https://www.sciencedirect.com/science/article/pii/S0267364922000292" target="_blank" rel="noopener">Green 2022</a><a class="src" href="https://doi.org/10.1038/s41562-024-02024-1" target="_blank" rel="noopener">Vaccaro et al. 2024</a></div>
+    </div>
+    <div class="card">
+      <h3>The response</h3>
+      <h4>Place humans by measured marginal contribution</h4>
+      <p>The defence is not humans everywhere. It is humans where their marginal contribution is measurable and positive, which the meta-analysis says is where humans already outperform the system on the task. Everywhere else, spend the same effort on reversibility and on the handoff, and say plainly that the human is not there for accuracy.</p>
+      <div class="src-row"><span class="badge b-inf">Inference</span></div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:var(--m-space-12)">Instrument these four, or the argument stays unfalsifiable</h3>
+  <table>
+    <thead><tr><th scope="col">Measure</th><th scope="col">What it tells you</th><th scope="col">Why it is usually missing</th></tr></thead>
+    <tbody>
+      <tr><td>Override rate by regime</td><td>Whether humans discriminate between reliability conditions. The direct test of calibration.</td><td>Requires labelling regimes in advance; most logging records the decision but not the conditions.</td></tr>
+      <tr><td>Counterfactual quality</td><td>Outcome with the human step versus without, at matched throughput. The only number that settles whether oversight pays.</td><td>Needs a holdout leadership has to approve, and the request sounds like asking to remove safety.</td></tr>
+      <tr><td>Unassisted baseline</td><td>Whether operators still perform when the system is absent. The colonoscopy study is exactly this measurement and it is cheap to replicate where a baseline exists.</td><td>Nobody measures the unassisted case once assistance is standard, so the trend line starts the day someone asks.</td></tr>
+      <tr><td>Handoff resolution time</td><td>Whether the handoff contract is doing work, timed from escalation to human decision.</td><td>Escalations are timed end to end, mixing queue wait with the comprehension cost you want to isolate.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note" style="margin-top:var(--m-space-10)">
+    <p><b>Corrections made in this edition.</b> Four claims from the earlier unsourced version did not survive checking, and are named here rather than quietly removed.</p>
+    <p><b>1.</b> "Approval rates converge to 100 percent under volume" had no source and is removed. The defensible version is narrower: developers overseeing agents report skimming as their main processing mechanism, and substituting plans and test results for direct review.</p>
+    <p><b>2.</b> "The second and third interruptions in an hour cost far more than the first" is not supported by the interruption literature I checked and is removed. The finding that replaces it is more useful anyway: interrupted work finished no slower and no worse, at significantly higher stress and effort, so completion-time metrics systematically underprice interruption.</p>
+    <p><b>3.</b> "Undo beats confirm" was presented as established. It is an inference and is now labelled as one. Two-phase staging appears in the 2026 agentic-architecture literature as a proposed tactic, not a measured result.</p>
+    <p><b>4.</b> The vigilance claim was stated too loosely. The decrement is robust and meta-analytically confirmed, but its mechanism is contested: whether it reflects genuine loss of perceptual sensitivity or a shift in response criterion has been challenged in the modern literature, and the distinction matters for whether better displays can fix it.</p>
+  </div>
+
+  <div class="note">
+    <p><b>Epistemic status of the whole.</b> The human factors foundations (vigilance decrement, automation bias, the ironies of automation) are established across four decades and multiple domains. The contemporary empirical anchors (the meta-analysis, the deskilling study, the developer trial, the agent-oversight interviews) are each single studies or single syntheses with named limitations, and three of the four are under active revision or correspondence. The design patterns are practitioner synthesis and are labelled as such throughout.</p>
+    <p><b>Weakest assumption, stated plainly.</b> That outcome quality is measurable in your domain at all. Where feedback loops are long, definitions of good are contested, or no counterfactual is available, every argument here degrades to preference. The honest move then is to say so, rather than to instrument something adjacent and call it evidence.</p>
+  </div>
+
+  <h3 style="margin-top:var(--m-space-12)">References</h3>
+  <ol class="refs">
+    <li><b>Bainbridge, L. (1983).</b> Ironies of automation. <i>Automatica</i> 19(6), 775 to 779. <a href="https://doi.org/10.1016/0005-1098(83)90046-8" target="_blank" rel="noopener">doi:10.1016/0005-1098(83)90046-8</a></li>
+    <li><b>Parasuraman, R. &amp; Riley, V. (1997).</b> Humans and automation: use, misuse, disuse, abuse. <i>Human Factors</i> 39(2), 230 to 253.</li>
+    <li><b>See, J. E., Howe, S. R., Warm, J. S. &amp; Dember, W. N. (1995).</b> Meta-analysis of the sensitivity decrement in vigilance. <i>Psychological Bulletin</i> 117(2), 230 to 249. The fifteen-minute figure for the bulk of the decrement traces to Teichner (1974) as reported in subsequent review literature.</li>
+    <li><b>Thomson, D. R., Besner, D. &amp; Smilek, D. (2016).</b> A critical examination of the evidence for sensitivity loss in modern vigilance tasks. <i>Psychological Review</i> 123(1), 70 to 83. The source of the mechanism dispute noted in correction 4.</li>
+    <li><b>Lee, J. D. &amp; See, K. A. (2004).</b> Trust in automation: designing for appropriate reliance. <i>Human Factors</i> 46(1), 50 to 80. <a href="https://doi.org/10.1518/hfes.46.1.50_30392" target="_blank" rel="noopener">doi:10.1518/hfes.46.1.50_30392</a></li>
+    <li><b>Mark, G., Gudith, D. &amp; Klocke, U. (2008).</b> The cost of interrupted work: more speed and stress. <i>CHI '08</i>, 107 to 110. <a href="https://doi.org/10.1145/1357054.1357072" target="_blank" rel="noopener">doi:10.1145/1357054.1357072</a></li>
+    <li><b>Buçinca, Z., Malaya, M. B. &amp; Gajos, K. Z. (2021).</b> To trust or to think: cognitive forcing functions can reduce overreliance on AI in AI-assisted decision-making. <i>Proc. ACM Hum.-Comput. Interact.</i> 5(CSCW1), Article 188. <a href="https://doi.org/10.1145/3449287" target="_blank" rel="noopener">doi:10.1145/3449287</a></li>
+    <li><b>Green, B. (2022).</b> The flaws of policies requiring human oversight of government algorithms. <i>Computer Law &amp; Security Review</i> 45. <a href="https://www.sciencedirect.com/science/article/pii/S0267364922000292" target="_blank" rel="noopener">ScienceDirect</a></li>
+    <li><b>Zhang, B., de Winter, J., Varotto, S., Happee, R. &amp; Martens, M. (2019).</b> Determinants of take-over time from automated driving: a meta-analysis of 129 studies. <i>Transportation Research Part F</i> 64, 285 to 307.</li>
+    <li><b>Vaccaro, M., Almaatouq, A. &amp; Malone, T. (2024).</b> When combinations of humans and AI are useful: a systematic review and meta-analysis. <i>Nature Human Behaviour</i> 8, 2293 to 2303. <a href="https://doi.org/10.1038/s41562-024-02024-1" target="_blank" rel="noopener">doi:10.1038/s41562-024-02024-1</a></li>
+    <li><b>Becker, J., Rush, N., Barnes, E. &amp; Rein, D. (2025).</b> Measuring the impact of early-2025 AI on experienced open-source developer productivity. METR. <a href="https://arxiv.org/abs/2507.09089" target="_blank" rel="noopener">arXiv:2507.09089</a></li>
+    <li><b>Becker, J., Rush, N., Cunningham, T., Rein, D. &amp; Mahamud, K. (2026).</b> We are changing our developer productivity experiment design. METR, 24 February 2026. <a href="https://metr.org/blog/2026-02-24-uplift-update/" target="_blank" rel="noopener">metr.org</a></li>
+    <li><b>Budzyń, K., Romańczyk, M., Kitala, D. et al. (2025).</b> Endoscopist deskilling risk after exposure to artificial intelligence in colonoscopy: a multicentre, observational study. <i>The Lancet Gastroenterology &amp; Hepatology</i> 10(10), 896 to 903. <a href="https://doi.org/10.1016/S2468-1253(25)00133-5" target="_blank" rel="noopener">doi:10.1016/S2468-1253(25)00133-5</a></li>
+    <li><b>Dhanorkar, S., Passi, S. &amp; Vorvoreanu, M. (2026).</b> Human oversight of agentic systems in practice: examining the oversight work, challenges, and heuristics of developers using software agents. <i>FAccT '26</i>. <a href="https://arxiv.org/abs/2606.05391" target="_blank" rel="noopener">arXiv:2606.05391</a></li>
+    <li><b>European Union (2024).</b> Artificial Intelligence Act, Article 14 (human oversight), in particular 14(4)(b) on automation bias and 14(4)(d) on the ability to disregard, override, or reverse. <a href="https://artificialintelligenceact.eu/article/14/" target="_blank" rel="noopener">artificialintelligenceact.eu</a></li>
+  </ol>
+</section>
+
+</main>
+
+<div class="wrap">
+  <footer>
+    <p><b>On sourcing.</b> Every citation above was checked against the publisher record or the primary posting in August 2026, not recalled. Where secondary coverage conflicted with the primary source, the primary source governs: popular reporting that the METR follow-up showed an 18 percent speedup does not match what METR published, which is that the follow-up data is an unreliable signal with intervals crossing zero. Figures reproduced in the charts are the authors' own reported values.</p>
+    <p><b>Navigation.</b> Use <span class="kbd">←</span> <span class="kbd">→</span> or number keys <span class="kbd">1</span> to <span class="kbd">6</span> to move between sections. Print renders all six as pages.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function(t){ return document.getElementById(t.getAttribute('aria-controls')); });
+
+  function select(i, focus){
+    tabs.forEach(function(t, j){
+      var on = i === j;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      panels[j].hidden = !on;
+    });
+    if (focus !== false) { try { tabs[i].focus(); } catch (err) {} }
+    try {
+      tabs[i].scrollIntoView({block:'nearest', inline:'nearest'});
+      window.scrollTo({top:0, behavior:'smooth'});
+    } catch (err) {
+      window.scrollTo(0, 0);
+    }
+    // replaceState throws SecurityError on opaque origins (sandboxed iframes,
+    // some file:// contexts). Deep links are a nicety; never let one break navigation.
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (err) {}
+  }
+
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ select(i, false); });
+    t.addEventListener('keydown', function(e){
+      var n = null;
+      if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+      if (e.key === 'ArrowLeft')  n = (i - 1 + tabs.length) % tabs.length;
+      if (e.key === 'Home')       n = 0;
+      if (e.key === 'End')        n = tabs.length - 1;
+      if (n !== null){ e.preventDefault(); select(n); }
+    });
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    var cur = 0;
+    for (var k = 0; k < tabs.length; k++) { if (tabs[k].getAttribute('aria-selected') === 'true') { cur = k; break; } }
+    if (e.key >= '1' && e.key <= '6'){ select(parseInt(e.key,10) - 1, false); return; }
+    if (e.target.getAttribute && e.target.getAttribute('role') === 'tab') return;
+    if (e.key === 'ArrowRight'){ select((cur + 1) % tabs.length, false); }
+    if (e.key === 'ArrowLeft'){ select((cur - 1 + tabs.length) % tabs.length, false); }
+  });
+
+  // Theme toggle is wired before any navigation call so that a throw in the
+  // hash restore below cannot leave it unbound.
+  var btn = document.getElementById('themeBtn');
+  var lbl = document.getElementById('themeLbl');
+  if (btn && lbl) {
+    btn.addEventListener('click', function(){
+      var dark = document.documentElement.classList.toggle('dark');
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+      lbl.textContent = dark ? 'Light' : 'Dark';
+    });
+  }
+
+  // Progressive enhancement: panels ship visible in the markup, so if this
+  // script never runs the document degrades to six readable stacked sections.
+  // JS takes over visibility here.
+  var start = 0;
+  try {
+    var hash = parseInt((location.hash || '').replace('#', ''), 10);
+    if (hash >= 1 && hash <= tabs.length) { start = hash - 1; }
+  } catch (err) {}
+
+  tabs.forEach(function(t, j){
+    t.setAttribute('aria-selected', start === j ? 'true' : 'false');
+    t.tabIndex = start === j ? 0 : -1;
+    panels[j].hidden = start !== j;
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Operating Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+--m-font-primary:'Manrope',system-ui,-apple-system,sans-serif;
+--m-font-code:'JetBrains Mono','Fira Code','Consolas',monospace;
+--m-text-xs:.6875rem;--m-text-sm:.8125rem;--m-text-base:.9375rem;--m-text-lg:1.0625rem;
+--m-text-xl:1.25rem;--m-text-2xl:1.5rem;--m-text-3xl:1.875rem;--m-text-4xl:2.25rem;
+--m-weight-regular:400;--m-weight-medium:500;--m-weight-semibold:600;--m-weight-bold:700;--m-weight-extrabold:800;
+--m-leading-tight:1.25;--m-leading-snug:1.4;--m-leading-normal:1.6;--m-leading-relaxed:1.7;
+--m-tracking-tight:-.015em;--m-tracking-tighter:-.025em;--m-tracking-tightest:-.035em;--m-tracking-wide:.04em;
+--m-neutral-0:#FFFFFF;--m-neutral-50:#F8F9FA;--m-neutral-100:#F1F3F5;--m-neutral-200:#E9ECEF;
+--m-neutral-300:#DEE2E6;--m-neutral-400:#ADB5BD;--m-neutral-500:#868E96;--m-neutral-600:#495057;
+--m-neutral-700:#343A40;--m-neutral-800:#212529;--m-neutral-900:#16191D;--m-neutral-950:#0D0F12;
+--m-primary-50:#EEF2FF;--m-primary-100:#E0E7FF;--m-primary-200:#C7D2FE;--m-primary-300:#A5B4FC;
+--m-primary-400:#818CF8;--m-primary-500:#6366F1;--m-primary-600:#4F46E5;--m-primary-700:#4338CA;
+--m-primary-800:#3730A3;--m-primary-900:#312E81;
+--m-accent-50:#FFFBEB;--m-accent-100:#FEF3C7;--m-accent-300:#FCD34D;--m-accent-400:#FBBF24;
+--m-accent-500:#F59E0B;--m-accent-700:#B45309;--m-accent-900:#78350F;
+--m-success:#15803D;--m-success-bg:#F0FDF4;--m-success-text:#14532D;
+--m-warning:#EA580C;--m-warning-bg:#FFF7ED;--m-warning-text:#9A3412;
+--m-error:#DC2626;--m-error-bg:#FEF2F2;--m-error-text:#991B1B;
+--m-info:#2563EB;--m-info-bg:#EFF6FF;--m-info-text:#1E40AF;
+--m-bg:var(--m-neutral-0);--m-surface:var(--m-neutral-50);--m-border:var(--m-neutral-200);
+--m-border-subtle:var(--m-neutral-100);--m-text:var(--m-neutral-800);
+--m-text-secondary:var(--m-neutral-600);--m-text-tertiary:var(--m-neutral-500);
+--m-primary:var(--m-primary-600);--m-primary-hover:var(--m-primary-700);--m-primary-subtle:var(--m-primary-50);
+--m-accent:var(--m-accent-700);--m-accent-subtle:var(--m-accent-50);
+--m-space-1:.25rem;--m-space-2:.5rem;--m-space-3:.75rem;--m-space-4:1rem;--m-space-5:1.25rem;
+--m-space-6:1.5rem;--m-space-8:2rem;--m-space-10:2.5rem;--m-space-12:3rem;--m-space-16:4rem;
+--m-radius-sm:4px;--m-radius-md:8px;--m-radius-lg:12px;--m-radius-xl:16px;--m-radius-full:9999px;
+--m-shadow-sm:0 1px 2px rgba(0,0,0,.04);--m-shadow-md:0 2px 8px rgba(0,0,0,.06);--m-shadow-lg:0 4px 16px rgba(0,0,0,.08);
+--m-ease-out-expo:cubic-bezier(.16,1,.3,1);
+--m-transition-fast:120ms ease;--m-transition-base:200ms ease;
+--m-max-prose:760px;--m-sidebar-docs:248px;
+--m-code-bg:var(--m-neutral-950);--m-code-text:var(--m-neutral-100);
+}
+.dark{
+--m-bg:var(--m-neutral-950);--m-surface:var(--m-neutral-900);--m-border:var(--m-neutral-700);
+--m-border-subtle:var(--m-neutral-800);--m-text:var(--m-neutral-200);
+--m-text-secondary:var(--m-neutral-400);--m-text-tertiary:var(--m-neutral-500);
+--m-primary:var(--m-primary-400);--m-primary-hover:var(--m-primary-300);--m-primary-subtle:var(--m-primary-900);
+--m-accent:var(--m-accent-400);--m-accent-subtle:var(--m-accent-900);
+--m-success:#4ADE80;--m-success-bg:rgba(74,222,128,.10);--m-success-text:#86EFAC;
+--m-warning:#FB923C;--m-warning-bg:rgba(251,146,60,.10);--m-warning-text:#FDBA74;
+--m-error:#F87171;--m-error-bg:rgba(248,113,113,.10);--m-error-text:#FCA5A5;
+--m-info:#60A5FA;--m-info-bg:rgba(96,165,250,.10);--m-info-text:#93C5FD;
+--m-shadow-sm:0 1px 2px rgba(0,0,0,.3);--m-shadow-md:0 2px 8px rgba(0,0,0,.4);--m-shadow-lg:0 4px 16px rgba(0,0,0,.5);
+--m-code-bg:#000205;--m-code-text:var(--m-neutral-200);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+font-family:var(--m-font-primary);font-size:var(--m-text-lg);line-height:var(--m-leading-relaxed);
+background:var(--m-bg);color:var(--m-text);
+-webkit-font-smoothing:antialiased;transition:background var(--m-transition-base),color var(--m-transition-base);
+}
+:focus-visible{outline:2px solid var(--m-primary);outline-offset:2px}
+::selection{background:var(--m-primary-100);color:var(--m-primary-900)}
+.dark ::selection{background:var(--m-primary-800);color:var(--m-neutral-0)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── Shell ─────────────────────────────────── */
+.shell{display:flex;min-height:100vh;max-width:1360px;margin:0 auto}
+.sidebar{
+width:var(--m-sidebar-docs);flex-shrink:0;border-right:1px solid var(--m-border);
+padding:var(--m-space-8) var(--m-space-5);position:sticky;top:0;height:100vh;overflow-y:auto;
+background:var(--m-bg);
+}
+.brand{font-size:var(--m-text-sm);font-weight:var(--m-weight-bold);letter-spacing:var(--m-tracking-wide);
+text-transform:uppercase;color:var(--m-primary);margin-bottom:var(--m-space-1)}
+.brand-sub{font-size:var(--m-text-xs);color:var(--m-text-secondary);margin-bottom:var(--m-space-8);line-height:var(--m-leading-snug)}
+.nav{list-style:none;display:flex;flex-direction:column;gap:2px}
+.nav button{
+width:100%;text-align:left;background:none;border:none;cursor:pointer;
+font-family:inherit;font-size:var(--m-text-sm);font-weight:var(--m-weight-medium);
+color:var(--m-text-secondary);padding:9px 12px;border-radius:var(--m-radius-md);
+transition:background var(--m-transition-fast),color var(--m-transition-fast);
+display:flex;align-items:baseline;gap:10px;min-height:40px;
+}
+.nav button:hover{background:var(--m-surface);color:var(--m-text)}
+.nav button[aria-selected="true"]{background:var(--m-primary-subtle);color:var(--m-primary);font-weight:var(--m-weight-semibold)}
+.nav .num{font-family:var(--m-font-code);font-size:var(--m-text-xs);color:var(--m-text-tertiary);flex-shrink:0}
+.nav button[aria-selected="true"] .num{color:var(--m-primary)}
+.side-foot{margin-top:var(--m-space-8);padding-top:var(--m-space-5);border-top:1px solid var(--m-border-subtle)}
+.themebtn{
+background:none;border:1px solid var(--m-border);border-radius:var(--m-radius-md);cursor:pointer;
+font-family:inherit;font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);
+letter-spacing:var(--m-tracking-wide);text-transform:uppercase;color:var(--m-text-secondary);
+padding:10px 14px;width:100%;min-height:44px;transition:all var(--m-transition-fast);
+}
+.themebtn:hover{border-color:var(--m-primary);color:var(--m-primary)}
+
+.main{flex:1;min-width:0;padding:var(--m-space-12) var(--m-space-10) var(--m-space-16)}
+.panel{display:none;max-width:var(--m-max-prose);animation:fade 250ms var(--m-ease-out-expo)}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── Type ──────────────────────────────────── */
+h1{font-size:var(--m-text-4xl);font-weight:var(--m-weight-extrabold);letter-spacing:var(--m-tracking-tighter);
+line-height:var(--m-leading-tight);margin-bottom:var(--m-space-3)}
+h2{font-size:var(--m-text-2xl);font-weight:var(--m-weight-bold);letter-spacing:var(--m-tracking-tight);
+line-height:var(--m-leading-tight);margin:var(--m-space-12) 0 var(--m-space-4);
+padding-top:var(--m-space-4);border-top:1px solid var(--m-border-subtle)}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font-size:var(--m-text-lg);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight);
+margin:var(--m-space-8) 0 var(--m-space-3)}
+h4{font-size:var(--m-text-base);font-weight:var(--m-weight-semibold);margin:var(--m-space-5) 0 var(--m-space-2)}
+p{margin-bottom:var(--m-space-4);color:var(--m-text)}
+.lede{font-size:var(--m-text-lg);color:var(--m-text-secondary);margin-bottom:var(--m-space-8);line-height:var(--m-leading-normal)}
+ul,ol{margin:0 0 var(--m-space-4) var(--m-space-5);padding-left:var(--m-space-3)}
+li{margin-bottom:var(--m-space-2)}
+strong{font-weight:var(--m-weight-semibold)}
+a{color:var(--m-primary);text-decoration:none;border-bottom:1px solid transparent;transition:border-color var(--m-transition-fast)}
+a:hover{border-bottom-color:var(--m-primary)}
+code{font-family:var(--m-font-code);font-size:.88em;background:var(--m-surface);
+border:1px solid var(--m-border-subtle);border-radius:var(--m-radius-sm);padding:1px 5px;color:var(--m-text)}
+pre{background:var(--m-code-bg);color:var(--m-code-text);border-radius:var(--m-radius-md);
+padding:var(--m-space-4) var(--m-space-5);overflow-x:auto;margin-bottom:var(--m-space-5);
+font-family:var(--m-font-code);font-size:var(--m-text-sm);line-height:1.65}
+pre code{background:none;border:none;padding:0;color:inherit;font-size:inherit}
+.label{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-text-secondary);margin-bottom:var(--m-space-2)}
+
+/* ── Tables ────────────────────────────────── */
+.tw{overflow-x:auto;margin-bottom:var(--m-space-6);border:1px solid var(--m-border);border-radius:var(--m-radius-lg)}
+table{width:100%;border-collapse:collapse;font-size:var(--m-text-sm);line-height:var(--m-leading-normal)}
+th{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-text-secondary);text-align:left;
+padding:12px 16px;background:var(--m-surface);border-bottom:1px solid var(--m-border);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--m-border-subtle);vertical-align:top;color:var(--m-text)}
+tr:last-child td{border-bottom:none}
+td code{font-size:.85em}
+
+/* ── Callouts ──────────────────────────────── */
+.note{border-radius:var(--m-radius-lg);padding:var(--m-space-5);margin-bottom:var(--m-space-6);
+border-left:3px solid;font-size:var(--m-text-base);line-height:var(--m-leading-normal)}
+.note p:last-child{margin-bottom:0}
+.note .nt{font-weight:var(--m-weight-semibold);font-size:var(--m-text-xs);text-transform:uppercase;
+letter-spacing:var(--m-tracking-wide);display:block;margin-bottom:var(--m-space-2)}
+.note.warn{background:var(--m-warning-bg);border-color:var(--m-warning)}
+.note.warn .nt{color:var(--m-warning-text)}
+.note.ok{background:var(--m-success-bg);border-color:var(--m-success)}
+.note.ok .nt{color:var(--m-success-text)}
+.note.info{background:var(--m-info-bg);border-color:var(--m-info)}
+.note.info .nt{color:var(--m-info-text)}
+.note.err{background:var(--m-error-bg);border-color:var(--m-error)}
+.note.err .nt{color:var(--m-error-text)}
+
+/* ── Badges ────────────────────────────────── */
+.badge{display:inline-block;font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);
+text-transform:uppercase;letter-spacing:var(--m-tracking-wide);padding:3px 10px;border-radius:var(--m-radius-full);
+white-space:nowrap;vertical-align:middle}
+.b-p0{background:var(--m-error-bg);color:var(--m-error-text);border:1px solid var(--m-error)}
+.b-p1{background:var(--m-warning-bg);color:var(--m-warning-text);border:1px solid var(--m-warning)}
+.b-p2{background:var(--m-surface);color:var(--m-text-secondary);border:1px solid var(--m-border)}
+.b-fact{background:var(--m-info-bg);color:var(--m-info-text);border:1px solid var(--m-info)}
+.b-inf{background:var(--m-accent-subtle);color:var(--m-accent);border:1px solid var(--m-accent)}
+.b-new{background:var(--m-primary-subtle);color:var(--m-primary);border:1px solid var(--m-primary)}
+
+/* ── Cards ─────────────────────────────────── */
+.card{border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-6);
+margin-bottom:var(--m-space-5);background:var(--m-bg);box-shadow:var(--m-shadow-sm)}
+.card h3{margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.card p:last-child,.card ul:last-child,.card pre:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--m-space-4);margin-bottom:var(--m-space-6)}
+.mini{border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-5);background:var(--m-surface)}
+.mini h4{margin-top:0}
+.mini p:last-child{margin-bottom:0;font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+
+/* ── Ladder ────────────────────────────────── */
+.ladder{list-style:none;margin:0 0 var(--m-space-6);padding:0;counter-reset:l}
+.ladder li{counter-increment:l;position:relative;padding:var(--m-space-4) var(--m-space-4) var(--m-space-4) 56px;
+border:1px solid var(--m-border);border-radius:var(--m-radius-md);margin-bottom:var(--m-space-2);
+font-size:var(--m-text-base);line-height:var(--m-leading-normal)}
+.ladder li::before{content:counter(l);position:absolute;left:16px;top:50%;transform:translateY(-50%);
+font-family:var(--m-font-code);font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);
+width:26px;height:26px;line-height:26px;text-align:center;border-radius:var(--m-radius-full);
+background:var(--m-primary-subtle);color:var(--m-primary)}
+
+.meta{font-size:var(--m-text-sm);color:var(--m-text-secondary);font-family:var(--m-font-code);
+margin-bottom:var(--m-space-8);padding-bottom:var(--m-space-5);border-bottom:1px solid var(--m-border-subtle)}
+footer{max-width:var(--m-max-prose);margin-top:var(--m-space-16);padding-top:var(--m-space-5);
+border-top:1px solid var(--m-border);font-size:var(--m-text-xs);color:var(--m-text-tertiary);
+line-height:var(--m-leading-normal)}
+
+@media (max-width:920px){
+.shell{flex-direction:column}
+.sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--m-border)}
+.nav{flex-direction:row;flex-wrap:wrap}
+.nav button{width:auto}
+.main{padding:var(--m-space-8) var(--m-space-5)}
+.grid2{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar" aria-label="Guide sections">
+  <div class="brand">Claude Operating Guide</div>
+  <div class="brand-sub">Routing, orchestration, and drift control across surfaces</div>
+  <ul class="nav" role="tablist">
+    <li><button role="tab" aria-selected="true" data-t="p1"><span class="num">01</span> How it works</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p2"><span class="num">02</span> Primitives</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p3"><span class="num">03</span> Orchestration</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p4"><span class="num">04</span> Surfaces</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p5"><span class="num">05</span> Your setup</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p6"><span class="num">06</span> Drift control</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p7"><span class="num">07</span> Patterns</button></li>
+    <li><button role="tab" aria-selected="false" data-t="p8"><span class="num">08</span> Reference</button></li>
+  </ul>
+  <div class="side-foot">
+    <button class="themebtn" id="tt" aria-label="Toggle colour theme">Dark theme</button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ══════════ 01 ══════════ -->
+<section class="panel active" id="p1" role="tabpanel">
+<h1>How Claude actually works</h1>
+<p class="lede">The model is not the product. The harness is. Understanding where the leverage sits changes what you build.</p>
+<div class="meta">Verified against official docs · 10 Aug 2026 · Claude Code v2.1.2xx era · Max plan</div>
+
+<h2>The distinction that matters</h2>
+<p>Claude is a model. Claude Code is an <strong>agentic harness</strong>: the tools, context management, permission gating, memory loading, and the loop that chains actions together. Anthropic's own glossary draws this line explicitly. Nearly everything you can tune lives in the harness, not the model.</p>
+<p>This is why "which model should I use" is usually the least interesting question in the room, and why a well-configured Sonnet session routinely beats a badly-configured Opus one.</p>
+
+<h2>The loop</h2>
+<p>Every task runs through three blended phases: <strong>gather context</strong>, <strong>take action</strong>, <strong>verify results</strong>, repeating until done. Each tool result feeds the next decision. You are inside the loop, not outside it: you can interrupt with <code>Esc</code>, or type a correction mid-turn without stopping the running tool.</p>
+<p>Every extension point you will read about in section 02 plugs into a named phase of this loop. That is the whole mental model.</p>
+
+<h2>What actually makes it powerful</h2>
+<p>Four things, in descending order of how much they explain:</p>
+
+<div class="card">
+<h3>1. Verification, not generation</h3>
+<p>The step-change is not that Claude writes code. It is that Claude can run the test, read the failure, and patch. Anything you give it to check against (a test suite, a type check, a screenshot, an acceptance criterion, an exit code) compounds. Anything you do not is a coin flip. This is the single highest-leverage input you control, and it is upstream of every other tuning decision.</p>
+</div>
+
+<div class="card">
+<h3>2. Context economics</h3>
+<p>The docs state the binding constraint plainly: the context window fills fast and <em>performance degrades as it fills</em>. Almost every best practice is downstream of that one fact. Compaction clears older tool outputs first, then summarises; detailed instructions from early in a conversation can be lost. A large CLAUDE.md is not free knowledge, it is a recurring per-request tax that also reduces adherence.</p>
+</div>
+
+<div class="card">
+<h3>3. Isolation primitives</h3>
+<p>Subagents, forked skills, dynamic workflows, and agent teams all exist to let you <em>spend context you do not have to hold</em>. A subagent can read forty files and return three hundred tokens. A workflow can run hundreds of agents and land one report. Learning to route work into isolated context is the difference between a session that stays sharp and one that thrashes.</p>
+</div>
+
+<div class="card">
+<h3>4. Determinism where it matters</h3>
+<p>An instruction is a request. A hook is a guarantee. CLAUDE.md content arrives as a user message after the system prompt, and Claude "tries to follow it, but there's no guarantee of strict compliance." A <code>PreToolUse</code> hook that blocks the edit is enforcement. Mature setups know which of their rules are requests and which are guarantees, and put each in the right layer.</p>
+</div>
+
+<h2>What does not make it powerful</h2>
+<div class="note warn">
+<span class="nt">Falsifiable claims</span>
+<p><strong>Bigger CLAUDE.md does not help.</strong> Falsifier: run <code>/doctor</code> on a repo with a 400-line CLAUDE.md. It proposes trims and cuts content Claude can derive from the codebase.</p>
+<p><strong>More installed skills does not help.</strong> Falsifier: the skill listing has a context budget of 1% of the model's window. Past it, descriptions are truncated starting with the skills you invoke least, which silently strips the trigger keywords. <code>/doctor</code> reports the listing cost.</p>
+<p><strong>Prompt cleverness is not the frontier.</strong> Falsifier: compare an elaborate prompt with no verification target against a plain prompt plus "run the tests after." The second wins consistently.</p>
+</div>
+
+<h2>Reframe worth holding</h2>
+<p>You did not ask a knowledge question, you asked a routing question. Feature knowledge is now a commodity with a shelf life of weeks. The durable skill is: <em>for this task, which surface, which primitive, and what is the cheapest artifact that makes that choice repeatable next time?</em> Sections 02 through 04 are the routing procedure. Section 08 is the perishable part and is dated accordingly.</p>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section class="panel" id="p2" role="tabpanel">
+<h1>The primitive set</h1>
+<p class="lede">Nine extension points. Each solves one problem. Most setups fail by using the wrong one, not by using too few.</p>
+
+<h2>What each one is for</h2>
+<div class="tw"><table>
+<thead><tr><th>Primitive</th><th>What it does</th><th>Reach for it when</th></tr></thead>
+<tbody>
+<tr><td><strong>CLAUDE.md</strong></td><td>Persistent context, every session</td><td>A fact Claude should always hold: build commands, conventions, "never do X"</td></tr>
+<tr><td><strong><code>.claude/rules/</code></strong></td><td>Modular instructions, optionally path-scoped</td><td>CLAUDE.md is growing, or a rule only applies to some file paths</td></tr>
+<tr><td><strong>Skill</strong></td><td>Reference knowledge or an invocable workflow, loaded on demand</td><td>You have pasted the same playbook three times, or CLAUDE.md grew a procedure</td></tr>
+<tr><td><strong>Subagent</strong></td><td>Isolated worker with its own context that returns a summary</td><td>A side task would flood your window with output you will not reference again</td></tr>
+<tr><td><strong>Agent team</strong></td><td>Independent sessions with a shared task list and peer messaging</td><td>Workers need to challenge each other, not just report up. Experimental, off by default</td></tr>
+<tr><td><strong>Workflow</strong></td><td>A JS script the runtime executes, orchestrating dozens to hundreds of agents</td><td>The orchestration itself is the thing worth making repeatable</td></tr>
+<tr><td><strong>Hook</strong></td><td>Script, HTTP call, prompt, or subagent fired at a lifecycle event</td><td>It must happen every time, without Claude deciding</td></tr>
+<tr><td><strong>MCP</strong></td><td>Connection to an external service</td><td>You keep copying data from a tab Claude cannot see</td></tr>
+<tr><td><strong>Plugin</strong></td><td>Packaging layer bundling all of the above</td><td>A second repository or machine needs the same setup</td></tr>
+</tbody>
+</table></div>
+
+<h2>The four confusions worth settling</h2>
+
+<div class="grid2">
+<div class="mini"><h4>CLAUDE.md vs Skill</h4><p>CLAUDE.md loads every session and cannot trigger a workflow. A skill loads on demand and can be invoked as <code>/name</code>. Rule of thumb from the docs: keep CLAUDE.md under 200 lines; if it is growing, the overflow is either a rule or a skill.</p></div>
+<div class="mini"><h4>Rules vs Skill</h4><p>Rules load every session, or whenever a matching file is opened (<code>paths:</code> frontmatter). Skills load only when invoked or judged relevant. Rules are for "always true for these files." Skills are for "sometimes needed."</p></div>
+<div class="mini"><h4>Skill vs Subagent</h4><p>A skill is content loaded into a context. A subagent is a separate context. They compose: a skill with <code>context: fork</code> runs itself in a subagent; a subagent with a <code>skills:</code> field preloads skills at launch.</p></div>
+<div class="mini"><h4>Hook vs Skill</h4><p>A hook always fires on its event and costs zero context unless it returns output. A skill is interpreted and can vary. "Never edit <code>.env</code>" in CLAUDE.md is a request. A <code>PreToolUse</code> hook is enforcement.</p></div>
+</div>
+
+<h2>Context cost, which is the real budget</h2>
+<div class="tw"><table>
+<thead><tr><th>Feature</th><th>When it loads</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><td>CLAUDE.md</td><td>Session start</td><td>Full content, every request</td></tr>
+<tr><td>Rules (no <code>paths</code>)</td><td>Session start</td><td>Full content, every request</td></tr>
+<tr><td>Rules (with <code>paths</code>)</td><td>When a matching file is read</td><td>Zero until matched</td></tr>
+<tr><td>Skills</td><td>Descriptions at start, body on use</td><td>Low. Zero for <code>disable-model-invocation: true</code></td></tr>
+<tr><td>MCP servers</td><td>Tool names at start, schemas on demand</td><td>Low. Tool search is on by default</td></tr>
+<tr><td>Subagents</td><td>When spawned</td><td>Isolated. Does not touch your window</td></tr>
+<tr><td>Hooks</td><td>On event</td><td>Zero, unless the hook returns output</td></tr>
+</tbody>
+</table></div>
+<p class="label">Diagnostics</p>
+<pre><code>/context     # what actually loaded, with per-feature sizes
+/doctor      # setup checkup; flags skill-listing cost and CLAUDE.md bloat
+/mcp         # per-server connection status and token cost
+/memory      # which CLAUDE.md, CLAUDE.local.md and rules are live</code></pre>
+
+<h2>Layering, which is where drift originates</h2>
+<p>Four different merge semantics. Getting these wrong is the most common cause of "it works on my other machine."</p>
+<div class="tw"><table>
+<thead><tr><th>Feature</th><th>Semantics</th><th>Precedence</th></tr></thead>
+<tbody>
+<tr><td>CLAUDE.md</td><td><strong>Additive</strong>. All levels concatenate</td><td>Root down to cwd; <code>CLAUDE.local.md</code> last in each directory</td></tr>
+<tr><td>Rules</td><td>Additive, same priority as <code>.claude/CLAUDE.md</code></td><td>User rules load before project rules</td></tr>
+<tr><td>Skills</td><td><strong>Override by name</strong></td><td>managed &gt; user &gt; project. Plugin skills are namespaced, so never conflict</td></tr>
+<tr><td>Subagents</td><td>Override by name</td><td>managed &gt; CLI flag &gt; project &gt; user &gt; plugin</td></tr>
+<tr><td>MCP servers</td><td>Override by name</td><td>local &gt; project &gt; user</td></tr>
+<tr><td>Hooks</td><td><strong>Merge</strong>. All matching hooks fire regardless of source</td><td>No precedence. This is a feature and a footgun</td></tr>
+</tbody>
+</table></div>
+<div class="note info"><span class="nt">Non-obvious</span><p>Because CLAUDE.md is additive rather than overriding, two files that contradict each other do not resolve deterministically. The docs say Claude "may pick one arbitrarily." In a monorepo, use <code>claudeMdExcludes</code> in <code>.claude/settings.local.json</code> to drop other teams' files.</p></div>
+
+<h2>The growth path</h2>
+<p>Do not configure everything up front. Each primitive has a trigger:</p>
+<ol class="ladder">
+<li>Claude gets a convention wrong <strong>twice</strong> → add it to CLAUDE.md</li>
+<li>You type the same prompt to start a task → save it as a user-invocable skill</li>
+<li>You paste the same playbook a third time → capture it as a skill</li>
+<li>You keep copying from a tab Claude cannot see → connect it as an MCP server</li>
+<li>A side task floods your window → route it through a subagent</li>
+<li>Something must happen every time → write a hook</li>
+<li>A second repository needs the same setup → package it as a plugin</li>
+</ol>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section class="panel" id="p3" role="tabpanel">
+<h1>Orchestration: loops, goals, workflows, teams</h1>
+<p class="lede">The 2026 vocabulary. The organising question is not "what can it do" but <strong>who holds the plan</strong>.</p>
+
+<h2>Who holds the plan</h2>
+<div class="tw"><table>
+<thead><tr><th></th><th>Subagents</th><th>Skills</th><th>Agent teams</th><th>Workflows</th></tr></thead>
+<tbody>
+<tr><td><strong>What it is</strong></td><td>A worker Claude spawns</td><td>Instructions Claude follows</td><td>A lead supervising peer sessions</td><td>A script the runtime executes</td></tr>
+<tr><td><strong>Decides next step</strong></td><td>Claude, turn by turn</td><td>Claude, from the prompt</td><td>The lead agent, turn by turn</td><td>The script</td></tr>
+<tr><td><strong>Intermediates live in</strong></td><td>Claude's context</td><td>Claude's context</td><td>A shared task list</td><td>Script variables</td></tr>
+<tr><td><strong>What's repeatable</strong></td><td>The worker definition</td><td>The instructions</td><td>The team definition</td><td>The orchestration itself</td></tr>
+<tr><td><strong>Scale</strong></td><td>A few per turn</td><td>Same</td><td>A handful of peers</td><td>Dozens to hundreds per run</td></tr>
+<tr><td><strong>Interruption</strong></td><td>Restarts the turn</td><td>Restarts the turn</td><td>Teammates keep running</td><td>Resumable in-session</td></tr>
+</tbody>
+</table></div>
+<p>The distinguishing move of a workflow is that it takes the plan out of a context window and puts it into code. Claude's context then holds only the final answer. It also enables quality patterns you cannot get any other way: independent agents adversarially reviewing each other's findings before anything is reported.</p>
+
+<h2>On "graphs"</h2>
+<div class="note warn"><span class="nt">Correction to a common assumption</span>
+<p>There is no declarative graph primitive in Claude Code. No YAML DAG, no node-and-edge config. The closest thing is a <strong>dynamic workflow</strong>: plain JavaScript with top-level <code>await</code>, where <code>agent()</code> spawns one subagent and <code>pipeline()</code> maps one per item. Fan-out, branching, and joins are expressed as ordinary control flow. If you are carrying a LangGraph-style mental model, drop it. The graph is the script.</p></div>
+
+<pre><code>export const meta = {
+  name: 'audit-routes',
+  description: 'Audit every route handler for missing auth checks',
+}
+
+const found = await agent('List every .ts file under src/routes/.', {
+  schema: { type: 'object', required: ['files'],
+    properties: { files: { type: 'array', items: { type: 'string' } } } },
+})
+
+const audits = await pipeline(found.files, file =&gt;
+  agent(`Audit ${file} for missing authentication checks.`, { label: file }),
+)
+
+return audits.filter(Boolean)</code></pre>
+
+<h3>Workflow mechanics worth knowing before you spend on one</h3>
+<ul>
+<li>Trigger with the keyword <code>ultracode</code> in a prompt you type yourself, or plain language ("use a workflow"). It does <em>not</em> trigger from <code>-p</code>, scheduled tasks, webhooks, or PR comments, by design.</li>
+<li><code>/effort ultracode</code> makes Claude plan a workflow for every substantive task in the session. Session-scoped, resets on new session. Costly.</li>
+<li>Hard caps: <strong>16 concurrent agents</strong>, <strong>1,000 agents per run</strong>. No filesystem or shell access from the script itself. No <code>import()</code>.</li>
+<li>Size guideline in <code>/config</code>: <code>small</code> (&lt;5), <code>medium</code> (&lt;15, the default), <code>large</code> (&lt;50), <code>unrestricted</code>.</li>
+<li>Watch and control with <code>/workflows</code>. Press <code>s</code> to save a run's script as a reusable <code>/command</code>.</li>
+<li><strong>Resume is order-sensitive.</strong> Cached results stop at the first agent that did not finish; every agent that <em>started after</em> it re-runs even if it completed. Many small agents preserve more progress than few long ones.</li>
+<li>Workflow subagents always run in <code>acceptEdits</code> mode regardless of your session mode. File edits are auto-approved. Allowlist the shell commands they need before a long run.</li>
+<li><code>/deep-research</code> is the bundled workflow: fans out searches, cross-checks sources, votes on claims, filters out what did not survive.</li>
+</ul>
+
+<h2>Keeping a session running: three mechanisms</h2>
+<div class="tw"><table>
+<thead><tr><th>Approach</th><th>Next turn starts when</th><th>Stops when</th></tr></thead>
+<tbody>
+<tr><td><code>/goal &lt;condition&gt;</code></td><td>The previous turn finishes</td><td>A separate evaluator model confirms the condition holds</td></tr>
+<tr><td><code>/loop</code></td><td>A time interval elapses</td><td>You stop it, or Claude judges the work done</td></tr>
+<tr><td>Stop hook</td><td>The previous turn finishes</td><td>Your own script or prompt decides</td></tr>
+</tbody>
+</table></div>
+
+<h3><code>/goal</code>, and how to write a condition that actually holds</h3>
+<p><code>/goal</code> is a session-scoped wrapper around a prompt-based Stop hook. After each turn, a small fast model reads the condition plus the conversation and answers yes or no with a reason. On "no", the reason becomes guidance for the next turn.</p>
+<div class="note err"><span class="nt">The failure mode</span><p>The evaluator <strong>does not run commands or read files</strong>. It only judges what Claude has already surfaced in the transcript. A condition like "the code is correct" is unevaluable. "<code>npm test</code> exits 0 and the output is in this conversation" is evaluable. Write the check, not the wish.</p></div>
+<p>A durable condition has three parts: one measurable end state, a stated proof method, and the constraints that must not be violated on the way there. Add a bound such as "or stop after 20 turns." Max 4,000 characters.</p>
+<p><code>/goal</code> does not change permissions. Pair it with auto mode for unattended runs: auto mode removes per-tool prompts, <code>/goal</code> removes per-turn prompts. They are complementary.</p>
+
+<h2>Parallelism and the surrounding machinery</h2>
+<div class="grid2">
+<div class="mini"><h4>Agent teams <span class="badge b-new">experimental</span></h4><p>Independent sessions, shared task list, peer-to-peer messages. Higher token cost since each teammate is a separate Claude instance. Best for competing hypotheses and parallel review. Disabled by default.</p></div>
+<div class="mini"><h4>Agent view</h4><p><code>claude agents</code> opens a monitor over background sessions: state, PR status, peek and reply, attach. Dispatch new agents from the view or from your shell. Worktree-isolated file edits.</p></div>
+<div class="mini"><h4>Cross-session messaging</h4><p>Sessions message each other directly without forming a team. Works across machines with approval gating. Useful when two long-running sessions need to hand off.</p></div>
+<div class="mini"><h4>Worktrees</h4><p>The isolation substrate. Parallel sessions on separate branches, subagents in their own checkouts, no edit conflicts. Clean up <code>.claude/worktrees/</code> periodically.</p></div>
+<div class="mini"><h4>Routines <span class="badge b-new">cloud</span></h4><p>Scheduled, API-triggered, or GitHub-triggered runs in cloud environments. Each run is a fresh remote session, so it does <strong>not</strong> see <code>~/.claude/skills/</code>. See section 04.</p></div>
+<div class="mini"><h4>Scheduled tasks <span class="badge b-new">local</span></h4><p>Desktop scheduled tasks run locally and <em>do</em> load your local skills. Seven-day expiry, jitter applied. Different animal from routines.</p></div>
+</div>
+
+<h2>The dials you should be using consciously</h2>
+<div class="tw"><table>
+<thead><tr><th>Dial</th><th>Values</th><th>When to move it</th></tr></thead>
+<tbody>
+<tr><td>Effort</td><td><code>low</code> → <code>medium</code> → <code>high</code> → <code>xhigh</code> → <code>max</code>, plus <code>ultracode</code></td><td><code>high</code> for routine work; <code>ultracode</code> only for genuinely large orchestration</td></tr>
+<tr><td>Permission mode</td><td>Manual, acceptEdits, plan, dontAsk, auto, bypassPermissions</td><td><code>Shift+Tab</code> cycles. Plan mode before any consequential change</td></tr>
+<tr><td>Advisor</td><td>A second model consulted at hard decision points</td><td>Architecture calls where you want a dissenting read</td></tr>
+<tr><td>Fast mode</td><td>Priority serving path, higher token rate</td><td>Interactive iteration, not long autonomous runs</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section class="panel" id="p4" role="tabpanel">
+<h1>Surfaces: what reaches where</h1>
+<p class="lede">This is the drift map. Almost every "why did it forget my rules" incident traces to a cell in this table.</p>
+
+<h2>Primitive availability by surface</h2>
+<div class="tw"><table>
+<thead><tr><th>Primitive</th><th>Code (local)</th><th>Code (cloud / routines)</th><th>Chat + Projects</th><th>Cowork</th><th>Office add-ins</th></tr></thead>
+<tbody>
+<tr><td>Personal skills in <code>~/.claude/skills/</code></td><td>Yes</td><td><strong>No</strong></td><td>No</td><td><strong>No</strong></td><td>No</td></tr>
+<tr><td>Account-enabled skills (claude.ai)</td><td>No</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Project skills in repo <code>.claude/skills/</code></td><td>Yes</td><td>Yes (cloned repo)</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Plugin skills</td><td>Yes</td><td>Repo-declared only</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Plugin hooks &amp; subagents</td><td>Yes</td><td>Yes</td><td><strong>No</strong> (greyed out)</td><td>Yes</td><td>No</td></tr>
+<tr><td>CLAUDE.md / rules</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td><td>No</td></tr>
+<tr><td>Connectors (remote MCP)</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Partial</td></tr>
+<tr><td>Project instructions + knowledge</td><td>No</td><td>No</td><td>Yes</td><td>No</td><td>No</td></tr>
+<tr><td>Workflows / <code>/goal</code> / <code>/loop</code></td><td>Yes</td><td>Yes</td><td>No</td><td>Partial</td><td>No</td></tr>
+</tbody>
+</table></div>
+
+<div class="note err"><span class="nt">The two facts that cause the most confusion</span>
+<p><strong>1.</strong> Cowork and cloud sessions do not read <code>~/.claude/skills/</code> on your machine. They load the skills enabled for your claude.ai account, synced at session start. If a skill exists only locally, a routine invoking it reports "skill not found." Desktop scheduled tasks are the exception: they run locally and behave like any local session.</p>
+<p><strong>2.</strong> Plugin hooks and subagents run only in Cowork. In chat they appear greyed out. A plugin whose value is its hooks does nothing for you in a chat window.</p>
+</div>
+
+<h2>The frontmatter portability trap</h2>
+<p>Claude Code accepts around twenty frontmatter fields. The Agent Skills open standard, which governs claude.ai uploads and the Skills API, accepts <strong>six</strong>:</p>
+<pre><code>name  description  license  compatibility  metadata  allowed-tools</code></pre>
+<p>Anything else is a <strong>hard error</strong> on upload, not a silently ignored field:</p>
+<pre><code>Unexpected key(s) in SKILL.md frontmatter: argument-hint.
+Allowed properties are: allowed-tools, compatibility, description,
+license, metadata, name</code></pre>
+<p>Claude Code-only body features also stop working: dynamic context injection (<code>!`command`</code>), <code>$ARGUMENTS</code> substitution, <code>context: fork</code>. A skill you want in every surface must be authored to the six-field spec, with the body carrying no shell injection.</p>
+<div class="note info"><span class="nt">Practical consequence</span><p>You need two authoring tiers, not one. Tier A skills are spec-compliant and portable everywhere. Tier B skills use the full Claude Code feature set and stay local. Deciding which tier a skill belongs to at authoring time is cheaper than discovering it at upload.</p></div>
+
+<h2>Choosing a surface</h2>
+<div class="tw"><table>
+<thead><tr><th>The work is…</th><th>Go to</th><th>Because</th></tr></thead>
+<tbody>
+<tr><td>Touching a repo, needs verification</td><td>Claude Code (local)</td><td>Full loop, checkpoints, hooks, worktrees</td></tr>
+<tr><td>Long-running, you want to step away</td><td>Code on the web, or background sessions + agent view</td><td>Runs without your terminal open; Remote Control if files must stay local</td></tr>
+<tr><td>Recurring on a schedule, repo-scoped</td><td>Routine (cloud)</td><td>Fresh remote session per run. Commit the skills it needs</td></tr>
+<tr><td>Recurring, needs local files or local skills</td><td>Desktop scheduled task</td><td>Runs locally, loads local skills</td></tr>
+<tr><td>Thinking, drafting, evidence work</td><td>Chat + a Project</td><td>Project instructions plus knowledge; no filesystem noise</td></tr>
+<tr><td>Multi-step knowledge work over files and connected apps</td><td>Cowork</td><td>Only non-Code surface where hooks and subagents run</td></tr>
+<tr><td>Deliverable lands in Excel, PowerPoint, Word, Outlook</td><td>Office add-ins</td><td>Account-enabled skills carry over; nothing local does</td></tr>
+<tr><td>Programmatic, embedded in your own product</td><td>Agent SDK</td><td>Same harness, <code>settingSources</code> controls what loads</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section class="panel" id="p5" role="tabpanel">
+<h1>Your setup</h1>
+<p class="lede">Account side is observed. Claude Code side needs one command block from you.</p>
+
+<h2>Observed on your account <span class="badge b-fact">fact</span></h2>
+<div class="tw"><table>
+<thead><tr><th>Layer</th><th>Present</th></tr></thead>
+<tbody>
+<tr><td><strong>Plugins</strong></td><td><code>design</code> (7 skills), <code>data</code> (10 skills), <code>engineering</code> (10 skills)</td></tr>
+<tr><td><strong>Personal skill</strong></td><td>Your design system skill (one entry)</td></tr>
+<tr><td><strong>Connectors</strong></td><td>Gmail, Google Calendar, Google Drive, Microsoft Learn, Spotify, Claude in Chrome</td></tr>
+<tr><td><strong>Plan</strong></td><td>Max. Workflows, routines, agent teams, Remote Control, Cowork all available</td></tr>
+</tbody>
+</table></div>
+
+<h2>Three findings</h2>
+
+<div class="card">
+<h3><span class="badge b-p0">P0</span> Your Fabric skill package is not on the account</h3>
+<p><span class="badge b-fact">fact</span> It is absent from the account-side skill listing. <span class="badge b-inf">inference</span> It therefore lives only in <code>~/.claude/skills/</code>, a repo, or a Project. <strong>Consequence:</strong> it is invisible in chat, Cowork, cloud sessions, routines, and every Office add-in. Every time you reason about Fabric architecture outside a terminal, you are working without the package you built.</p>
+<p><strong>Confidence:</strong> high on the absence, medium on which location it occupies. <strong>Falsifier:</strong> <code>ls ~/.claude/skills/</code> and Customize → Skills on claude.ai.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> The <code>data</code> plugin has description collisions</h3>
+<p>Three overlapping pairs: <code>write-query</code> / <code>sql-queries</code>, <code>data-visualization</code> / <code>create-viz</code>, and <code>analyze</code> / <code>explore-data</code> / <code>statistical-analysis</code>. Anthropic's own troubleshooting guidance names vague or overlapping descriptions as the cause of loading the wrong skill or missing one.</p>
+<p>Twenty-seven plugin skills also consume skill-listing budget in every session. Once the listing overflows, descriptions are dropped starting with least-invoked skills, which strips exactly the trigger keywords that make your own skills fire.</p>
+<p><strong>Confidence:</strong> high on the overlap, medium on it currently mistriggering. <strong>Falsifier:</strong> <code>/doctor</code> reports listing cost and top contributors. Then use <code>skillOverrides</code> to set the redundant halves to <code>"name-only"</code> or <code>"off"</code>.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> Your design system skill is probably tier-B authored</h3>
+<p><span class="badge b-inf">inference</span> It is on the account, which means it already passes the six-field spec. But if the Claude Code copy and the account copy are separate files, they will diverge. Version 1.2.0 in one place and 1.1.0 in another is exactly the drift you named. One source file, one publish step.</p>
+</div>
+
+<h2>Complete the audit</h2>
+<p>Run this and paste the output. It is the only part I cannot observe from here.</p>
+<pre><code># ── global layer ─────────────────────────────
+claude --version
+ls -la ~/.claude/
+cat ~/.claude/settings.json
+ls ~/.claude/skills ~/.claude/agents ~/.claude/workflows ~/.claude/rules 2&gt;/dev/null
+wc -l ~/.claude/CLAUDE.md
+claude plugin list
+claude plugin marketplace list
+
+# ── per repo (run in fabric-deploy, fabric-lens, psistla.com) ──
+ls -R .claude/
+wc -l CLAUDE.md
+cat .claude/settings.json 2&gt;/dev/null</code></pre>
+<p class="label">Then, inside one representative session</p>
+<pre><code>/context     # what loaded and what it cost
+/doctor      # config health, skill-listing budget, CLAUDE.md trim proposals
+/mcp         # server status and per-server token cost
+/hooks       # what is actually registered
+/memory      # live instruction files + auto-memory state</code></pre>
+
+<h2>Inventory template</h2>
+<p>Keep this as <code>~/.claude/INVENTORY.md</code>, dated. It is the artifact that makes drift visible rather than mysterious.</p>
+<pre><code># Claude setup inventory · updated YYYY-MM-DD · CC vX.Y.Z
+
+## Tier A (spec-compliant, published to account)
+| skill | version | source of truth | last published |
+
+## Tier B (Claude Code only)
+| skill | version | scope: user/project/plugin | repo |
+
+## Plugins
+| plugin | marketplace | version | enabled where |
+
+## Hooks
+| event | matcher | what it enforces | scope |
+
+## Subagents
+| name | model | tools | preloaded skills |
+
+## MCP / connectors
+| server | scope: local/project/user/account | why |
+
+## Known divergences
+| item | machine A | machine B | resolve by |</code></pre>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section class="panel" id="p6" role="tabpanel">
+<h1>Drift control</h1>
+<p class="lede">You asked to treat behavioural, configuration, and quality drift as one problem. They are not one problem, but they share one solution shape: move each rule to the lowest layer that can enforce it.</p>
+
+<h2>The enforcement ladder</h2>
+<p>Determinism increases as you descend. Cost and rigidity increase too. Most people leave everything at rung 1 and then wonder why adherence is inconsistent.</p>
+<ol class="ladder">
+<li><strong>Conversation</strong> — zero persistence. Lost at compaction. Never put a standing rule here.</li>
+<li><strong>Profile preferences / output style</strong> — persists across sessions on that surface. Still interpreted.</li>
+<li><strong>CLAUDE.md</strong> — every session, additive, interpreted. Project-root CLAUDE.md survives compaction and is re-injected. Nested files and path-scoped rules are <em>not</em>.</li>
+<li><strong><code>.claude/rules/</code> with <code>paths:</code></strong> — loads only when relevant files are touched. Same enforcement strength, better context economy.</li>
+<li><strong>Skill</strong> — full content on invocation, persists in context for the session. Re-invoke after compaction to restore.</li>
+<li><strong>Hook</strong> — fires on its event, always. Zero interpretation. This is where a rule becomes a guarantee.</li>
+<li><strong>Managed settings / permission deny rules</strong> — client-enforced regardless of what Claude decides. The floor.</li>
+</ol>
+
+<h2>Behavioural drift</h2>
+<p>Symptom: Claude honours your voice and format rules early, then stops.</p>
+<div class="tw"><table>
+<thead><tr><th>Cause</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>Rule was stated in conversation only</td><td>Move to CLAUDE.md or a rule file. Conversation-only instructions do not survive <code>/compact</code></td></tr>
+<tr><td>Skill content aged out after compaction</td><td>Compaction re-attaches only the first 5,000 tokens of each invoked skill, sharing a 25,000-token budget, filled most-recent-first. Re-invoke the skill, or shorten it</td></tr>
+<tr><td>Instruction is a preference, not a check</td><td>Convert to a Stop hook that inspects the output. A prompt-based Stop hook can check "no em dashes, employer name absent, evidence tags present" and block the turn</td></tr>
+<tr><td>Conflicting instructions across layers</td><td>Audit with <code>/memory</code> and <code>/context</code>. Contradictions resolve arbitrarily</td></tr>
+<tr><td>Needs system-prompt-level weight</td><td><code>--append-system-prompt</code>, or a custom output style</td></tr>
+</tbody>
+</table></div>
+<div class="note ok"><span class="nt">The highest-value single change</span><p>Your absolute constraint (never name the employer) is currently a request at rung 2 or 3. It should be a <code>PreToolUse</code> deny hook on <code>Write</code> and <code>Edit</code> plus a Stop hook on output. That is the difference between "usually holds" and "cannot fail." Pattern in section 07.</p></div>
+
+<h2>Configuration drift</h2>
+<p>Symptom: behaviour differs between machines, repos, or surfaces, and you cannot say why.</p>
+<ul>
+<li><strong>Root cause is almost always copies.</strong> A skill in <code>~/.claude/skills/</code>, a near-copy in a repo, and an upload on the account are three files that will diverge.</li>
+<li><strong>The fix is packaging.</strong> A plugin is the only construct that bundles skills, hooks, subagents, MCP servers, LSP servers, and default settings into one versioned, installable unit with a marketplace behind it. Everything else is manual synchronisation.</li>
+<li><strong>Symlinks for the rest.</strong> <code>.claude/rules/</code> resolves symlinks and detects cycles, so one shared rules directory can serve every repo. Skill directories can be symlinks too, and a target reachable from two locations loads once.</li>
+<li><strong>Version and date the inventory.</strong> Drift you can see is a maintenance task. Drift you cannot see is a mystery.</li>
+</ul>
+<div class="note warn"><span class="nt">Cache side effect worth knowing</span><p>Enabling or disabling a plugin, connecting or disconnecting an MCP server, switching models, or changing effort level all <strong>invalidate the prompt cache</strong>. Editing CLAUDE.md mid-session, invoking skills, and rewinding do not. Do your configuration churn at session boundaries, not mid-task.</p></div>
+
+<h2>Quality drift</h2>
+<p>Symptom: output degrades as the session runs long. This is the expected behaviour of a filling context window, not a malfunction.</p>
+<ul>
+<li><strong>Budget before you optimise.</strong> Run <code>/context</code>. If CLAUDE.md plus rules plus skill listing exceeds roughly 15% of the window at session start, you have a structural problem, not a prompting problem.</li>
+<li><strong>The kitchen-sink session is the named antipattern.</strong> One task, then an unrelated one, then back. Use <code>/clear</code>, a fork, or a second worktree instead.</li>
+<li><strong>Route volume into isolation.</strong> Anything that reads many files and returns a verdict belongs in a subagent or a forked skill, not the main window.</li>
+<li><strong>Trim the listing.</strong> <code>skillOverrides</code> with <code>"name-only"</code> frees budget without editing files you do not own. <code>disable-model-invocation: true</code> takes a skill to zero context cost until you invoke it.</li>
+<li><strong>Guide compaction.</strong> Add a "Compact Instructions" section to CLAUDE.md, or run <code>/compact focus on the deployment change</code>.</li>
+<li><strong><code>@path</code> imports do not save context.</strong> Imported files load at launch just the same. Path-scoped rules are what actually reduce load.</li>
+</ul>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section class="panel" id="p7" role="tabpanel">
+<h1>Patterns to implement</h1>
+<p class="lede">Ranked by leverage per hour. Each has a falsifiable success test, because a pattern you cannot verify is a pattern you will abandon.</p>
+
+<div class="card">
+<h3><span class="badge b-p0">P0</span> One personal plugin as the single source of truth</h3>
+<p>Collapse <code>~/.claude/skills/</code>, <code>~/.claude/agents/</code>, your hooks, and your standing rules into one plugin in a private GitHub marketplace. Install it on every machine with one command. This is the structural fix for configuration drift; everything else is symptom management.</p>
+<pre><code>ps-toolkit/
+├── .claude-plugin/plugin.json
+├── skills/
+│   ├── fabric-architecture/SKILL.md     # tier A: 6-field spec
+│   ├── design-system/SKILL.md           # tier A
+│   ├── evidence-discipline/SKILL.md     # tier A
+│   └── deploy-runbook/SKILL.md          # tier B: context: fork, allowed-tools
+├── agents/
+│   ├── evidence-auditor.md
+│   └── architecture-reviewer.md
+├── hooks/hooks.json
+└── workflows/adversarial-review.js</code></pre>
+<pre><code>/plugin marketplace add &lt;your-org&gt;/ps-toolkit
+/plugin install ps-toolkit@ps-toolkit</code></pre>
+<p><strong>Success test:</strong> a fresh machine reaches full working configuration in two commands, and <code>/context</code> on both machines shows identical loaded skills.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p0">P0</span> The constraint hook stack</h3>
+<p>Your non-negotiables become enforcement rather than requests. Three hooks, roughly forty lines total.</p>
+<p><strong>A. <code>PreToolUse</code> on <code>Write</code> and <code>Edit</code></strong> — reject any payload containing the employer string. Exit code 2 blocks the call and returns the reason to Claude.</p>
+<p><strong>B. <code>Stop</code>, prompt-based</strong> — a model-evaluated check on the finished turn: employer name absent, no em dashes, load-bearing claims carry confidence and a falsifier, no generic closer. Returns block plus reason if any fail.</p>
+<p><strong>C. <code>SessionStart</code></strong> — inject the current date, active project, and a one-line restatement of the format contract, so it is present in the window rather than assumed.</p>
+<pre><code>{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Write|Edit",
+      "hooks": [{ "type": "command",
+        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/constraint-guard.sh" }]
+    }],
+    "Stop": [{
+      "hooks": [{ "type": "prompt",
+        "prompt": "Check the final assistant message. Fail if it contains an em dash, names an employer, opens with a filler phrase, or closes generically. Return {block, reason}." }]
+    }]
+  }
+}</code></pre>
+<p><strong>Success test:</strong> deliberately ask for a deliverable that names the employer. The hook blocks it. If it does not, the hook is not registered; check <code>/hooks</code>.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p0">P0</span> Dual-publish tier-A skills</h3>
+<p>Author every portable skill to the six-field spec, keep one source file, and publish to the account so it reaches chat, Projects, Cowork, cloud sessions, routines, and the Office add-ins. Your Fabric package and your design system are both tier-A candidates. A publish step in the plugin repo (a make target or a small script) removes the divergence permanently.</p>
+<p><strong>Success test:</strong> open a chat window with no repo attached, ask a medallion-architecture question, and confirm the Fabric skill fires.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> CLAUDE.md diet plus path-scoped rules</h3>
+<p>Per repo: cut CLAUDE.md to under 200 lines of facts that apply everywhere. Move the rest into <code>.claude/rules/</code> with <code>paths:</code> frontmatter so it loads only when relevant. In a Python CLI repo, deployment conventions should not be in context while you are editing tests.</p>
+<pre><code>---
+paths:
+  - "src/**/*.py"
+  - "tests/**/*_test.py"
+---
+# Python conventions
+- Target 3.11 and 3.12. No 3.13-only syntax.
+- Every public function has a typed signature and a docstring with a failure case.</code></pre>
+<p><strong>Success test:</strong> <code>/context</code> at session start shows a smaller Memory-files figure, and <code>/doctor</code> stops proposing trims.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> Goal-bounded verification loops</h3>
+<p>For CLI and pipeline work, stop babysitting turn by turn. Set an evaluable condition, pair with auto mode, walk away.</p>
+<pre><code>/goal `pytest -q` exits 0 with zero failures on Python 3.11 and 3.12,
+`ruff check .` is clean, no file outside src/ or tests/ is modified,
+and the full command output appears in this conversation. Stop after 15 turns.</code></pre>
+<p>Note the last clause: the evaluator only reads the transcript, so the condition must require Claude to surface the proof.</p>
+<p><strong>Success test:</strong> the goal clears on its own with an achieved entry in the transcript, rather than you clearing it manually.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> Adversarial review workflow for consequential deliverables</h3>
+<p>This is the pattern your evidence discipline has been asking for, and it is only cleanly available as a workflow: independent agents that review each other's findings before anything is reported, so a single confident pass cannot slip through.</p>
+<pre><code>use a workflow to review this architecture recommendation: run three
+independent agents that each build the strongest case against the
+recommendation from a different angle (cost, operational risk, platform
+lock-in), then have a fourth agent rank which objections survive
+cross-examination and which do not</code></pre>
+<p>Save the run with <code>s</code> in <code>/workflows</code>, and it becomes <code>/adversarial-review</code> for every future deliverable. Distribute it in your plugin under <code>workflows/</code>.</p>
+<p><strong>Success test:</strong> the workflow surfaces at least one objection you had not already written down. If it never does, the prompt is too leading.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p1">P1</span> A small, named subagent set</h3>
+<p>Three is enough. More than five and you are building an org chart, not a toolkit.</p>
+<ul>
+<li><code>evidence-auditor</code> — reads a draft and tags every load-bearing claim as fact, inference, or speculation, flags the weakest assumption. Preload the evidence-discipline skill. Read-only tools.</li>
+<li><code>architecture-reviewer</code> — takes a design and returns the objections a sceptical principal would raise. Model <code>opus</code>, effort <code>high</code>.</li>
+<li><code>deliverable-qa</code> — checks a generated artifact against the design-system and constraint rules before it leaves the machine.</li>
+</ul>
+<p><strong>Success test:</strong> your main context stays under half full through a full deliverable cycle, because the reading happened elsewhere.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p2">P2</span> Evals on the skills you rely on</h3>
+<p>You already have a golden-question set for the Fabric package. That is an <code>evals/evals.json</code> waiting to happen. The <code>skill-creator</code> plugin runs the loop: isolated subagent per test case, pass or fail with evidence, with-skill versus without-skill benchmark, blind A/B between two versions, and description tuning that measures trigger hit rate against should-trigger and should-not-trigger prompts.</p>
+<pre><code>/plugin marketplace add anthropics/claude-plugins-official
+/plugin install skill-creator@claude-plugins-official</code></pre>
+<p><strong>Success test:</strong> you can state your Fabric skill's pass-rate delta and its token overhead as numbers. Until then, "it works" is a feeling.</p>
+</div>
+
+<div class="card">
+<h3><span class="badge b-p2">P2</span> Code intelligence and the right scheduling surface</h3>
+<p>Install the LSP plugins for your stack (<code>pyright-lsp</code>, <code>typescript-lsp</code>) from the official marketplace. They enable the LSP tool, which replaces broad file reads with symbol lookups, so net context use goes down. The binary must be on your PATH; the plugin does not install it.</p>
+<p>For recurring work, route deliberately: cloud <strong>routines</strong> for repo-scoped checks with skills committed to the repo, desktop <strong>scheduled tasks</strong> for anything that needs local files or local skills. Choosing the wrong one produces a silent "skill not found."</p>
+</div>
+
+<h2>Sequence</h2>
+<div class="tw"><table>
+<thead><tr><th>Week</th><th>Do</th><th>Unblocks</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Full audit (section 05), then scaffold the plugin repo</td><td>Everything else</td></tr>
+<tr><td>1</td><td>Constraint hook stack</td><td>Behavioural drift closed permanently</td></tr>
+<tr><td>2</td><td>Retier skills, dual-publish, CLAUDE.md diet</td><td>Configuration and quality drift</td></tr>
+<tr><td>3</td><td>Subagent set, first goal loop</td><td>Context economy in daily work</td></tr>
+<tr><td>4</td><td>Adversarial review workflow, saved as a command</td><td>Evidence discipline becomes machinery</td></tr>
+<tr><td>5+</td><td>Evals, LSP plugins, scheduling</td><td>Measurement replaces intuition</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section class="panel" id="p8" role="tabpanel">
+<h1>Reference</h1>
+<p class="lede">The perishable layer. Verified 10 August 2026. Re-check anything here against the live docs before relying on it in three months.</p>
+
+<h2>File locations</h2>
+<div class="tw"><table>
+<thead><tr><th>Path</th><th>Holds</th></tr></thead>
+<tbody>
+<tr><td><code>~/.claude/CLAUDE.md</code></td><td>Personal instructions, all projects</td></tr>
+<tr><td><code>~/.claude/rules/*.md</code></td><td>Personal rules, load before project rules</td></tr>
+<tr><td><code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></td><td>Personal skills. Local sessions only</td></tr>
+<tr><td><code>~/.claude/agents/*.md</code></td><td>Personal subagents</td></tr>
+<tr><td><code>~/.claude/workflows/*.js</code></td><td>Personal saved workflows</td></tr>
+<tr><td><code>~/.claude/settings.json</code></td><td>User settings</td></tr>
+<tr><td><code>~/.claude/projects/&lt;p&gt;/memory/</code></td><td>Auto memory. <code>MEMORY.md</code> index plus topic files. Machine-local</td></tr>
+<tr><td><code>./CLAUDE.md</code> or <code>./.claude/CLAUDE.md</code></td><td>Project instructions, committed</td></tr>
+<tr><td><code>./CLAUDE.local.md</code></td><td>Personal project notes. Gitignore it</td></tr>
+<tr><td><code>./.claude/rules/*.md</code></td><td>Project rules, recursive, symlinks resolved</td></tr>
+<tr><td><code>./.claude/settings.local.json</code></td><td>Machine-local overrides including <code>skillOverrides</code></td></tr>
+</tbody>
+</table></div>
+
+<h2>Skill frontmatter</h2>
+<div class="tw"><table>
+<thead><tr><th>Field</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>description</code> <span class="badge b-fact">spec</span></td><td>How Claude decides relevance. Put the key use case first; combined with <code>when_to_use</code> it truncates at 1,536 chars</td></tr>
+<tr><td><code>name</code> <span class="badge b-fact">spec</span></td><td>Display label. For personal and project skills the command still comes from the directory name</td></tr>
+<tr><td><code>allowed-tools</code> <span class="badge b-fact">spec</span></td><td>Pre-approves tools for the invoking turn only. Does <strong>not</strong> restrict</td></tr>
+<tr><td><code>license</code>, <code>compatibility</code>, <code>metadata</code> <span class="badge b-fact">spec</span></td><td>Accepted, not acted on by Claude Code</td></tr>
+<tr><td><code>disable-model-invocation</code></td><td>Only you can invoke. Removes the description from context entirely</td></tr>
+<tr><td><code>user-invocable: false</code></td><td>Only Claude can invoke. Hidden from the <code>/</code> menu</td></tr>
+<tr><td><code>disallowed-tools</code></td><td>Removes tools from the pool while active. Clears on your next message</td></tr>
+<tr><td><code>context: fork</code></td><td>Runs in a subagent. Backgrounded by default; <code>background: false</code> to block the turn</td></tr>
+<tr><td><code>agent</code></td><td>Which subagent type executes the fork. <code>Explore</code> and <code>Plan</code> skip CLAUDE.md and git status</td></tr>
+<tr><td><code>paths</code></td><td>Globs limiting when the skill auto-activates</td></tr>
+<tr><td><code>model</code>, <code>effort</code></td><td>Override for the turn. Not saved to settings</td></tr>
+<tr><td><code>hooks</code></td><td>Hooks scoped to this skill's lifecycle. Requires approval before first use</td></tr>
+<tr><td><code>argument-hint</code>, <code>arguments</code></td><td>Autocomplete hint; named positional args for <code>$name</code></td></tr>
+</tbody>
+</table></div>
+<p class="label">Substitutions</p>
+<pre><code>$ARGUMENTS   $ARGUMENTS[0]   $0 $1 $2   $&lt;named&gt;
+${CLAUDE_SESSION_ID}  ${CLAUDE_EFFORT}
+${CLAUDE_SKILL_DIR}   ${CLAUDE_PROJECT_DIR}
+
+!`git diff HEAD`        # inline shell injection, runs before Claude sees it
+```!                    # fenced form for multi-line
+node --version
+```</code></pre>
+<div class="note warn"><span class="nt">Two traps</span><p><code>context: fork</code> on a reference-only skill produces nothing: the subagent gets the knowledge but no task. Only fork skills with explicit step-by-step instructions.</p><p>An invoked skill's content stays in context for the whole session. Every line is a recurring cost. Keep <code>SKILL.md</code> under 500 lines and push detail into sibling files.</p></div>
+
+<h2>Hook events</h2>
+<div class="tw"><table>
+<thead><tr><th>Group</th><th>Events</th></tr></thead>
+<tbody>
+<tr><td>Session</td><td><code>SessionStart</code>, <code>Setup</code>, <code>InstructionsLoaded</code>, <code>SessionEnd</code></td></tr>
+<tr><td>Prompt</td><td><code>UserPromptSubmit</code>, <code>UserPromptExpansion</code>, <code>MessageDisplay</code></td></tr>
+<tr><td>Tools</td><td><code>PreToolUse</code>, <code>PostToolUse</code>, <code>PostToolUseFailure</code>, <code>PostToolBatch</code></td></tr>
+<tr><td>Permissions</td><td><code>PermissionRequest</code>, <code>PermissionDenied</code></td></tr>
+<tr><td>Turn</td><td><code>Stop</code>, <code>StopFailure</code>, <code>Notification</code></td></tr>
+<tr><td>Agents</td><td><code>SubagentStart</code>, <code>SubagentStop</code>, <code>TeammateIdle</code>, <code>TaskCreated</code>, <code>TaskCompleted</code></td></tr>
+<tr><td>Context</td><td><code>PreCompact</code>, <code>PostCompact</code></td></tr>
+<tr><td>Environment</td><td><code>ConfigChange</code>, <code>CwdChanged</code>, <code>DirectoryAdded</code>, <code>FileChanged</code>, <code>WorktreeCreate</code>, <code>WorktreeRemove</code></td></tr>
+<tr><td>MCP</td><td><code>Elicitation</code>, <code>ElicitationResult</code></td></tr>
+</tbody>
+</table></div>
+<p>Four handler types: <code>command</code>, <code>http</code>, <code>prompt</code> (model-evaluated), <code>agent</code> (subagent-evaluated). Exit code 2 blocks; structured JSON output gives finer control. Hooks can run async in the background.</p>
+
+<h2>Commands worth knowing</h2>
+<div class="tw"><table>
+<thead><tr><th>Command</th><th>Use</th></tr></thead>
+<tbody>
+<tr><td><code>/context</code> <code>/doctor</code> <code>/memory</code> <code>/mcp</code> <code>/hooks</code></td><td>Diagnose what loaded and what it cost</td></tr>
+<tr><td><code>/goal</code> <code>/loop</code></td><td>Keep a session running to a condition or on an interval</td></tr>
+<tr><td><code>/workflows</code> <code>/deep-research</code></td><td>Run and manage dynamic workflows</td></tr>
+<tr><td><code>/effort</code> <code>/model</code> <code>/config</code></td><td>Reasoning depth, model, feature toggles</td></tr>
+<tr><td><code>/plugin</code> <code>/reload-plugins</code> <code>/skills</code></td><td>Manage extensions; <code>/skills</code> writes <code>skillOverrides</code></td></tr>
+<tr><td><code>/rewind</code> (or <code>Esc</code> twice)</td><td>Restore code, conversation, or both to an earlier point</td></tr>
+<tr><td><code>/compact focus on X</code></td><td>Guide what survives summarisation</td></tr>
+<tr><td><code>/init</code> <code>/import</code></td><td>Generate CLAUDE.md; import config from another agent tool</td></tr>
+<tr><td><code>/run</code> <code>/verify</code> <code>/run-skill-generator</code></td><td>Launch and verify your app against reality, not just tests</td></tr>
+<tr><td><code>/code-review</code> <code>/security-review</code></td><td>Bundled review skills. Manual-invoke only, by design</td></tr>
+<tr><td><code>claude agents</code></td><td>Agent view over background sessions</td></tr>
+</tbody>
+</table></div>
+
+<h2>Numbers to remember</h2>
+<div class="tw"><table>
+<thead><tr><th>Limit</th><th>Value</th></tr></thead>
+<tbody>
+<tr><td>CLAUDE.md target size</td><td>Under 200 lines</td></tr>
+<tr><td><code>SKILL.md</code> target size</td><td>Under 500 lines</td></tr>
+<tr><td>Auto-memory index loaded at start</td><td>First 200 lines or 25KB of <code>MEMORY.md</code></td></tr>
+<tr><td>Skill listing budget</td><td>1% of context window (<code>skillListingBudgetFraction</code>)</td></tr>
+<tr><td>Skill description cap</td><td>1,536 characters including <code>when_to_use</code></td></tr>
+<tr><td>Skill re-attach after compaction</td><td>First 5,000 tokens each, 25,000 total, most-recent-first</td></tr>
+<tr><td>Workflow concurrency</td><td>16 agents, fewer on low-core machines</td></tr>
+<tr><td>Workflow total</td><td>1,000 agents per run; warning at 25 agents or 1.5M projected tokens</td></tr>
+<tr><td><code>/goal</code> condition length</td><td>4,000 characters</td></tr>
+<tr><td>CLAUDE.md import depth</td><td>4 hops</td></tr>
+</tbody>
+</table></div>
+
+<h2>Sources</h2>
+<p class="label">All verified 10 August 2026</p>
+<ul>
+<li><a href="https://code.claude.com/docs/en/claude_code_docs_map">Claude Code documentation map</a> — the LLM-navigable index; fetch this first when re-verifying</li>
+<li><a href="https://code.claude.com/docs/en/how-claude-code-works">How Claude Code works</a> · <a href="https://code.claude.com/docs/en/features-overview">Extend Claude Code</a> · <a href="https://code.claude.com/docs/en/best-practices">Best practices</a></li>
+<li><a href="https://code.claude.com/docs/en/skills">Skills</a> · <a href="https://code.claude.com/docs/en/memory">Memory</a> · <a href="https://code.claude.com/docs/en/sub-agents">Subagents</a> · <a href="https://code.claude.com/docs/en/hooks">Hooks</a></li>
+<li><a href="https://code.claude.com/docs/en/workflows">Dynamic workflows</a> · <a href="https://code.claude.com/docs/en/goal">/goal</a> · <a href="https://code.claude.com/docs/en/agent-teams">Agent teams</a> · <a href="https://code.claude.com/docs/en/scheduled-tasks">Scheduled tasks</a></li>
+<li><a href="https://code.claude.com/docs/en/plugins">Plugins</a> · <a href="https://code.claude.com/docs/en/plugin-marketplaces">Marketplaces</a> · <a href="https://github.com/anthropics/claude-plugins-official">Official marketplace repo</a></li>
+<li><a href="https://support.claude.com/en/articles/13837440-use-plugins-in-claude">Plugins in Claude (chat and Cowork)</a> · <a href="https://support.claude.com/en/articles/12512180-use-skills-in-claude">Skills in Claude</a></li>
+<li><a href="https://agentskills.io">Agent Skills open standard</a> — the six-field frontmatter spec</li>
+</ul>
+
+<div class="note info"><span class="nt">Re-verification protocol</span><p>Anthropic ships weekly. When something here stops matching reality, fetch the docs map above and ask Claude Code directly: it fetches its own documentation to answer questions about itself. Section 08 is the only part of this guide expected to go stale; sections 01 through 06 should hold.</p></div>
+</section>
+
+<footer>
+  Documentation context: 17px body, 1.7 line height, 760px prose measure, 220px left navigation, anchor-free tabbed sections. Light and dark tokens both WCAG AA on body text and above. Design tokens v1.2.0.
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.nav button'));
+  var panels=[].slice.call(document.querySelectorAll('.panel'));
+  tabs.forEach(function(b){
+    b.addEventListener('click',function(){
+      tabs.forEach(function(x){x.setAttribute('aria-selected','false')});
+      panels.forEach(function(p){p.classList.remove('active')});
+      b.setAttribute('aria-selected','true');
+      var t=document.getElementById(b.dataset.t);
+      if(t)t.classList.add('active');
+      document.querySelector('.main').scrollTop=0;
+      window.scrollTo({top:0,behavior:'auto'});
+    });
+    b.addEventListener('keydown',function(e){
+      var i=tabs.indexOf(b),n=null;
+      if(e.key==='ArrowDown'||e.key==='ArrowRight')n=tabs[(i+1)%tabs.length];
+      if(e.key==='ArrowUp'||e.key==='ArrowLeft')n=tabs[(i-1+tabs.length)%tabs.length];
+      if(n){e.preventDefault();n.focus();n.click();}
+    });
+  });
+  var btn=document.getElementById('tt');
+  btn.addEventListener('click',function(){
+    var d=document.documentElement.classList.toggle('dark');
+    btn.textContent=d?'Light theme':'Dark theme';
+  });
+})();
+</script>
+</body>
+</html>
