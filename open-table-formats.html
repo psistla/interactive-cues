@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open table formats in six slides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font:'Manrope',system-ui,-apple-system,sans-serif;
+  --code:'JetBrains Mono','Fira Code',Consolas,monospace;
+  --n0:#FFFFFF;--n50:#F8F9FA;--n100:#F1F3F5;--n200:#E9ECEF;--n300:#DEE2E6;--n400:#ADB5BD;--n500:#868E96;--n600:#495057;--n700:#343A40;--n800:#212529;--n900:#16191D;--n950:#0D0F12;
+  --p50:#EEF2FF;--p400:#818CF8;--p600:#4F46E5;--p700:#4338CA;
+  --a50:#FFFBEB;--a400:#FBBF24;--a500:#F59E0B;--a700:#B45309;
+  --success:#15803D;--success-bg:#F0FDF4;--success-text:#14532D;
+  --error:#DC2626;--error-bg:#FEF2F2;--error-text:#991B1B;
+  --info:#2563EB;--info-bg:#EFF6FF;--info-text:#1E40AF;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);--shadow-lg:0 4px 16px rgba(0,0,0,.08);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--n100);color:var(--n800);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+
+.stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.frame{position:relative;width:1280px;height:720px;transform-origin:center center;background:var(--n0);border-radius:12px;box-shadow:var(--shadow-lg);overflow:hidden}
+.slide{position:absolute;inset:0;padding:44px 64px 54px;display:none;flex-direction:column;opacity:0;transform:translateY(8px)}
+.slide.active{display:flex;opacity:1;transform:none;transition:opacity 250ms var(--ease-out),transform 250ms var(--ease-out)}
+.slide.m-dark{background:var(--n950);color:var(--n200)}
+
+.eyebrow{font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--p600);margin:0 0 8px}
+.slide.m-dark .eyebrow{color:var(--p400)}
+h1{font-size:56px;line-height:1.1;letter-spacing:-.035em;font-weight:800;margin:0 0 18px;max-width:1000px}
+h2{font-size:34px;line-height:1.2;letter-spacing:-.025em;font-weight:700;margin:0 0 18px}
+h3{font-size:20px;line-height:1.3;letter-spacing:-.015em;font-weight:700;margin:0 0 6px}
+p{font-size:18px;margin:0 0 10px;line-height:1.45}
+.lead{font-size:23px;color:var(--n600);max-width:1040px}
+.sm{font-size:15px;color:var(--n600)}
+ul{margin:0;padding-left:22px;font-size:18px;line-height:1.4}
+li{margin:0 0 7px}
+strong{font-weight:700}
+code{font-family:var(--code);font-size:.86em;background:var(--n100);padding:1px 6px;border-radius:4px}
+
+.cols{display:grid;gap:18px;flex:1;min-height:0}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:1fr 1fr 1fr}
+.cols-32{grid-template-columns:3fr 2fr}
+.card{background:var(--n0);border:1px solid var(--n200);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow-sm)}
+.card.surface{background:var(--n50)}
+.card h3{margin-top:0}
+.card ul{font-size:15px}
+.card li{margin-bottom:5px}
+.card p{font-size:15px;margin-bottom:6px}
+.slide.m-dark .card{background:var(--n900);border-color:var(--n700)}
+.callout{border-left:4px solid var(--a500);background:var(--a50);border-radius:0 10px 10px 0;padding:12px 18px;margin-top:auto}
+.callout p{font-size:16px;margin:0}
+.callout .lbl{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--a700);display:block;margin-bottom:3px}
+.callout.info{border-color:var(--info);background:var(--info-bg)}.callout.info .lbl{color:var(--info-text)}
+
+table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.35}
+th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--n600);padding:6px 10px;border-bottom:2px solid var(--n200)}
+td{padding:8px 10px;border-bottom:1px solid var(--n100);vertical-align:top}
+td:first-child{font-weight:600}
+
+.stack{display:flex;flex-direction:column;gap:8px}
+.layer{border:1px solid var(--n300);border-radius:8px;padding:12px 18px;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:20px;background:var(--n0)}
+.layer .k{font-weight:700;white-space:nowrap}
+.layer .v{color:var(--n600);font-size:14px;text-align:right}
+.layer.hi{border-color:var(--p600);background:var(--p50)}
+.layer.hi .v{color:var(--p700)}
+.layer.acc{border-color:var(--a500);background:var(--a50)}
+.layer.acc .v{color:var(--a700)}
+.chip{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:9999px;background:var(--p50);color:var(--p700);margin:0 5px 5px 0}
+.chip.a{background:var(--a50);color:var(--a700)}
+.problem{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--n200);border-radius:10px;overflow:hidden}
+.problem .before,.problem .after{padding:12px 16px;font-size:15px}
+.problem .before{background:var(--error-bg);color:var(--n800);border-right:1px solid var(--n200)}
+.problem .after{background:var(--success-bg)}
+.problem .t{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px}
+.problem .before .t{color:var(--error-text)}
+.problem .after .t{color:var(--success-text)}
+
+.rail{position:absolute;left:0;top:0;height:4px;background:var(--p600);width:0;transition:width 200ms var(--ease-out);z-index:2}
+.foot{position:absolute;left:64px;right:64px;bottom:18px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--n500);font-family:var(--code)}
+.foot .sec{color:var(--n600);font-family:var(--font);font-weight:600;letter-spacing:.04em;text-transform:uppercase;font-size:11px}
+.hud{position:fixed;right:20px;bottom:20px;display:flex;gap:8px;z-index:10}
+.hud button{min-width:44px;min-height:44px;border:1px solid var(--n300);background:var(--n0);border-radius:8px;font-weight:600;font-size:14px;color:var(--n700);cursor:pointer;padding:0 14px;box-shadow:var(--shadow-sm)}
+.hud button:hover{border-color:var(--p600);color:var(--p700)}
+.hud button:focus-visible{outline:2px solid var(--p600);outline-offset:2px}
+.help{position:fixed;left:20px;bottom:20px;font-size:13px;color:var(--n600);background:var(--n0);border:1px solid var(--n200);border-radius:8px;padding:8px 12px;font-family:var(--code);z-index:10}
+.help kbd{background:var(--n100);border:1px solid var(--n300);border-radius:4px;padding:0 5px;font-family:inherit}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  html,body{background:#fff;height:auto}
+  .stage{position:static;display:block}
+  .frame{transform:none!important;box-shadow:none;border-radius:0;margin:0 auto;page-break-after:always}
+  .slide{display:flex!important;opacity:1!important;transform:none!important;position:relative;height:720px}
+  .hud,.help,.rail{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="stage"><div class="frame" id="frame">
+<div class="rail" id="rail"></div>
+
+<!-- 1. TITLE -->
+<section class="slide" data-section="Open table formats">
+  <p class="eyebrow">Six slides, August 2026</p>
+  <h1>Open table formats: what they are, what they fix, which one to pick</h1>
+  <p class="lead">A data lake is a pile of files. A table format is the contract that turns the pile into a database table you can trust: one that has a schema, a history, and safe concurrent writes. Two formats matter in enterprise estates today, Delta Lake and Apache Iceberg, and the choice between them is simpler than the debate suggests.</p>
+  <div class="cols cols-3" style="flex:0 0 auto;margin-top:auto">
+    <div class="card surface"><h3>1. What they are</h3><p>Metadata on top of Parquet files.</p></div>
+    <div class="card surface"><h3>2. What they fix</h3><p>Six problems every lake hits.</p></div>
+    <div class="card surface"><h3>3. What to pick</h3><p>Three questions; the format follows.</p></div>
+  </div>
+</section>
+
+<!-- 2. WHAT THEY ARE -->
+<section class="slide" data-section="What they are">
+  <p class="eyebrow">What they are</p>
+  <h2>Parquet files plus a metadata layer that makes them behave like a table</h2>
+  <div class="cols cols-32">
+    <div class="stack">
+      <div class="layer hi"><span class="k">Catalog</span><span class="v">Turns a name into a table. Holds permissions and the pointer to the current version.</span></div>
+      <div class="layer"><span class="k">Table metadata</span><span class="v">Schema, partitioning, version history: which files are part of the table right now.</span></div>
+      <div class="layer"><span class="k">Statistics and deletes</span><span class="v">Min, max and null counts per file for skipping; markers for deleted rows so files are not rewritten.</span></div>
+      <div class="layer acc"><span class="k">Data files</span><span class="v">Parquet. Immutable, portable, readable by any engine. Identical in both formats.</span></div>
+    </div>
+    <div>
+      <h3>The one difference that explains the rest</h3>
+      <p><strong>Delta Lake</strong> keeps its truth in a transaction log inside the table folder. A catalog is helpful but optional. Grew up inside Databricks and Microsoft Fabric.</p>
+      <p><strong>Apache Iceberg</strong> keeps its truth in the catalog, which points to the current metadata file. No catalog, no table. Grew up at Netflix for many engines sharing one lake; native to Snowflake, AWS and Google.</p>
+      <p class="sm">By 2026 both support the same core features: row-level deletes without rewrites, time travel, schema evolution, change tracking, semi-structured columns. The differences that remain are about ecosystem, not capability.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. WHAT THEY FIX -->
+<section class="slide" data-section="What they fix">
+  <p class="eyebrow">What they fix</p>
+  <h2>Six problems every file-based lake hits, and how a table format solves each</h2>
+  <div class="cols cols-2" style="gap:12px">
+    <div class="problem"><div class="before"><span class="t">Without</span>A job fails halfway and readers see half-written data.</div><div class="after"><span class="t">With</span>Atomic commits: readers see the old version or the new one, never a mix.</div></div>
+    <div class="problem"><div class="before"><span class="t">Without</span>Someone adds a column upstream and downstream reports break silently.</div><div class="after"><span class="t">With</span>Schema is versioned and enforced; evolution is explicit and backward compatible.</div></div>
+    <div class="problem"><div class="before"><span class="t">Without</span>Deleting one customer for a privacy request means rewriting terabytes.</div><div class="after"><span class="t">With</span>Row-level deletes and updates mark rows without rewriting the files.</div></div>
+    <div class="problem"><div class="before"><span class="t">Without</span>A bad load overwrites good data and there is no way back.</div><div class="after"><span class="t">With</span>Every commit is a version: time travel, audit, rollback.</div></div>
+    <div class="problem"><div class="before"><span class="t">Without</span>Queries list thousands of files and scan most of them.</div><div class="after"><span class="t">With</span>File statistics let the engine skip files it does not need to open.</div></div>
+    <div class="problem"><div class="before"><span class="t">Without</span>Two teams write the same folder and corrupt each other's output.</div><div class="after"><span class="t">With</span>Optimistic concurrency detects conflicting writes and rejects one safely.</div></div>
+  </div>
+  <div class="callout" style="margin-top:14px">
+    <span class="lbl">The cost</span>
+    <p>These guarantees are not free. Someone must own compaction of small files, expiry of old versions and the catalog itself. A table format without maintenance degrades within weeks.</p>
+  </div>
+</section>
+
+<!-- 4. DELTA VS ICEBERG -->
+<section class="slide" data-section="Delta vs Iceberg">
+  <p class="eyebrow">Delta vs Iceberg</p>
+  <h2>Same capabilities, different neighbourhoods</h2>
+  <table>
+    <thead><tr><th style="width:22%">Question</th><th>Delta Lake</th><th>Apache Iceberg</th></tr></thead>
+    <tbody>
+      <tr><td>Who writes it natively?</td><td>Microsoft Fabric (every engine), Databricks, Spark</td><td>Snowflake, AWS (Glue, Athena, EMR), Google BigQuery, Spark, Flink, Trino</td></tr>
+      <tr><td>Does it need a catalog?</td><td>No; the log in the folder is the truth. A catalog adds governance and multi-table transactions.</td><td>Yes; the catalog is the truth. A catalog outage is a data outage.</td></tr>
+      <tr><td>Can the table be moved?</td><td>Yes; paths are relative, so copies and shortcuts just work.</td><td>Only by its writer; paths are absolute inside the metadata.</td></tr>
+      <tr><td>How do other engines read it?</td><td>UniForm or OneLake generate Iceberg metadata; Snowflake and BigQuery read that.</td><td>Any engine that speaks the Iceberg REST catalog protocol.</td></tr>
+      <tr><td>Where is the lock-in?</td><td>In the platform: the deepest features live in Databricks and Fabric.</td><td>In the catalog: the REST spec standardises the wire, not the governance.</td></tr>
+    </tbody>
+  </table>
+  <div class="cols cols-2" style="flex:0 0 auto;margin-top:16px">
+    <div class="card" style="border-top:4px solid var(--p600)"><h3>Delta gravity</h3><span class="chip">Microsoft Fabric</span><span class="chip">Databricks</span><span class="chip">Azure</span></div>
+    <div class="card" style="border-top:4px solid var(--a500)"><h3>Iceberg gravity</h3><span class="chip a">Snowflake</span><span class="chip a">AWS</span><span class="chip a">Google</span><span class="chip a">Trino, Flink</span></div>
+  </div>
+</section>
+
+<!-- 5. HOW TO PICK -->
+<section class="slide" data-section="How to pick">
+  <p class="eyebrow">How to pick</p>
+  <h2>Do not choose a format. Answer three questions and it chooses itself.</h2>
+  <div class="stack" style="gap:10px;margin-bottom:16px">
+    <div class="layer hi"><span class="k" style="font-size:19px">1. Which engine writes the table?</span><span class="v">Its native format wins. Fighting the writer means paying for a translation layer on every commit.</span></div>
+    <div class="layer hi"><span class="k" style="font-size:19px">2. Which catalog governs it?</span><span class="v">The ten-year decision. Sets governance, credentials, and who can add a writer later.</span></div>
+    <div class="layer hi"><span class="k" style="font-size:19px">3. Who else must read it without a copy?</span><span class="v">Picks the interop layer, not the format. One writer per table; everyone else reads a projection.</span></div>
+  </div>
+  <table>
+    <thead><tr><th style="width:34%">If your estate looks like this</th><th>Pick</th></tr></thead>
+    <tbody>
+      <tr><td>Fabric or Databricks does the writing</td><td>Delta. Serve Iceberg readers through UniForm, OneLake virtualization, or managed Iceberg tables.</td></tr>
+      <tr><td>Snowflake, AWS or Google does the writing</td><td>Iceberg. It is the only open format those platforms write.</td></tr>
+      <tr><td>Many engines, no dominant platform</td><td>Iceberg plus a vendor-neutral REST catalog (Polaris or equivalent). The one case where Iceberg is chosen on its own merits.</td></tr>
+      <tr><td>Two platforms both want to write the same tables</td><td>Not a format problem. Fix ownership first: one writer per table.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 6. FABRIC -->
+<section class="slide" data-section="Microsoft Fabric">
+  <p class="eyebrow">Microsoft Fabric</p>
+  <h2>In Fabric the format is already decided. Spend the decision on interop.</h2>
+  <div class="cols cols-2">
+    <div class="card surface">
+      <h3>What is fixed</h3>
+      <ul>
+        <li>Every Fabric engine writes Delta to OneLake: Spark, Warehouse, pipelines, mirroring</li>
+        <li>SQL endpoint and Direct Lake read Delta only</li>
+        <li>Iceberg comes in as a read-only Delta projection: OneLake generates the Delta metadata automatically</li>
+        <li>Iceberg goes out as virtual Iceberg metadata plus a read-only Iceberg REST endpoint on OneLake</li>
+      </ul>
+    </div>
+    <div class="card surface">
+      <h3>Three interop paths</h3>
+      <ul>
+        <li><strong>Snowflake or any Iceberg reader needs Fabric data:</strong> point it at the OneLake table endpoint; no copy</li>
+        <li><strong>Snowflake, Glue or BigQuery writes, Fabric reads:</strong> shortcut or mirror the Iceberg table; OneLake virtualizes it to Delta</li>
+        <li><strong>Databricks writes, Fabric reads:</strong> mirror the Unity Catalog into Fabric, or store Unity managed tables in OneLake</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cols cols-3" style="flex:0 0 auto;margin-top:16px">
+    <div class="card"><h3>Guardrail 1</h3><p>One writer engine per table. Deletion vectors are on by default in Spark Runtime 2.0 and Python notebooks cannot write to those tables.</p></div>
+    <div class="card"><h3>Guardrail 2</h3><p>Incoming Iceberg must be V2, under 5000 commits, updated slower than every two minutes, and reachable over the public network.</p></div>
+    <div class="card"><h3>Guardrail 3</h3><p>OPTIMIZE and VACUUM need an owner and a schedule, with retention longer than your slowest reader.</p></div>
+  </div>
+</section>
+
+<div class="foot"><span class="sec" id="footsec"></span><span>Built for scale by Prasanth Sistla</span><span id="footnum"></span></div>
+</div></div>
+
+<div class="help">← → <kbd>space</kbd> navigate · <kbd>H</kbd> hide</div>
+<div class="hud"><button id="prev" aria-label="Previous slide">Prev</button><button id="next" aria-label="Next slide">Next</button></div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')),n=slides.length,cur=0;
+  var rail=document.getElementById('rail'),footsec=document.getElementById('footsec'),footnum=document.getElementById('footnum');
+  var frame=document.getElementById('frame'),help=document.querySelector('.help'),hud=document.querySelector('.hud');
+  function fit(){var s=Math.min((window.innerWidth-24)/1280,(window.innerHeight-24)/720);frame.style.transform='scale('+s+')';}
+  function show(i){i=Math.max(0,Math.min(n-1,i));slides[cur].classList.remove('active');cur=i;slides[cur].classList.add('active');
+    rail.style.width=((cur+1)/n*100)+'%';footsec.textContent=slides[cur].dataset.section||'';footnum.textContent=(cur+1)+' / '+n;location.hash='#/'+(cur+1);}
+  document.getElementById('prev').onclick=function(){show(cur-1)};
+  document.getElementById('next').onclick=function(){show(cur+1)};
+  document.addEventListener('keydown',function(e){
+    switch(e.key){
+      case 'ArrowRight':case ' ':case 'PageDown':e.preventDefault();show(cur+1);break;
+      case 'ArrowLeft':case 'PageUp':e.preventDefault();show(cur-1);break;
+      case 'Home':show(0);break;case 'End':show(n-1);break;
+      case 'h':case 'H':help.style.display=help.style.display==='none'?'':'none';hud.style.display=hud.style.display==='none'?'':'none';break;
+    }
+  });
+  var tx=null;
+  document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  document.addEventListener('touchend',function(e){if(tx===null)return;var dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>60)show(cur+(dx<0?1:-1));tx=null;},{passive:true});
+  window.addEventListener('resize',fit);
+  window.addEventListener('hashchange',function(){var m=location.hash.match(/#\/(\d+)/);if(m)show(parseInt(m[1],10)-1);});
+  var m=location.hash.match(/#\/(\d+)/);fit();show(m?parseInt(m[1],10)-1:0);
+})();
+</script>
+</body>
+</html>
