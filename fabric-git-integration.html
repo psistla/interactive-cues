@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Fabric Dev Workspace: Git Integration Runbook</title>
+<style>
+:root{
+--m-font-primary:'Manrope','Segoe UI Variable Text',system-ui,-apple-system,sans-serif;
+--m-font-code:'JetBrains Mono','Cascadia Mono','Consolas',monospace;
+--m-text-xs:.6875rem;--m-text-sm:.8125rem;--m-text-base:.9375rem;--m-text-lg:1.0625rem;
+--m-text-xl:1.25rem;--m-text-2xl:1.5rem;--m-text-3xl:1.875rem;
+--m-weight-medium:500;--m-weight-semibold:600;--m-weight-bold:700;
+--m-leading-tight:1.25;--m-leading-snug:1.4;--m-leading-normal:1.6;
+--m-tracking-tight:-.015em;--m-tracking-tighter:-.025em;--m-tracking-wide:.04em;
+--m-neutral-0:#FFFFFF;--m-neutral-50:#F8F9FA;--m-neutral-100:#F1F3F5;--m-neutral-200:#E9ECEF;
+--m-neutral-300:#DEE2E6;--m-neutral-400:#ADB5BD;--m-neutral-500:#868E96;--m-neutral-600:#495057;
+--m-neutral-700:#343A40;--m-neutral-800:#212529;--m-neutral-900:#16191D;--m-neutral-950:#0D0F12;
+--m-primary-50:#EEF2FF;--m-primary-100:#E0E7FF;--m-primary-200:#C7D2FE;--m-primary-300:#A5B4FC;
+--m-primary-400:#818CF8;--m-primary-600:#4F46E5;--m-primary-700:#4338CA;--m-primary-800:#3730A3;
+--m-primary-900:#312E81;
+--m-accent-400:#FBBF24;--m-accent-700:#B45309;
+--m-success:#15803D;--m-success-bg:#F0FDF4;--m-success-text:#14532D;
+--m-warning:#EA580C;--m-warning-bg:#FFF7ED;--m-warning-text:#9A3412;
+--m-error:#DC2626;--m-error-bg:#FEF2F2;--m-error-text:#991B1B;
+--m-info:#2563EB;--m-info-bg:#EFF6FF;--m-info-text:#1E40AF;
+--m-bg:var(--m-neutral-0);--m-surface:var(--m-neutral-50);--m-border:var(--m-neutral-200);
+--m-border-subtle:var(--m-neutral-100);--m-text:var(--m-neutral-800);
+--m-text-secondary:var(--m-neutral-600);--m-primary:var(--m-primary-600);
+--m-primary-hover:var(--m-primary-700);--m-primary-subtle:var(--m-primary-50);
+--m-accent:var(--m-accent-700);--m-on-primary:#FFFFFF;
+--m-space-1:.25rem;--m-space-2:.5rem;--m-space-3:.75rem;--m-space-4:1rem;--m-space-5:1.25rem;
+--m-space-6:1.5rem;--m-space-8:2rem;--m-space-10:2.5rem;--m-space-12:3rem;--m-space-16:4rem;
+--m-radius-sm:4px;--m-radius-md:8px;--m-radius-lg:12px;--m-radius-full:9999px;
+--m-shadow-sm:0 1px 2px rgba(0,0,0,.04);--m-shadow-md:0 2px 8px rgba(0,0,0,.06);
+--m-ease-out-expo:cubic-bezier(.16,1,.3,1);
+color-scheme:light;
+}
+html.dark{
+--m-bg:var(--m-neutral-950);--m-surface:var(--m-neutral-900);--m-border:var(--m-neutral-700);
+--m-border-subtle:var(--m-neutral-800);--m-text:var(--m-neutral-200);
+--m-text-secondary:var(--m-neutral-400);--m-primary:var(--m-primary-400);
+--m-primary-hover:var(--m-primary-300);--m-primary-subtle:rgba(129,140,248,.12);
+--m-accent:var(--m-accent-400);--m-on-primary:var(--m-neutral-950);
+--m-success:#4ADE80;--m-success-bg:rgba(74,222,128,.10);--m-success-text:#86EFAC;
+--m-warning:#FB923C;--m-warning-bg:rgba(251,146,60,.10);--m-warning-text:#FDBA74;
+--m-error:#F87171;--m-error-bg:rgba(248,113,113,.10);--m-error-text:#FCA5A5;
+--m-info:#60A5FA;--m-info-bg:rgba(96,165,250,.10);--m-info-text:#93C5FD;
+--m-shadow-sm:0 1px 2px rgba(0,0,0,.2);--m-shadow-md:0 2px 8px rgba(0,0,0,.3);
+color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--m-font-primary);font-size:var(--m-text-base);
+line-height:var(--m-leading-normal);color:var(--m-text);background:var(--m-bg);
+-webkit-font-smoothing:antialiased;
+transition:background 200ms var(--m-ease-out-expo),color 200ms var(--m-ease-out-expo)}
+:focus-visible{outline:2px solid var(--m-primary);outline-offset:2px}
+::selection{background:var(--m-primary-100);color:var(--m-primary-900)}
+html.dark ::selection{background:var(--m-primary-800);color:var(--m-primary-100)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+
+.wrap{max-width:1000px;margin:0 auto;padding:var(--m-space-10) var(--m-space-5) var(--m-space-16)}
+header.hd{border-bottom:1px solid var(--m-border);padding-bottom:var(--m-space-6);margin-bottom:var(--m-space-8)}
+.toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--m-space-4)}
+.eyebrow{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-accent);margin-bottom:var(--m-space-2)}
+h1{font-size:var(--m-text-3xl);font-weight:var(--m-weight-bold);letter-spacing:var(--m-tracking-tighter);
+line-height:var(--m-leading-tight);margin-bottom:var(--m-space-3)}
+.sub{color:var(--m-text-secondary);max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:var(--m-space-2);margin-top:var(--m-space-4)}
+.badge{display:inline-flex;align-items:center;gap:var(--m-space-1);font-size:var(--m-text-xs);
+font-weight:var(--m-weight-semibold);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+padding:4px 10px;border-radius:var(--m-radius-full);border:1px solid var(--m-border);
+background:var(--m-surface);color:var(--m-text-secondary)}
+.badge.v{background:var(--m-success-bg);border-color:var(--m-success);color:var(--m-success-text)}
+.badge.p{background:var(--m-warning-bg);border-color:var(--m-warning);color:var(--m-warning-text)}
+.badge.j{background:var(--m-info-bg);border-color:var(--m-info);color:var(--m-info-text)}
+.themebtn{display:inline-flex;align-items:center;gap:var(--m-space-2);flex:0 0 auto;
+min-height:44px;padding:10px 16px;border:1px solid var(--m-border);border-radius:var(--m-radius-md);
+background:var(--m-bg);color:var(--m-text);font:inherit;font-size:var(--m-text-sm);
+font-weight:var(--m-weight-semibold);cursor:pointer;
+transition:background 120ms var(--m-ease-out-expo),border-color 120ms var(--m-ease-out-expo)}
+.themebtn:hover{background:var(--m-surface);border-color:var(--m-primary)}
+.themebtn svg{color:var(--m-text-secondary)}
+
+h2{font-size:var(--m-text-xl);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight);
+line-height:var(--m-leading-snug);margin-bottom:var(--m-space-4)}
+p{margin-bottom:var(--m-space-3)}
+section.blk{margin-bottom:var(--m-space-12)}
+.card{background:var(--m-bg);border:1px solid var(--m-border);border-radius:var(--m-radius-lg);
+padding:var(--m-space-6);box-shadow:var(--m-shadow-sm)}
+
+.steps{display:flex;align-items:center;gap:var(--m-space-2);margin-bottom:var(--m-space-6);flex-wrap:wrap}
+.dot{display:flex;align-items:center;gap:var(--m-space-2);font-size:var(--m-text-xs);
+font-weight:var(--m-weight-semibold);color:var(--m-text-secondary)}
+.dot i{width:26px;height:26px;border-radius:var(--m-radius-full);border:1px solid var(--m-border);
+display:flex;align-items:center;justify-content:center;font-style:normal;font-size:var(--m-text-xs);
+background:var(--m-surface);transition:background 200ms var(--m-ease-out-expo)}
+.dot.on i{background:var(--m-primary);border-color:var(--m-primary);color:var(--m-on-primary)}
+.dot.on{color:var(--m-text)}
+.dot.done i{background:var(--m-primary-subtle);border-color:var(--m-primary);color:var(--m-primary)}
+.dot .bar{width:18px;height:1px;background:var(--m-border)}
+
+.q{font-size:var(--m-text-xl);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight);
+margin-bottom:var(--m-space-2)}
+.qhelp{color:var(--m-text-secondary);font-size:var(--m-text-sm);margin-bottom:var(--m-space-5);max-width:66ch}
+.opts{display:grid;gap:var(--m-space-3)}
+.opt{display:flex;gap:var(--m-space-3);align-items:flex-start;width:100%;text-align:left;
+min-height:44px;padding:var(--m-space-4);border:1px solid var(--m-border);border-radius:var(--m-radius-md);
+background:var(--m-bg);cursor:pointer;font:inherit;color:inherit;
+transition:border-color 120ms var(--m-ease-out-expo),background 120ms var(--m-ease-out-expo)}
+.opt:hover{border-color:var(--m-primary);background:var(--m-primary-subtle)}
+.opt.sel{border-color:var(--m-primary);background:var(--m-primary-subtle);box-shadow:inset 3px 0 0 var(--m-primary)}
+.opt .ol{font-weight:var(--m-weight-semibold);display:block}
+.opt .od{display:block;color:var(--m-text-secondary);font-size:var(--m-text-sm);margin-top:2px}
+code{font-family:var(--m-font-code);font-size:.92em;background:var(--m-surface);
+border:1px solid var(--m-border-subtle);padding:1px 5px;border-radius:var(--m-radius-sm)}
+.nav{display:flex;justify-content:space-between;gap:var(--m-space-3);margin-top:var(--m-space-6);
+padding-top:var(--m-space-5);border-top:1px solid var(--m-border-subtle)}
+button.btn{font:inherit;font-weight:var(--m-weight-semibold);font-size:var(--m-text-sm);
+padding:10px 20px;min-height:44px;border-radius:var(--m-radius-md);cursor:pointer;border:1px solid transparent;
+transition:background 120ms var(--m-ease-out-expo)}
+button.btn.pri{background:var(--m-primary);color:var(--m-on-primary)}
+button.btn.pri:hover{background:var(--m-primary-hover)}
+button.btn.sec{background:var(--m-bg);border-color:var(--m-border);color:var(--m-text)}
+button.btn.sec:hover{background:var(--m-surface)}
+button.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.alert{display:flex;gap:var(--m-space-3);padding:var(--m-space-4);border-radius:var(--m-radius-md);
+border:1px solid;margin-bottom:var(--m-space-4);align-items:flex-start}
+.alert .at{font-weight:var(--m-weight-semibold);font-size:var(--m-text-sm);display:block;margin-bottom:2px}
+.alert .ab{color:var(--m-text);font-size:var(--m-text-sm)}
+.alert .ai{flex:0 0 auto;margin-top:1px}
+.alert.err{background:var(--m-error-bg);border-color:var(--m-error)}
+.alert.err .at{color:var(--m-error-text)}.alert.err .ai{color:var(--m-error)}
+.alert.warn{background:var(--m-warning-bg);border-color:var(--m-warning)}
+.alert.warn .at{color:var(--m-warning-text)}.alert.warn .ai{color:var(--m-warning)}
+.alert.ok{background:var(--m-success-bg);border-color:var(--m-success)}
+.alert.ok .at{color:var(--m-success-text)}.alert.ok .ai{color:var(--m-success)}
+.alert.info{background:var(--m-info-bg);border-color:var(--m-info)}
+.alert.info .at{color:var(--m-info-text)}.alert.info .ai{color:var(--m-info)}
+
+.prog{display:flex;align-items:center;gap:var(--m-space-4);margin-bottom:var(--m-space-6)}
+.track{flex:1;height:8px;background:var(--m-border);border-radius:var(--m-radius-full);overflow:hidden}
+.fill{height:100%;width:0;background:var(--m-primary);border-radius:var(--m-radius-full);
+transition:width 250ms var(--m-ease-out-expo)}
+.pnum{font-family:var(--m-font-code);font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);
+color:var(--m-text-secondary);white-space:nowrap}
+.grp{margin-bottom:var(--m-space-8)}
+.ghd{display:flex;align-items:baseline;gap:var(--m-space-3);margin-bottom:var(--m-space-4);
+padding-bottom:var(--m-space-2);border-bottom:1px solid var(--m-border-subtle)}
+.gname{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-accent)}
+.gcount{font-family:var(--m-font-code);font-size:var(--m-text-xs);color:var(--m-text-secondary)}
+.item{display:flex;gap:var(--m-space-3);padding:var(--m-space-3);border-radius:var(--m-radius-md);
+align-items:flex-start;min-height:44px}
+.item:hover{background:var(--m-surface)}
+.item input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:0 0 auto;
+width:20px;height:20px;margin-top:2px;border:1.5px solid var(--m-neutral-400);border-radius:var(--m-radius-sm);
+background:var(--m-bg);cursor:pointer;position:relative}
+.item input[type=checkbox]:checked{background:var(--m-primary);border-color:var(--m-primary)}
+.item input[type=checkbox]:checked::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+border:solid var(--m-on-primary);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.item label{cursor:pointer;flex:1}
+.itxt{font-weight:var(--m-weight-medium);line-height:var(--m-leading-snug)}
+.inote{display:block;color:var(--m-text-secondary);font-size:var(--m-text-sm);margin-top:var(--m-space-1)}
+.item.done .itxt{color:var(--m-text-secondary);text-decoration:line-through}
+.item.stop{background:var(--m-error-bg);border:1px solid var(--m-error)}
+.tag{display:inline-block;font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);
+letter-spacing:var(--m-tracking-wide);text-transform:uppercase;padding:1px 7px;border-radius:var(--m-radius-full);
+margin-left:var(--m-space-2);vertical-align:1px}
+.tag.v{background:var(--m-success-bg);color:var(--m-success-text);border:1px solid var(--m-success)}
+.tag.p{background:var(--m-warning-bg);color:var(--m-warning-text);border:1px solid var(--m-warning)}
+.tag.j{background:var(--m-info-bg);color:var(--m-info-text);border:1px solid var(--m-info)}
+
+table{width:100%;border-collapse:collapse;font-size:var(--m-text-sm);margin-bottom:var(--m-space-4)}
+th{text-align:left;font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-text-secondary);padding:var(--m-space-2) var(--m-space-3);
+border-bottom:1px solid var(--m-border)}
+td{padding:var(--m-space-3);border-bottom:1px solid var(--m-border-subtle);vertical-align:top}
+details{border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-4) var(--m-space-5);
+margin-bottom:var(--m-space-3);background:var(--m-bg)}
+details[open]{box-shadow:var(--m-shadow-sm)}
+summary{cursor:pointer;font-weight:var(--m-weight-semibold);list-style:none;display:flex;
+align-items:center;gap:var(--m-space-2);min-height:32px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"";width:8px;height:8px;border-right:1.5px solid var(--m-text-secondary);
+border-bottom:1.5px solid var(--m-text-secondary);transform:rotate(-45deg);
+transition:transform 200ms var(--m-ease-out-expo);flex:0 0 auto;margin-right:2px}
+details[open] summary::before{transform:rotate(45deg)}
+.dbody{padding-top:var(--m-space-4)}
+ul.plain{list-style:none;display:grid;gap:var(--m-space-2)}
+ul.plain li{padding-left:var(--m-space-4);position:relative;font-size:var(--m-text-sm)}
+ul.plain li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;
+border-radius:var(--m-radius-full);background:var(--m-neutral-400)}
+footer.ft{margin-top:var(--m-space-16);padding-top:var(--m-space-6);border-top:1px solid var(--m-border);
+display:flex;justify-content:space-between;gap:var(--m-space-4);flex-wrap:wrap;
+font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+.hide{display:none !important}
+#printNote{display:none}
+@media (max-width:640px){
+.wrap{padding:var(--m-space-6) var(--m-space-4) var(--m-space-12)}
+h1{font-size:var(--m-text-2xl)}
+.toprow{flex-direction:column-reverse;align-items:stretch}
+.themebtn{align-self:flex-end}
+.nav{flex-direction:column-reverse}
+.nav button{width:100%}
+table{font-size:var(--m-text-xs)}
+}
+@media print{
+/* Printed output is the checklist plus the gotchas panel. Nothing else. */
+html.dark{color-scheme:light}
+body{background:#fff;color:#212529;font-size:10.5pt;line-height:1.45}
+.wrap{max-width:none;padding:0}
+header.hd .eyebrow,header.hd .sub,header.hd .meta,.themebtn{display:none !important}
+header.hd{border-bottom:1px solid #DEE2E6;padding-bottom:8px;margin-bottom:16px}
+h1{font-size:16pt;margin-bottom:2px}
+#wizardBlock,#verdict,.prog,.nav,footer.ft,.opt,.steps,button{display:none !important}
+#refBlock>h2{display:none !important}
+#refBlock details:not(#gotchas){display:none !important}
+#gotchas{border:none;box-shadow:none;padding:0;margin-top:20px;break-inside:auto}
+#gotchas summary{font-size:13pt;font-weight:700;padding-bottom:6px;border-bottom:1px solid #DEE2E6;margin-bottom:10px}
+#gotchas summary::before{display:none}
+details:not([open])>.dbody{display:block}
+.grp{break-inside:avoid;margin-bottom:16px}
+.item{break-inside:avoid;padding:4px 0;min-height:0}
+.item:hover{background:none}
+.item.done .itxt{text-decoration:line-through;color:#495057}
+.item input[type=checkbox]{-webkit-print-color-adjust:exact;print-color-adjust:exact;
+border:1.5px solid #868E96;width:12pt;height:12pt}
+.tag,.alert,.badge{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.alert{break-inside:avoid}
+.inote{font-size:9pt}
+#wizardBlock:not(.hide) ~ #printNote{display:block !important;font-size:11pt;margin-top:16px}
+#wizardBlock:not(.hide) ~ #refBlock{display:none !important}
+@page{margin:14mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hd">
+  <div class="toprow">
+    <div>
+      <div class="eyebrow">Portal-only runbook, revision 3</div>
+      <h1>Fabric dev workspace, Git integration</h1>
+      <p class="sub">Azure DevOps or GitHub. Git on dev for version history, deployment pipelines for promotion to test and prod. Every step is a click in a portal, with one stated exception on the cross-tenant Azure DevOps path.</p>
+    </div>
+    <button class="themebtn" id="themeBtn" type="button" aria-pressed="false">
+      <span id="themeIcon" aria-hidden="true"></span>
+      <span id="themeLabel">Dark</span>
+    </button>
+  </div>
+  <div class="meta">
+    <span class="badge">Verified 2026-08-25</span>
+    <span class="badge v">V sourced</span>
+    <span class="badge p">P preview</span>
+    <span class="badge j">J judgment</span>
+  </div>
+</header>
+
+<section class="blk" id="wizardBlock">
+  <div class="card">
+    <div class="steps" id="steps"></div>
+    <div id="qwrap" role="group" aria-live="polite"></div>
+    <div class="nav">
+      <button class="btn sec" id="backBtn" type="button">Back</button>
+      <button class="btn pri" id="nextBtn" type="button">Next</button>
+    </div>
+  </div>
+</section>
+
+<section class="blk hide" id="resultBlock">
+  <div id="verdict"></div>
+  <h2>Your checklist</h2>
+  <div class="prog">
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="pnum" id="pnum">0 / 0</div>
+  </div>
+  <div id="list"></div>
+  <div class="nav">
+    <button class="btn sec" id="resetBtn" type="button">Start over</button>
+    <button class="btn sec" id="printBtn" type="button">Print or save as PDF</button>
+  </div>
+</section>
+
+<p id="printNote">Nothing to print yet. Answer the wizard questions first; the printed output is the checklist and the deployment gotchas.</p>
+
+<section class="blk" id="refBlock">
+  <h2>Reference</h2>
+
+  <details open id="gotchas">
+    <summary>Deployment gotchas that will bite this design</summary>
+    <div class="dbody">
+      <div class="alert err">
+        <svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><span class="at">Direct Lake semantic models do not autobind</span><span class="ab">Deploy a lakehouse and its Direct Lake model together and the model in the target stage still points at the lakehouse in the source stage. Every other semantic model type autobinds to the paired item. Fix with a datasource rule in the target stage. Until you do, test reads dev data and looks entirely healthy doing it.</span></span>
+      </div>
+      <ul class="plain">
+        <li><strong>Lakehouse deploy creates an empty lakehouse</strong> of the same name in the target and remaps notebooks and Spark job definitions to it. With a dependency mapping configured, the empty lakehouse is still created but references point to the mapped one.</li>
+        <li><strong>Deploy overwrites shortcut state</strong> in the target lakehouse. All shortcuts are created, updated, or deleted to match source. Use Review changes first.</li>
+        <li><strong>RLS role assignments are not copied.</strong> Neither are refresh schedules, data source credentials, query caching settings, endorsement settings, permissions, or workspace settings. Each is configured per stage, by hand.</li>
+        <li><strong>Gateway mapping is not automatic</strong> after the initial deployment. Map it in the target item's settings and verify a refresh. Later deployments leave it alone.</li>
+        <li><strong>Sensitivity labels copy only in narrow cases:</strong> a new item, an existing item into an empty stage, or a protected source label over an unprotected target (which prompts for consent).</li>
+        <li><strong>Ownership moves on first deploy.</strong> The deploying user becomes owner of cloned semantic models and dataflows. Paginated report ownership transfers on every deploy.</li>
+        <li><strong>Hard caps:</strong> 300 items per single deployment; circular or self dependencies fail; PBIR reports unsupported; post-deployment .pbix download unsupported.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Provider comparison: what actually differs</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Concern</th><th>Azure DevOps</th><th>GitHub</th></tr></thead>
+        <tbody>
+          <tr><td>Service principal auth</td><td>Supported, selectable in the Add account form <span class="tag v">V</span></td><td>Not available. PAT only <span class="tag v">V</span></td></tr>
+          <tr><td>Default one-click path</td><td>OAuth2 as the signed-in Entra user, which is the trap</td><td>PAT entry, no silent default</td></tr>
+          <tr><td>Cross-tenant</td><td>Supported, org may live in another tenant <span class="tag v">V</span></td><td>Not applicable</td></tr>
+          <tr><td>Connection fields</td><td>Organization, Project, Repository, Branch, Folder <span class="tag v">V</span></td><td>Repository URL, Branch, Folder <span class="tag v">V</span></td></tr>
+          <tr><td>Extra tenant switch</td><td>None beyond the general Git switch</td><td>Users can synchronize workspace items with GitHub repositories <span class="tag v">V</span></td></tr>
+          <tr><td>Self-hosted</td><td>Azure DevOps Server not supported <span class="tag v">V</span></td><td>Enterprise Server not supported <span class="tag v">V</span></td></tr>
+          <tr><td>Credential rotation</td><td>Client secret, edited in Manage connections and gateways <span class="tag v">V</span></td><td>PAT, re-entered via Add account <span class="tag v">V</span></td></tr>
+          <tr><td>Everything downstream</td><td colspan="2">Identical. Sync semantics, limits, deployment pipelines, and every gotcha above apply to both.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>The commit-before-deploy control</summary>
+    <div class="dbody">
+      <p>Git and deployment pipelines never talk to each other. The pipeline copies the live dev workspace; it does not read your branch. Nothing prevents deploying an uncommitted change, and when that happens prod holds a state that exists in no commit.</p>
+      <ul class="plain">
+        <li>Before any deploy, open the dev Source control panel.</li>
+        <li>If the uncommitted count is not zero, commit or undo. Do not deploy past it.</li>
+        <li>Commit message names the release, so the commit is findable from the deployment note.</li>
+        <li>Deployment note names the commit message, so the deployment is findable from the branch.</li>
+      </ul>
+      <p style="margin-top:1rem">That reciprocal naming is the entire trace this model gives you. If an auditor asks which commit is running in prod, the honest answer is that you infer it from two matching free-text strings. If that is unacceptable, the promotion decision is what needs revisiting, not the procedure.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>What Git covers and what deployment pipelines cover</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Concern</th><th>Git integration (dev)</th><th>Deployment pipelines</th></tr></thead>
+        <tbody>
+          <tr><td>Item definitions</td><td>Versioned, diffable, revertible</td><td>Copied on deploy, overwrites the paired item</td></tr>
+          <tr><td>Lakehouse tables and Files data</td><td>Never tracked <span class="tag v">V</span></td><td>Never copied, metadata only <span class="tag v">V</span></td></tr>
+          <tr><td>Shortcut definitions</td><td>Tracked in <code>shortcuts.metadata.json</code> <span class="tag v">V</span></td><td>Synced, target state overwritten <span class="tag v">V</span></td></tr>
+          <tr><td>Spark views</td><td>Not tracked <span class="tag v">V</span></td><td>Not overwritten <span class="tag v">V</span></td></tr>
+          <tr><td>Environment-specific values</td><td>Committed as-is</td><td>Deployment rules in the target stage <span class="tag v">V</span></td></tr>
+          <tr><td>Permissions and RLS membership</td><td>Not carried</td><td>Not copied <span class="tag v">V</span></td></tr>
+          <tr><td>Schedules and credentials</td><td>Not carried</td><td>Not copied <span class="tag v">V</span></td></tr>
+          <tr><td>Rollback</td><td>Undo, or revert branch then update</td><td>Backward deploy only into an empty stage <span class="tag v">V</span></td></tr>
+        </tbody>
+      </table>
+      <div class="alert warn">
+        <svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span><span class="at">Prod has no independent rollback path</span><span class="ab">Backward deployment works only into an empty stage. Rolling prod back means reverting dev from Git, then deploying forward through test to prod. Rehearse it once before you need it.</span></span>
+      </div>
+    </div>
+  </details>
+
+  <details>
+    <summary>Pipeline permissions</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Action</th><th>Required</th></tr></thead>
+        <tbody>
+          <tr><td>Create a pipeline</td><td>Pro, PPU, or Premium license</td></tr>
+          <tr><td>Assign a workspace to a stage</td><td>Pipeline admin and workspace admin of that workspace</td></tr>
+          <tr><td>Deploy to the next stage</td><td>Pipeline admin and contributor or above in both source and target</td></tr>
+          <tr><td>View or set a deployment rule</td><td>Pipeline admin, target workspace contributor or above, and owner of the item</td></tr>
+          <tr><td>Compare two stages</td><td>Pipeline admin and contributor or above in both stages</td></tr>
+        </tbody>
+      </table>
+      <p>Pipeline permission and workspace permission are granted separately; pipeline admin alone grants no access to workspace content. Microsoft 365 groups are not supported as pipeline admins. <span class="tag v">V</span></p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Fallback matrix</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Failure</th><th>First fallback</th><th>Second fallback</th></tr></thead>
+        <tbody>
+          <tr><td>Azure DevOps Server (on-premises)</td><td>Migrate the repo to Azure DevOps Services</td><td>Mirror to a cloud provider Fabric supports</td></tr>
+          <tr><td>Cannot register an Entra app</td><td>Have an admin register it and hand you the client ID and secret</td><td>OAuth2 as a named user, documented as interim with a migration trigger</td></tr>
+          <tr><td>Cross-tenant SPN creation blocked</td><td>Have the Azure DevOps tenant admin run the one CLI or PowerShell command</td><td>OAuth2 interim, or move the repo into the Fabric tenant</td></tr>
+          <tr><td>GitHub is Enterprise Server</td><td>Mirror repo to a github.com org</td><td>Move to Azure DevOps, which also unlocks SPN auth <span class="tag v">V</span></td></tr>
+          <tr><td>GitHub sync tenant switch off</td><td>Escalate as a governance decision</td><td>Use Azure DevOps, which needs no GitHub-specific switch</td></tr>
+          <tr><td>Not a workspace admin</td><td>Get Admin on dev</td><td>None. Connect and disconnect are Admin-only <span class="tag v">V</span></td></tr>
+          <tr><td>Outbound protection blocks Git</td><td>Tick the per-workspace Git consent checkbox <span class="tag v">V</span></td><td>Move dev off the protected configuration</td></tr>
+          <tr><td>Client secret or PAT expired</td><td>Rotate, then edit the connection in Manage connections and gateways <span class="tag v">V</span></td><td>Disconnect and reconnect; the repo is unaffected</td></tr>
+          <tr><td>Credential owner leaves</td><td>Service principal migration, immediately</td><td>Another admin reconnects under their own identity as a stopgap</td></tr>
+          <tr><td>Logical ID conflict on connect</td><td>Rename the conflicting workspace item, retry <span class="tag v">V</span></td><td>Edit <code>.platform</code> in the provider's web editor</td></tr>
+          <tr><td>Item type unsupported by Git</td><td>Ignored, not deleted, non-committable <span class="tag v">V</span></td><td>Keep a written "not source controlled" register</td></tr>
+          <tr><td>Pairing failed at assignment</td><td>Make name plus type plus folder unique <span class="tag v">V</span></td><td>Clean deploy into an empty target stage</td></tr>
+          <tr><td>Direct Lake model bound to the wrong stage</td><td>Datasource rule in the target stage <span class="tag v">V</span></td><td>Rebind by hand after each deploy</td></tr>
+          <tr><td>Deployment exceeds 300 items</td><td>Split into selective deployments <span class="tag v">V</span></td><td>Reduce workspace scope</td></tr>
+          <tr><td>Prod needs rollback</td><td>Revert dev via Git, redeploy forward</td><td>Backward deploy, empty target stage only <span class="tag v">V</span></td></tr>
+          <tr><td>Workspace nearing 1,000 items</td><td>Split into workspaces, one branch each</td><td>None. Hard limit; sync fails above it <span class="tag v">V</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <details>
+    <summary>Hard limits</summary>
+    <div class="dbody">
+      <p><strong>Git integration, both providers</strong></p>
+      <ul class="plain">
+        <li>1,000 items maximum per workspace. A branch holding more fails to sync.</li>
+        <li>Full file path maximum 250 characters. Branch name maximum 244 characters.</li>
+        <li>Maximum file size 25 MB. Folder structure preserved to 10 levels deep.</li>
+        <li>One branch and one folder per workspace at a time. One sync direction at a time.</li>
+        <li>Submodules not supported. Sovereign clouds not supported.</li>
+        <li>Sensitivity labels not supported in sync; exporting labeled items may be disabled pending an admin switch.</li>
+        <li>Display names over 256 characters, ending in a period or space, or containing <code>" / : &lt; &gt; \ * ? |</code> cause the Git folder to be renamed to a GUID plus type.</li>
+        <li>An item recreated by both Git and the recycle bin produces two identities and can stop Git integration working. Delete the Git-recreated copy.</li>
+      </ul>
+      <p style="margin-top:1rem"><strong>Deployment pipelines</strong></p>
+      <ul class="plain">
+        <li>300 items maximum per single deployment.</li>
+        <li>Stage count and names are permanent after creation.</li>
+        <li>Circular or self dependencies fail the deployment.</li>
+        <li>PBIR reports not supported. Post-deployment .pbix download not supported.</li>
+        <li>Real-time connectivity semantic models cannot be deployed.</li>
+        <li>Dataflow Gen2 (CI/CD) as a semantic model datasource is not supported for deployment.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Open questions, ranked by how much the answer changes the design</summary>
+    <div class="dbody">
+      <ul class="plain">
+        <li><strong>Which provider, and is it cloud-hosted?</strong> Self-hosted on either side invalidates the approach. Questions 1 and 2 resolve it.</li>
+        <li><strong>On Azure DevOps, is the organization in the Fabric tenant?</strong> If not, service principal creation needs one CLI or PowerShell command, which is the only non-clickable step in this runbook.</li>
+        <li><strong>Are dev, test, and prod inventories aligned by name, type, and folder?</strong> If not, first assignment produces pairing failures or silent duplicates.</li>
+        <li><strong>Are any semantic models Direct Lake?</strong> If yes, datasource rules are mandatory, not optional.</li>
+        <li><strong>Do bronze shortcuts point at the same storage in all three environments?</strong> If not, you need Variable Library (preview) or a manual post-deploy fix.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Sources, all retrieved 2026-08-25</summary>
+    <div class="dbody">
+      <ul class="plain">
+        <li>learn.microsoft.com/en-us/fabric/cicd/git-integration/git-get-started</li>
+        <li>learn.microsoft.com/en-us/fabric/cicd/git-integration/git-integration-with-service-principal</li>
+        <li>learn.microsoft.com/fabric/cicd/git-integration/git-integration-process</li>
+        <li>learn.microsoft.com/en-us/fabric/cicd/git-integration/intro-to-git-integration</li>
+        <li>learn.microsoft.com/fabric/cicd/github-data-residency-support</li>
+        <li>learn.microsoft.com/en-us/fabric/cicd/git-integration/git-automation</li>
+        <li>learn.microsoft.com/fabric/cicd/cicd-security</li>
+        <li>learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-git-deployment-pipelines</li>
+        <li>learn.microsoft.com/en-us/fabric/cicd/deployment-pipelines/get-started-with-deployment-pipelines</li>
+        <li>learn.microsoft.com/en-us/fabric/cicd/deployment-pipelines/understand-the-deployment-process</li>
+        <li>learn.microsoft.com/fabric/cicd/deployment-pipelines/assign-pipeline</li>
+        <li>docs.github.com/en/enterprise-cloud@latest/get-started/using-github-docs/about-versions-of-github-docs</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<footer class="ft">
+  <span>Portal-only procedure. Wizard answers, ticks, and theme choice are held in memory only and reset when the page reloads.</span>
+  <span>Built for scale by Prasanth Sistla</span>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme ---------- */
+var SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+var MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>';
+var themeBtn = document.getElementById("themeBtn");
+var themeIcon = document.getElementById("themeIcon");
+var themeLabel = document.getElementById("themeLabel");
+function applyTheme(dark){
+  document.documentElement.classList.toggle("dark", dark);
+  themeIcon.innerHTML = dark ? SUN : MOON;
+  themeLabel.textContent = dark ? "Light" : "Dark";
+  themeBtn.setAttribute("aria-pressed", dark ? "true" : "false");
+  themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+}
+applyTheme(!!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches));
+themeBtn.addEventListener("click", function(){
+  applyTheme(!document.documentElement.classList.contains("dark"));
+});
+
+/* ---------- questions ---------- */
+var isADO = function(a){ return a.provider === "ado"; };
+var isGH  = function(a){ return a.provider === "gh"; };
+
+var QUESTIONS = [
+  {
+    id:"provider", label:"Provider",
+    q:"Which Git provider is the dev workspace connecting to?",
+    help:"This is the only answer that changes the shape of the runbook. Everything after the connection steps is identical for both.",
+    options:[
+      {v:"ado", l:"Azure DevOps", d:"Supports service principal authentication for the connection"},
+      {v:"gh", l:"GitHub", d:"Personal access token only; no service principal option exists"}
+    ]
+  },
+  {
+    id:"adoHost", label:"Hosting", when:isADO,
+    q:"Is this Azure DevOps Services, or Azure DevOps Server?",
+    help:"Read the browser address bar on your repository. Fabric supports cloud-hosted providers only.",
+    options:[
+      {v:"cloud", l:"dev.azure.com or {org}.visualstudio.com", d:"Azure DevOps Services, cloud-hosted"},
+      {v:"onprem", l:"A hostname on our own network", d:"Azure DevOps Server, self-hosted"},
+      {v:"unsure", l:"Not sure", d:"Check the address bar before continuing"}
+    ]
+  },
+  {
+    id:"host", label:"Hosting", when:isGH,
+    q:"What hostname is in the address bar when you open your repository?",
+    help:"Open the repo you intend to connect and read the browser address bar. This is the only check that matters, and it can stop the project.",
+    options:[
+      {v:"dotcom", l:"github.com", d:"Free, Team, or Enterprise Cloud on the public host"},
+      {v:"ghe", l:"something.ghe.com", d:"Enterprise Cloud with data residency"},
+      {v:"gov", l:"something.github.us", d:"Enterprise Cloud for US government"},
+      {v:"ghes", l:"Any other hostname", d:"Enterprise Server, self-hosted"}
+    ]
+  },
+  {
+    id:"tenant", label:"Switches",
+    q:"Are the Git integration tenant switches enabled?",
+    help:"Admin portal, Tenant settings. Users can create Fabric items, and Users can synchronize workspace items with their Git repositories. GitHub needs a third, separate switch that people routinely miss; Azure DevOps does not.",
+    options:[
+      {v:"yes", l:"Yes, confirmed by looking", d:"Including the GitHub-specific switch if on GitHub"},
+      {v:"partial", l:"The general Git switch is on, I have not checked further", d:"Most common state"},
+      {v:"no", l:"No, or I cannot see the settings", d:"May be delegated to capacity or workspace admin"}
+    ]
+  },
+  {
+    id:"role", label:"Role",
+    q:"Are you a workspace Admin on the dev workspace?",
+    help:"Only a workspace Admin can connect or disconnect a workspace from Git, and assigning a workspace to a pipeline stage also requires workspace admin. Check in Workspace settings, Manage access.",
+    options:[
+      {v:"yes", l:"Yes, Admin", d:"You can complete both the connection and the stage assignment"},
+      {v:"no", l:"No, Contributor or Member", d:"You will need someone else to click Connect and to assign stages"},
+      {v:"unsure", l:"Not sure", d:"Treat as a blocker until confirmed"}
+    ]
+  },
+  {
+    id:"net", label:"Network",
+    q:"What network protection is applied to the dev workspace?",
+    help:"Workspace settings, Network security. Outbound protection blocks Git by default. Inbound protection (Private Link) forces all Git operations to originate inside an approved VNet and blocks branching out entirely.",
+    options:[
+      {v:"none", l:"Neither inbound nor outbound protection", d:"Standard configuration"},
+      {v:"out", l:"Outbound access protection is on", d:"Needs an explicit per-workspace Git consent checkbox"},
+      {v:"in", l:"Inbound protection or Private Link is on", d:"You must operate from inside the approved network"},
+      {v:"unsure", l:"Not sure", d:"Adds a verification step before you start"}
+    ]
+  },
+  {
+    id:"adoTenant", label:"Tenant", when:isADO,
+    q:"Is the Azure DevOps organization in the same Entra tenant as Fabric?",
+    help:"To check: in Azure DevOps go to Organization settings, then the Microsoft Entra (or Azure Active Directory) page, which names the connected directory. Compare that against the Fabric tenant in the Azure portal under Microsoft Entra ID, Overview. Cross-tenant is supported, but it adds the one non-clickable step in this runbook.",
+    options:[
+      {v:"same", l:"Same tenant", d:"Everything stays inside the portal"},
+      {v:"diff", l:"Different tenant", d:"Service principal must be created in the Azure DevOps tenant by command line"},
+      {v:"unsure", l:"Not sure", d:"Resolve this before registering the app"}
+    ]
+  },
+  {
+    id:"adoRights", label:"Rights", when:isADO,
+    q:"Do you hold the rights needed to set up the service principal?",
+    help:"You need Cloud Application Administrator or higher in Entra to register the app, and enough rights in Azure DevOps to add a user to the organization and to a team.",
+    options:[
+      {v:"both", l:"Both Entra and Azure DevOps", d:"You can complete the setup end to end"},
+      {v:"entra", l:"Entra only", d:"Someone else must add the principal to the Azure DevOps org"},
+      {v:"ado", l:"Azure DevOps only", d:"Someone else must register the Entra app"},
+      {v:"neither", l:"Neither, or not sure", d:"Identify the two owners before you start"}
+    ]
+  },
+  {
+    id:"token", label:"Token", when:isGH,
+    q:"Which personal access token will you use?",
+    help:"Fabric authenticates GitHub connections with a PAT. Service principal auth for Git exists only on Azure DevOps, so there is no SPN option to look for here.",
+    options:[
+      {v:"fine", l:"Fine-grained, scoped to one repo", d:"Recommended. Contents permission set to Read and write"},
+      {v:"classic", l:"Classic token with repo scope", d:"Works, but is org-wide, so the blast radius is every repo you can reach"},
+      {v:"none", l:"Not created yet", d:"The checklist will walk you through creating one"}
+    ]
+  },
+  {
+    id:"dl", label:"Direct Lake",
+    q:"Do any semantic models in the dev workspace use Direct Lake?",
+    help:"Direct Lake semantic models do not autobind to the target stage on deploy. They keep pointing at the source stage lakehouse, and nothing in the UI tells you this has happened.",
+    options:[
+      {v:"yes", l:"Yes", d:"Datasource rules become mandatory, not optional"},
+      {v:"no", l:"No, import or DirectQuery only", d:"Standard autobinding applies"},
+      {v:"unsure", l:"Not sure", d:"The checklist adds a verification step"}
+    ]
+  }
+];
+
+/* ---------- checklist ---------- */
+var always = function(){ return true; };
+
+var CHECKS = [
+  /* Gate A, Azure DevOps */
+  {g:"Gate A, environment", t:"Confirm the repository is on Azure DevOps Services, not Azure DevOps Server", n:"Fabric supports cloud-hosted providers only. A self-hosted Azure DevOps Server instance cannot be connected.", tag:"V", when:function(a){return isADO(a) && a.adoHost==="unsure";}},
+  {g:"Gate A, environment", t:"STOP: Azure DevOps Server (self-hosted) is not supported", n:"Migrate the repository to Azure DevOps Services, or mirror it to a cloud provider Fabric supports. No configuration makes a self-hosted instance work.", stop:true, tag:"V", when:function(a){return isADO(a) && a.adoHost==="onprem";}},
+  {g:"Gate A, environment", t:"Confirm the Azure DevOps account is registered to the same user signed into Fabric", n:"This is a documented prerequisite. Cross-tenant organizations are supported, but the account identity must match.", tag:"V", when:isADO},
+  {g:"Gate A, environment", t:"Identify the Entra tenant that hosts the Azure DevOps organization", n:"Organization settings, then the Microsoft Entra page, names the connected directory. Compare with the Fabric tenant in the Azure portal under Microsoft Entra ID, Overview. Verify against your current portal UI; menu labels shift.", tag:"J", when:function(a){return isADO(a) && a.adoTenant==="unsure";}},
+  {g:"Gate A, environment", t:"Note the Azure DevOps URL format you will need later", n:"Either https://dev.azure.com/{organization}/{project}/_git/{repository} or https://{organization}.visualstudio.com/{project}/_git/{repo}. The Add account form validates this.", tag:"V", when:isADO},
+
+  /* Gate A, GitHub */
+  {g:"Gate A, environment", t:"Confirm the repository hostname in the browser address bar", n:"Any hostname other than github.com, *.ghe.com, or *.github.us means Enterprise Server, which Fabric does not support.", tag:"V", when:isGH},
+  {g:"Gate A, environment", t:"Confirm whether an enterprise account governs your org", n:"Avatar menu, look for Your enterprises. Absence means a standalone org or personal account, which is still fine.", when:function(a){return isGH(a) && a.host==="dotcom";}},
+  {g:"Gate A, environment", t:"STOP: confirm support for github.us with Microsoft before proceeding", n:"Fabric documents github.com and ghe.com. The US government host is not named in the supported list. Do not assume it works.", stop:true, when:function(a){return isGH(a) && a.host==="gov";}},
+  {g:"Gate A, environment", t:"STOP: GitHub Enterprise Server is not supported", n:"Pick a fallback: mirror the repo to a github.com org, or move to Azure DevOps, which also unlocks service principal authentication.", stop:true, tag:"V", when:function(a){return isGH(a) && a.host==="ghes";}},
+
+  /* Gate B */
+  {g:"Gate B, tenant switches", t:"Enable Users can create Fabric items", tag:"V", when:always},
+  {g:"Gate B, tenant switches", t:"Enable Users can synchronize workspace items with their Git repositories", tag:"V", when:always},
+  {g:"Gate B, tenant switches", t:"Enable Users can synchronize workspace items with GitHub repositories", n:"GitHub only. A separate switch from the general Git one and required in addition to it. Check its preview status when you open the page.", tag:"V", when:isGH},
+  {g:"Gate B, tenant switches", t:"Find out who holds the delegation if the switches are not visible to you", n:"These can be delegated to capacity admin or workspace admin. Not seeing them does not mean they are off.", when:function(a){return a.tenant==="no";}},
+  {g:"Gate B, tenant switches", t:"Enable Create workspaces", n:"Only needed if anyone will branch out to a new workspace. Skip otherwise.", when:always},
+
+  /* Gate C */
+  {g:"Gate C, roles and network", t:"Confirm your role on dev in Workspace settings, Manage access", tag:"V", when:always},
+  {g:"Gate C, roles and network", t:"Get workspace Admin on dev, or nominate an Admin", n:"Connect and disconnect are Admin-only, and assigning a workspace to a pipeline stage also requires workspace admin.", stop:true, tag:"V", when:function(a){return a.role==="no"||a.role==="unsure";}},
+  {g:"Gate C, roles and network", t:"Check Workspace settings, Network security for inbound and outbound protection", when:function(a){return a.net==="unsure";}},
+  {g:"Gate C, roles and network", t:"Tick the per-workspace Git consent checkbox in network settings", n:"With outbound access protection on, Git is blocked by default and this checkbox is the only way to allow it.", tag:"V", when:function(a){return a.net==="out";}},
+  {g:"Gate C, roles and network", t:"Confirm you will operate from inside the approved VNet", n:"With inbound protection, Git operations from an unapproved network are blocked entirely and branching out is blocked with no toggle.", tag:"V", when:function(a){return a.net==="in";}},
+  {g:"Gate C, roles and network", t:"Diarize both 1 December 2026 restrictions", n:"Git integration: users without read-write on workspace items lose access. Deployment pipelines: users without read-write on ALL items cannot deploy or assign, for workspaces holding items under protection-policy labels.", tag:"V", when:always},
+  {g:"Gate C, roles and network", t:"Decide on Allow users with at least Contributor role to change Git branch", n:"Leave it off unless you have a stated reason. Per-workspace setting, no tenant-level override.", tag:"V", when:always},
+
+  /* Gate D, Azure DevOps service principal */
+  {g:"Gate D, service principal", t:"Confirm you hold Cloud Application Administrator or higher in Entra", n:"Documented prerequisite for registering the application. Without it, someone else must register the app and hand you the client ID and secret.", tag:"V", when:isADO},
+  {g:"Gate D, service principal", t:"Identify the two owners for the setup", n:"One person registers the Entra app, another adds the principal to the Azure DevOps organization and team. Name both before you start or the setup stalls halfway.", tag:"J", when:function(a){return isADO(a) && a.adoRights!=="both";}},
+  {g:"Gate D, service principal", t:"Register an application in Microsoft Entra ID and create a client secret", n:"Azure portal, Microsoft Entra ID, App registrations. Confirm org policy permits client secrets. Save the secret at creation; it is not retrievable later.", tag:"V", when:isADO},
+  {g:"Gate D, service principal", t:"Register the app as multitenant, not single tenant", n:"Cross-tenant scenarios require Accounts in any organizational directory. Choosing single tenant here means starting the registration again.", tag:"V", when:function(a){return isADO(a) && a.adoTenant==="diff";}},
+  {g:"Gate D, service principal", t:"NOT CLICKABLE: create the service principal in the Azure DevOps tenant", n:"One command, either az ad sp create --id {app id} after az login --tenant {ADO tenant id}, or New-MgServicePrincipal -AppId {app id} after Connect-MgGraph. This is the only step in this runbook with no portal path. Delegate it to whoever administers that tenant if you cannot run it.", stop:true, tag:"V", when:function(a){return isADO(a) && a.adoTenant==="diff";}},
+  {g:"Gate D, service principal", t:"Add the service principal to the Azure DevOps organization", n:"Organization settings, Users, Add users, then select the service principal.", tag:"V", when:isADO},
+  {g:"Gate D, service principal", t:"Add the service principal to the relevant team", n:"Project settings, Teams. Without team membership the principal has no access to the repository and the connection will authenticate but fail to read.", tag:"V", when:isADO},
+  {g:"Gate D, service principal", t:"Collect the Tenant ID and the Application (client) ID", n:"Tenant ID: Azure portal, Microsoft Entra ID, Overview. Client ID: App registrations, your app, Overview.", tag:"V", when:isADO},
+  {g:"Gate D, service principal", t:"Create a calendar reminder for client secret expiry", n:"Rotation is manual in a portal-only model. Name an owner and a backup on the invite. Rotate by editing the connection under Manage connections and gateways.", tag:"J", when:isADO},
+  {g:"Gate D, service principal", t:"Note that automating this later needs a separate tenant switch", n:"The portal path needs no service principal API switch. If you move to the Git REST APIs, service principal access to Fabric APIs must be enabled at tenant level first.", tag:"J", when:isADO},
+
+  /* Gate D, GitHub token */
+  {g:"Gate D, identity and token", t:"Accept that GitHub connections use a PAT, not a service principal", n:"Service principal auth for Fabric Git exists only for the Azure DevOps connector.", tag:"V", when:isGH},
+  {g:"Gate D, identity and token", t:"Create a fine-grained PAT: Settings, Developer settings, Personal access tokens", n:"Resource owner is the repo's org. Repository access: Only select repositories, pick the one repo. Repository permissions: Contents set to Read and write.", tag:"V", when:function(a){return isGH(a) && (a.token==="none"||a.token==="fine");}},
+  {g:"Gate D, identity and token", t:"Create a classic token with the repo scope", n:"Only if fine-grained tokens are blocked by policy. Classic tokens are org-wide, so the blast radius is every repo you can reach.", tag:"V", when:function(a){return isGH(a) && a.token==="classic";}},
+  {g:"Gate D, identity and token", t:"Generate the token from your .ghe.com host, not from github.com", n:"Your account on a data residency enterprise is a managed user account on the ghe.com subdomain.", when:function(a){return isGH(a) && a.host==="ghe";}},
+  {g:"Gate D, identity and token", t:"Store the token in your password manager immediately", n:"It is not retrievable after you leave the page.", when:isGH},
+  {g:"Gate D, identity and token", t:"Create a recurring calendar reminder five business days before token expiry", n:"In a portal-only model this calendar entry is your entire rotation control surface. Name an owner and a backup.", tag:"J", when:isGH},
+  {g:"Gate D, identity and token", t:"Write down the migration triggers off the interim personal PAT", n:"Move to a machine account when a second person needs the connection, when dev feeds an audited deliverable, at first token expiry, or when a compliance review is scheduled. On Azure DevOps this problem does not exist, which is itself an argument for the provider.", tag:"J", when:isGH},
+
+  /* Connect, Azure DevOps */
+  {g:"Connect the dev workspace", t:"Open the dev workspace, Workspace settings, Git integration, Azure DevOps", tag:"V", when:isADO},
+  {g:"Connect the dev workspace", t:"Do NOT click Connect on the first screen", n:"Connect signs you in automatically as the Entra user already signed into Fabric, binding the workspace to your personal identity via OAuth2. That is the exact failure mode the service principal exists to avoid, and it is one click away.", stop:true, tag:"V", when:isADO},
+  {g:"Connect the dev workspace", t:"Select Add account and set Authentication method to Service Principal", n:"Then supply Display name (unique), Azure DevOps URL, Tenant ID, Service principal ID, and Service principal key.", tag:"V", when:isADO},
+  {g:"Connect the dev workspace", t:"Select Connect, then complete the branch connection", n:"Five dropdowns: Organization, Project, Git repository, Branch, Folder. One branch and one folder at a time. Use a named folder even for a single-purpose repo.", tag:"V", when:isADO},
+
+  /* Connect, GitHub */
+  {g:"Connect the dev workspace", t:"Open the dev workspace, Workspace settings, Git integration, GitHub", when:isGH},
+  {g:"Connect the dev workspace", t:"Select Add account and fill the authorization form", n:"Display name must be unique per user; use one that identifies the token owner and scope.", tag:"V", when:isGH},
+  {g:"Connect the dev workspace", t:"Enter the Repository URL even though it is optional", n:"Blank gives the connection access to every repo the token can reach. Entering it scopes the connection to one repo.", tag:"V", when:function(a){return isGH(a) && (a.host==="dotcom"||a.host==="gov");}},
+  {g:"Connect the dev workspace", t:"Enter the Repository URL, which is mandatory on ghe.com", n:"Connections on ghe.com are per repository. No organization-level connection exists, so a second repo means a second connection.", tag:"V", when:function(a){return isGH(a) && a.host==="ghe";}},
+  {g:"Connect the dev workspace", t:"Select Connect, then choose Branch and Folder", n:"One branch and one folder at a time. Use a named directory even for a single-purpose repo so a second workspace can be added later without restructuring.", tag:"V", when:isGH},
+
+  /* Connect, shared */
+  {g:"Connect the dev workspace", t:"Select Connect and sync", when:always},
+  {g:"Connect the dev workspace", t:"Choose the sync direction deliberately", n:"Commit workspace to Git overwrites the branch and is recoverable from history. Update workspace from Git overwrites the workspace and is NOT recoverable. If you are offered this choice unexpectedly, the target folder already has content; stop and look first.", tag:"V", when:always},
+  {g:"Connect the dev workspace", t:"If connect fails with a logical ID conflict, rename the conflicting workspace item and retry", n:"Alternative: edit the .platform file in the provider's web editor so the logical ID matches.", tag:"V", when:always},
+  {g:"Connect the dev workspace", t:"Confirm the Source control panel shows items as Synced with no red account indicator", tag:"V", when:always},
+
+  /* Pipeline */
+  {g:"Deployment pipeline", t:"Audit test and prod for items matching dev by name, type, and folder", n:"Pairing uses name, type, and folder as a tiebreaker. Hand-built items with matching names produce duplicates or a pairing failure. On a first deploy, a same-name same-type collision fails the deployment outright.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Workspaces flyout, Deployment pipelines, New pipeline", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Decide the stage count before you create the pipeline", n:"Between 2 and 10, default 3. Stage count and names are permanent after creation.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Assign dev, test, and prod to their stages", n:"Assignment requires pipeline admin plus workspace admin of the workspace being assigned. Watch for pairing failures reported here.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Consider using the original pipeline UI rather than the new one", n:"The new deployment pipeline UI is preview, as is folders in deployment pipelines. If GA is your only production gate, stay on the original UI and keep the item layout shallow.", tag:"P", when:always},
+  {g:"Deployment pipeline", t:"Deploy dev to test using Select related for dependent items", n:"Relationships are not carried automatically, and a deploy fails if a dependency is absent from the target. Maximum 300 items in a single deployment.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Review changes before any deploy that touches a shortcut-backed layer", n:"A deploy overwrites shortcut state in the target lakehouse: all shortcuts created, updated, or deleted to match source.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Create a datasource rule for every Direct Lake semantic model in the target stage", n:"Direct Lake models do not autobind. Without the rule, the test model still reads the dev lakehouse and looks healthy while doing it.", tag:"V", when:function(a){return a.dl==="yes";}},
+  {g:"Deployment pipeline", t:"Check whether any semantic model uses Direct Lake before the first deploy", n:"If any do, they will not autobind to the target stage and need datasource rules.", tag:"V", when:function(a){return a.dl==="unsure";}},
+  {g:"Deployment pipeline", t:"Reconfigure what does not travel: RLS role assignments, refresh schedules, data source credentials, permissions, endorsement", n:"None of these are copied during deployment. They are per-stage manual configuration every time a stage is first populated.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Map the gateway on the target item and verify a refresh completes", n:"After the initial deployment the gateway is not mapped automatically. Later deployments leave the configuration alone.", tag:"V", when:always},
+  {g:"Deployment pipeline", t:"Decide how environment-specific shortcut targets are handled", n:"Variable Library is preview. Until GA, the portal-only fallback is fixing the shortcut by hand in the target after each deploy, written into the deploy checklist.", tag:"P", when:always},
+  {g:"Deployment pipeline", t:"Rehearse the rollback path once, before you need it", n:"Backward deployment only works into an empty stage. Rolling prod back means reverting dev from Git and redeploying forward through test.", tag:"J", when:always},
+
+  /* Steady state */
+  {g:"Steady state", t:"Adopt the commit-before-deploy rule", n:"Pipelines copy the live dev workspace, not your branch. If the uncommitted count is not zero, commit or undo before deploying, or prod will hold a state that exists in no commit.", tag:"J", when:always},
+  {g:"Steady state", t:"Name the release in the commit message and the commit message in the deployment note", n:"That reciprocal naming is the entire commit-to-production trace this model provides.", tag:"J", when:always},
+  {g:"Steady state", t:"Adopt the per-change loop: change in dev, Source control, review, commit", n:"Sync runs one direction at a time; you cannot commit and update in the same action.", tag:"V", when:always},
+  {g:"Steady state", t:"Brief the team on Undo semantics", n:"Undoing an added item deletes it permanently. Undoing a deletion recreates the item with a new identity, losing sensitivity labels and resetting the owner.", tag:"V", when:always},
+  {g:"Steady state", t:"Know that Commit to new branch exists", n:"It branches off and commits current changes in one action. The new branch is not connected to the workspace and is based on the last synced state, so treat it as a snapshot, not a working branch.", tag:"V", when:always},
+  {g:"Steady state", t:"Set a monthly check on the Source control account indicator and the credential expiry calendar entry", tag:"J", when:always},
+  {g:"Steady state", t:"Keep a written register of item types not covered by Git", n:"Unsupported items are ignored rather than deleted and show as non-committable. The register makes that visible to governance.", tag:"J", when:always},
+  {g:"Steady state", t:"Write the condition that would reverse the promotion decision", n:"Candidate: the first audit request for a commit-to-production trace, which deployment pipelines cannot produce because what deploys is workspace state, not a commit.", tag:"J", when:always}
+];
+
+/* ---------- state ---------- */
+var answers = {}, step = 0, checked = {};
+var qwrap = document.getElementById("qwrap");
+var stepsEl = document.getElementById("steps");
+var backBtn = document.getElementById("backBtn");
+var nextBtn = document.getElementById("nextBtn");
+var wizardBlock = document.getElementById("wizardBlock");
+var resultBlock = document.getElementById("resultBlock");
+var listEl = document.getElementById("list");
+var verdictEl = document.getElementById("verdict");
+var fillEl = document.getElementById("fill");
+var pnumEl = document.getElementById("pnum");
+
+function el(tag, cls, txt){
+  var e = document.createElement(tag);
+  if(cls){e.className = cls;}
+  if(txt !== undefined && txt !== null){e.textContent = txt;}
+  return e;
+}
+
+function activeQuestions(){
+  return QUESTIONS.filter(function(q){ return !q.when || q.when(answers); });
+}
+
+function renderSteps(){
+  var qs = activeQuestions();
+  stepsEl.innerHTML = "";
+  for(var i=0;i<qs.length;i++){
+    var d = el("span","dot" + (i===step?" on":(i<step?" done":"")));
+    d.appendChild(el("i",null,String(i+1)));
+    d.appendChild(el("span",null,qs[i].label));
+    stepsEl.appendChild(d);
+    if(i < qs.length-1){ stepsEl.appendChild(el("span","bar")); }
+  }
+}
+
+function renderQuestion(){
+  var qs = activeQuestions();
+  if(step >= qs.length){ step = qs.length - 1; }
+  var q = qs[step];
+  qwrap.innerHTML = "";
+  qwrap.appendChild(el("div","q",q.q));
+  qwrap.appendChild(el("div","qhelp",q.help));
+  var opts = el("div","opts");
+  q.options.forEach(function(o){
+    var b = el("button","opt" + (answers[q.id]===o.v?" sel":""));
+    b.type = "button";
+    b.setAttribute("aria-pressed", answers[q.id]===o.v ? "true" : "false");
+    var box = el("span");
+    box.appendChild(el("span","ol",o.l));
+    box.appendChild(el("span","od",o.d));
+    b.appendChild(box);
+    b.addEventListener("click", function(){
+      answers[q.id] = o.v;
+      renderQuestion();
+    });
+    opts.appendChild(b);
+  });
+  qwrap.appendChild(opts);
+  backBtn.disabled = (step === 0);
+  nextBtn.disabled = !answers[q.id];
+  nextBtn.textContent = (step === activeQuestions().length-1) ? "Build my checklist" : "Next";
+  renderSteps();
+}
+
+function icon(kind){
+  var path = kind==="ok"
+    ? '<path d="M20 6 9 17l-5-5"/>'
+    : kind==="info"
+      ? '<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
+      : '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>';
+  return '<svg class="ai" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+path+'</svg>';
+}
+
+function verdict(){
+  verdictEl.innerHTML = "";
+  var v = [];
+
+  if(isADO(answers)){
+    if(answers.adoHost === "onprem"){
+      v.push({k:"err", t:"Blocked: Azure DevOps Server is not supported",
+        b:"Fabric supports cloud-hosted providers only. Migrate the repository to Azure DevOps Services, or mirror it to a supported cloud provider. No configuration makes a self-hosted instance work."});
+    } else if(answers.adoHost === "unsure"){
+      v.push({k:"warn", t:"Confirm the hosting model before you invest time",
+        b:"Read the address bar on the repository. dev.azure.com or {org}.visualstudio.com means Services and you are fine. Anything on your own network is Server and stops here."});
+    } else {
+      v.push({k:"ok", t:"Supported: Azure DevOps Services with service principal authentication",
+        b:"This is the stronger of the two providers for your design. The connection can be owned by a service principal rather than a named person, which removes the shared-personal-credential finding entirely."});
+    }
+    v.push({k:"err", t:"Do not click Connect on the first screen",
+      b:"Connect signs you in automatically as the Entra user already signed into Fabric, binding the workspace connection to your personal identity over OAuth2. Choose Add account and set Authentication method to Service Principal instead. This is the single most likely way to end up with the wrong identity while believing you did it right."});
+    if(answers.adoTenant === "diff"){
+      v.push({k:"warn", t:"Cross-tenant: one step has no portal path",
+        b:"The service principal must be created in the Azure DevOps tenant using az ad sp create or New-MgServicePrincipal, and the app must be registered as multitenant. Everything else stays in the portal. Delegate this command if you cannot run it yourself."});
+    } else if(answers.adoTenant === "unsure"){
+      v.push({k:"warn", t:"Resolve the tenant question before registering the app",
+        b:"Single tenant versus multitenant is chosen at registration time, and getting it wrong means starting the registration again. Check the connected directory under Azure DevOps Organization settings first."});
+    }
+    if(answers.adoRights && answers.adoRights !== "both"){
+      v.push({k:"info", t:"The setup needs two sets of rights",
+        b:"Cloud Application Administrator or higher in Entra to register the app, plus rights in Azure DevOps to add a user to the organization and a team. Name both owners before starting, or the setup stalls halfway with a registered app that cannot reach the repo."});
+    }
+  }
+
+  if(isGH(answers)){
+    if(answers.host === "ghes"){
+      v.push({k:"err", t:"Blocked: GitHub Enterprise Server is not supported",
+        b:"Fabric supports cloud hosts only. Mirror the repo to a github.com org, or move to Azure DevOps, which also unlocks service principal authentication."});
+    } else if(answers.host === "gov"){
+      v.push({k:"warn", t:"Unconfirmed: github.us is not named in Fabric's supported hosts",
+        b:"Fabric documentation names github.com and ghe.com. Confirm with Microsoft support before investing in this path."});
+    } else if(answers.host === "ghe"){
+      v.push({k:"ok", t:"Supported: Enterprise Cloud with data residency",
+        b:"Connections are per repository, the repository URL is mandatory, and your token comes from your managed account on the ghe.com subdomain."});
+    } else {
+      v.push({k:"ok", t:"Supported: github.com",
+        b:"Standard connection flow. Scope the connection to a single repository by entering the repository URL even though the field is optional."});
+    }
+    v.push({k:"info", t:"No service principal option exists on this provider",
+      b:"The connection will be bound to a named person and every Fabric-originated commit will carry that person as author. If that is unacceptable under review, the fix is the provider, not the procedure: Azure DevOps supports service principal connections."});
+    if(answers.token === "classic"){
+      v.push({k:"info", t:"Classic token scope is wider than you need",
+        b:"A classic token with the repo scope reaches every repo you have access to. Prefer a fine-grained token scoped to the single repository unless org policy blocks it."});
+    }
+  }
+
+  if(answers.role === "no" || answers.role === "unsure"){
+    v.push({k:"warn", t:"Blocker: workspace Admin required twice over",
+      b:"Only a workspace Admin can connect a workspace to Git, and assigning a workspace to a pipeline stage also requires workspace admin on that workspace."});
+  }
+  if(answers.net === "in"){
+    v.push({k:"warn", t:"Network: inbound protection changes how you work",
+      b:"All Git operations, including the portal UI, must originate from inside the approved VNet, and branching out is blocked with no toggle to enable it."});
+  }
+  if(answers.dl === "yes"){
+    v.push({k:"err", t:"Direct Lake models will not autobind on deploy",
+      b:"A deployed Direct Lake semantic model keeps pointing at the source stage lakehouse. Create a datasource rule in each target stage, or test will read dev data while appearing healthy."});
+  } else if(answers.dl === "unsure"){
+    v.push({k:"warn", t:"Confirm whether any semantic model is Direct Lake",
+      b:"Direct Lake models are the one type that does not autobind to the target stage. If any exist, datasource rules are mandatory before the first deploy."});
+  }
+
+  v.forEach(function(it){
+    var a = el("div","alert " + it.k);
+    a.innerHTML = icon(it.k);
+    var s = el("span");
+    s.appendChild(el("span","at",it.t));
+    s.appendChild(el("span","ab",it.b));
+    a.appendChild(s);
+    verdictEl.appendChild(a);
+  });
+}
+
+function activeChecks(){
+  return CHECKS.filter(function(c){ return c.when(answers); });
+}
+
+function renderList(){
+  var items = activeChecks();
+  listEl.innerHTML = "";
+  var groups = [], byGroup = {};
+  items.forEach(function(c, idx){
+    c._id = "c" + idx;
+    if(!byGroup[c.g]){ byGroup[c.g] = []; groups.push(c.g); }
+    byGroup[c.g].push(c);
+  });
+  groups.forEach(function(g){
+    var wrapG = el("div","grp");
+    var hd = el("div","ghd");
+    hd.appendChild(el("span","gname",g));
+    var cnt = el("span","gcount");
+    hd.appendChild(cnt);
+    wrapG.appendChild(hd);
+    byGroup[g].forEach(function(c){
+      var row = el("div","item" + (c.stop?" stop":""));
+      var cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.id = c._id;
+      cb.addEventListener("change", function(){
+        checked[c._id] = cb.checked;
+        row.className = "item" + (c.stop?" stop":"") + (cb.checked?" done":"");
+        updateProgress(cnt, byGroup[g]);
+      });
+      var lab = document.createElement("label");
+      lab.htmlFor = c._id;
+      var t = el("span","itxt");
+      t.appendChild(document.createTextNode(c.t));
+      if(c.tag){ t.appendChild(el("span","tag " + c.tag.toLowerCase(), c.tag)); }
+      lab.appendChild(t);
+      if(c.n){ lab.appendChild(el("span","inote",c.n)); }
+      row.appendChild(cb);
+      row.appendChild(lab);
+      wrapG.appendChild(row);
+    });
+    listEl.appendChild(wrapG);
+    updateProgress(cnt, byGroup[g]);
+  });
+  updateTotal();
+}
+
+function updateProgress(cntEl, groupItems){
+  var done = groupItems.filter(function(c){ return checked[c._id]; }).length;
+  cntEl.textContent = done + " / " + groupItems.length;
+  updateTotal();
+}
+
+function updateTotal(){
+  var items = activeChecks();
+  var done = items.filter(function(c){ return checked[c._id]; }).length;
+  var pct = items.length ? Math.round(done/items.length*100) : 0;
+  fillEl.style.width = pct + "%";
+  pnumEl.textContent = done + " / " + items.length + "  (" + pct + "%)";
+}
+
+nextBtn.addEventListener("click", function(){
+  if(step < activeQuestions().length - 1){
+    step++;
+    renderQuestion();
+    window.scrollTo({top:0, behavior:"smooth"});
+  } else {
+    wizardBlock.classList.add("hide");
+    resultBlock.classList.remove("hide");
+    checked = {};
+    verdict();
+    renderList();
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+});
+
+backBtn.addEventListener("click", function(){
+  if(step > 0){ step--; renderQuestion(); }
+});
+
+document.getElementById("resetBtn").addEventListener("click", function(){
+  answers = {}; step = 0; checked = {};
+  resultBlock.classList.add("hide");
+  wizardBlock.classList.remove("hide");
+  renderQuestion();
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+document.getElementById("printBtn").addEventListener("click", function(){ window.print(); });
+
+renderQuestion();
+})();
+</script>
+</body>
+</html>

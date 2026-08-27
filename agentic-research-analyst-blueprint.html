@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dynamic Agentic RAG · Research Analyst Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+--m-font-primary:'Manrope',system-ui,-apple-system,sans-serif;
+--m-font-code:'JetBrains Mono','Fira Code','Consolas',monospace;
+--m-text-xs:.6875rem;--m-text-sm:.8125rem;--m-text-base:.9375rem;--m-text-lg:1.0625rem;
+--m-text-xl:1.25rem;--m-text-2xl:1.5rem;--m-text-3xl:1.875rem;--m-text-4xl:2.25rem;
+--m-weight-regular:400;--m-weight-medium:500;--m-weight-semibold:600;--m-weight-bold:700;--m-weight-extrabold:800;
+--m-leading-tight:1.25;--m-leading-snug:1.4;--m-leading-normal:1.6;--m-leading-relaxed:1.7;
+--m-tracking-tight:-.015em;--m-tracking-tighter:-.025em;--m-tracking-wide:.04em;
+--m-neutral-0:#FFFFFF;--m-neutral-50:#F8F9FA;--m-neutral-100:#F1F3F5;--m-neutral-200:#E9ECEF;
+--m-neutral-300:#DEE2E6;--m-neutral-400:#ADB5BD;--m-neutral-500:#868E96;--m-neutral-600:#495057;
+--m-neutral-700:#343A40;--m-neutral-800:#212529;--m-neutral-900:#16191D;--m-neutral-950:#0D0F12;
+--m-primary-50:#EEF2FF;--m-primary-100:#E0E7FF;--m-primary-200:#C7D2FE;--m-primary-400:#818CF8;
+--m-primary-500:#6366F1;--m-primary-600:#4F46E5;--m-primary-700:#4338CA;--m-primary-900:#312E81;
+--m-accent-50:#FFFBEB;--m-accent-100:#FEF3C7;--m-accent-400:#FBBF24;--m-accent-500:#F59E0B;--m-accent-700:#B45309;
+--m-success:#15803D;--m-success-bg:#F0FDF4;--m-success-text:#14532D;
+--m-warning:#EA580C;--m-warning-bg:#FFF7ED;--m-warning-text:#9A3412;
+--m-error:#DC2626;--m-error-bg:#FEF2F2;--m-error-text:#991B1B;
+--m-info:#2563EB;--m-info-bg:#EFF6FF;--m-info-text:#1E40AF;
+--m-bg:var(--m-neutral-0);--m-surface:var(--m-neutral-50);--m-border:var(--m-neutral-200);
+--m-border-subtle:var(--m-neutral-100);--m-text:var(--m-neutral-800);--m-text-secondary:var(--m-neutral-600);
+--m-text-tertiary:var(--m-neutral-500);--m-primary:var(--m-primary-600);--m-primary-hover:var(--m-primary-700);
+--m-primary-subtle:var(--m-primary-50);--m-accent:var(--m-accent-700);--m-accent-subtle:var(--m-accent-50);
+--m-space-1:.25rem;--m-space-2:.5rem;--m-space-3:.75rem;--m-space-4:1rem;--m-space-5:1.25rem;
+--m-space-6:1.5rem;--m-space-8:2rem;--m-space-10:2.5rem;--m-space-12:3rem;--m-space-16:4rem;
+--m-radius-sm:4px;--m-radius-md:8px;--m-radius-lg:12px;--m-radius-full:9999px;
+--m-shadow-sm:0 1px 2px rgba(0,0,0,.04);--m-shadow-md:0 2px 8px rgba(0,0,0,.06);--m-shadow-lg:0 4px 16px rgba(0,0,0,.08);
+--m-ease-out-expo:cubic-bezier(.16,1,.3,1);
+--m-transition-fast:120ms ease;--m-transition-base:200ms ease;--m-transition-enter:250ms var(--m-ease-out-expo);
+--m-max-content:1200px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid var(--m-primary);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+::selection{background:var(--m-primary-100);color:var(--m-primary-900)}
+body{font-family:var(--m-font-primary);font-size:var(--m-text-base);line-height:var(--m-leading-normal);
+color:var(--m-text);background:var(--m-bg);-webkit-font-smoothing:antialiased}
+
+/* ── Header ── */
+.hdr{border-bottom:1px solid var(--m-border);background:var(--m-bg)}
+.hdr-in{max-width:var(--m-max-content);margin:0 auto;padding:var(--m-space-10) var(--m-space-6) var(--m-space-6)}
+.overline{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-accent);margin-bottom:var(--m-space-3)}
+h1{font-size:var(--m-text-4xl);font-weight:var(--m-weight-extrabold);letter-spacing:var(--m-tracking-tighter);
+line-height:var(--m-leading-tight);max-width:22ch}
+.sub{margin-top:var(--m-space-4);color:var(--m-text-secondary);font-size:var(--m-text-lg);max-width:70ch;line-height:var(--m-leading-snug)}
+.meta{margin-top:var(--m-space-5);display:flex;flex-wrap:wrap;gap:var(--m-space-2)}
+
+/* ── Tabs ── */
+.tabbar{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);
+border-bottom:1px solid var(--m-border)}
+.tabbar-in{max-width:var(--m-max-content);margin:0 auto;padding:0 var(--m-space-6);display:flex;gap:var(--m-space-1);
+overflow-x:auto;scrollbar-width:none}
+.tabbar-in::-webkit-scrollbar{display:none}
+.tab{appearance:none;background:none;border:none;cursor:pointer;font-family:inherit;
+font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);color:var(--m-text-secondary);
+padding:var(--m-space-4) var(--m-space-4);min-height:44px;white-space:nowrap;
+border-bottom:2px solid transparent;transition:color var(--m-transition-fast),border-color var(--m-transition-fast);
+display:flex;align-items:center;gap:var(--m-space-2)}
+.tab:hover{color:var(--m-text)}
+.tab[aria-selected="true"]{color:var(--m-primary);border-bottom-color:var(--m-primary)}
+.tab .num{font-family:var(--m-font-code);font-size:var(--m-text-xs);color:var(--m-text-tertiary)}
+.tab[aria-selected="true"] .num{color:var(--m-primary)}
+
+/* ── Layout ── */
+main{max-width:var(--m-max-content);margin:0 auto;padding:var(--m-space-10) var(--m-space-6) var(--m-space-16)}
+.panel{display:none;animation:fade var(--m-transition-enter)}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+section{margin-bottom:var(--m-space-12)}
+h2{font-size:var(--m-text-2xl);font-weight:var(--m-weight-bold);letter-spacing:var(--m-tracking-tight);
+line-height:var(--m-leading-tight);margin-bottom:var(--m-space-3)}
+h3{font-size:var(--m-text-lg);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight);
+margin:var(--m-space-8) 0 var(--m-space-3)}
+h4{font-size:var(--m-text-base);font-weight:var(--m-weight-semibold);margin:var(--m-space-5) 0 var(--m-space-2)}
+p{margin-bottom:var(--m-space-4);max-width:78ch}
+p.lede{font-size:var(--m-text-lg);color:var(--m-text-secondary);line-height:var(--m-leading-snug);margin-bottom:var(--m-space-6)}
+ul,ol{margin:0 0 var(--m-space-4) var(--m-space-5);max-width:78ch}
+li{margin-bottom:var(--m-space-2)}
+strong{font-weight:var(--m-weight-semibold)}
+code{font-family:var(--m-font-code);font-size:.86em;background:var(--m-neutral-100);
+padding:2px 5px;border-radius:var(--m-radius-sm);color:var(--m-neutral-800)}
+a{color:var(--m-primary);text-decoration:none;border-bottom:1px solid var(--m-primary-200)}
+a:hover{border-bottom-color:var(--m-primary)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:var(--m-space-1);font-size:var(--m-text-xs);
+font-weight:var(--m-weight-semibold);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+padding:4px 10px;border-radius:var(--m-radius-full);background:var(--m-neutral-100);color:var(--m-neutral-700)}
+.badge.p{background:var(--m-primary-50);color:var(--m-primary-700)}
+.badge.a{background:var(--m-accent-50);color:var(--m-accent-700)}
+.badge.s{background:var(--m-success-bg);color:var(--m-success-text)}
+.badge.w{background:var(--m-warning-bg);color:var(--m-warning-text)}
+.badge.e{background:var(--m-error-bg);color:var(--m-error-text)}
+.badge.i{background:var(--m-info-bg);color:var(--m-info-text)}
+
+/* ── Cards & grids ── */
+.grid{display:grid;gap:var(--m-space-4)}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.card{border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-6);
+background:var(--m-bg);box-shadow:var(--m-shadow-sm)}
+.card h4{margin-top:0}
+.card p:last-child,.card ul:last-child{margin-bottom:0}
+.card .lbl{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-text-tertiary);margin-bottom:var(--m-space-2)}
+.metric{font-size:var(--m-text-3xl);font-weight:var(--m-weight-extrabold);letter-spacing:var(--m-tracking-tighter);
+line-height:1;color:var(--m-primary);margin-bottom:var(--m-space-2)}
+
+/* ── Callouts ── */
+.note{border-radius:var(--m-radius-lg);padding:var(--m-space-5) var(--m-space-6);margin:var(--m-space-6) 0;
+border:1px solid var(--m-border);background:var(--m-surface)}
+.note .t{font-weight:var(--m-weight-semibold);font-size:var(--m-text-sm);text-transform:uppercase;
+letter-spacing:var(--m-tracking-wide);margin-bottom:var(--m-space-2);display:flex;align-items:center;gap:var(--m-space-2)}
+.note p:last-child,.note ul:last-child{margin-bottom:0}
+.note.warn{background:var(--m-warning-bg);border-color:var(--m-warning)}
+.note.warn .t{color:var(--m-warning-text)}
+.note.info{background:var(--m-info-bg);border-color:var(--m-info)}
+.note.info .t{color:var(--m-info-text)}
+.note.ok{background:var(--m-success-bg);border-color:var(--m-success)}
+.note.ok .t{color:var(--m-success-text)}
+.note.err{background:var(--m-error-bg);border-color:var(--m-error)}
+.note.err .t{color:var(--m-error-text)}
+.note .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;margin:var(--m-space-5) 0;border:1px solid var(--m-border);border-radius:var(--m-radius-lg)}
+table{width:100%;border-collapse:collapse;font-size:var(--m-text-sm)}
+th{text-align:left;font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:var(--m-tracking-wide);
+font-weight:var(--m-weight-semibold);color:var(--m-text-secondary);padding:var(--m-space-3) var(--m-space-4);
+background:var(--m-surface);border-bottom:1px solid var(--m-border);white-space:nowrap}
+td{padding:var(--m-space-3) var(--m-space-4);border-bottom:1px solid var(--m-border-subtle);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--m-neutral-50)}
+td code{font-size:.82em}
+.nowrap{white-space:nowrap}
+
+/* ── Code ── */
+pre{background:var(--m-neutral-950);color:var(--m-neutral-100);border-radius:var(--m-radius-md);
+padding:var(--m-space-5);overflow-x:auto;margin:var(--m-space-4) 0;font-size:var(--m-text-sm);line-height:1.65}
+pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.k{color:#A5B4FC}.s{color:#FCD34D}.c{color:#868E96;font-style:italic}.f{color:#86EFAC}
+
+/* ── Flow diagram ── */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:var(--m-space-2);margin:var(--m-space-5) 0}
+.step{flex:1 1 128px;border:1px solid var(--m-border);border-radius:var(--m-radius-md);
+padding:var(--m-space-3) var(--m-space-4);background:var(--m-bg);min-width:128px}
+.step .n{font-family:var(--m-font-code);font-size:var(--m-text-xs);color:var(--m-primary);
+font-weight:var(--m-weight-semibold);display:block;margin-bottom:2px}
+.step .l{font-size:var(--m-text-sm);font-weight:var(--m-weight-semibold);line-height:var(--m-leading-snug)}
+.step .d{font-size:var(--m-text-xs);color:var(--m-text-secondary);line-height:var(--m-leading-snug);margin-top:4px}
+.step.acc{border-color:var(--m-accent-400);background:var(--m-accent-50)}
+.step.acc .n{color:var(--m-accent)}
+
+/* ── Layer stack ── */
+.layer{border:1px solid var(--m-border);border-left:3px solid var(--m-primary);border-radius:var(--m-radius-md);
+padding:var(--m-space-4) var(--m-space-5);margin-bottom:var(--m-space-2);background:var(--m-bg);
+display:flex;gap:var(--m-space-4);align-items:baseline;flex-wrap:wrap}
+.layer .name{font-weight:var(--m-weight-semibold);font-size:var(--m-text-sm);min-width:150px}
+.layer .desc{font-size:var(--m-text-sm);color:var(--m-text-secondary);flex:1;min-width:220px}
+.layer.a{border-left-color:var(--m-accent-500)}
+
+/* ── Phase list ── */
+.phase{border:1px solid var(--m-border);border-radius:var(--m-radius-lg);padding:var(--m-space-6);
+margin-bottom:var(--m-space-4);background:var(--m-bg)}
+.phase-h{display:flex;align-items:center;gap:var(--m-space-3);margin-bottom:var(--m-space-3);flex-wrap:wrap}
+.phase-n{font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:var(--m-weight-semibold);
+background:var(--m-primary-600);color:#fff;padding:4px 9px;border-radius:var(--m-radius-sm)}
+.phase-t{font-size:var(--m-text-lg);font-weight:var(--m-weight-semibold);letter-spacing:var(--m-tracking-tight)}
+.gate{margin-top:var(--m-space-4);padding-top:var(--m-space-4);border-top:1px dashed var(--m-border);
+font-size:var(--m-text-sm)}
+.gate b{color:var(--m-accent);text-transform:uppercase;font-size:var(--m-text-xs);
+letter-spacing:var(--m-tracking-wide);display:block;margin-bottom:4px}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--m-border);background:var(--m-surface)}
+.foot-in{max-width:var(--m-max-content);margin:0 auto;padding:var(--m-space-8) var(--m-space-6);
+display:flex;justify-content:space-between;gap:var(--m-space-4);flex-wrap:wrap;
+font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+
+@media(max-width:640px){
+h1{font-size:var(--m-text-3xl)}
+.hdr-in{padding:var(--m-space-8) var(--m-space-4) var(--m-space-5)}
+main{padding:var(--m-space-8) var(--m-space-4) var(--m-space-12)}
+.tabbar-in{padding:0 var(--m-space-4)}
+.foot-in{padding:var(--m-space-6) var(--m-space-4)}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-in">
+    <div class="overline">Reference Architecture</div>
+    <h1>Dynamic Agentic RAG for a Research Analyst Product</h1>
+    <p class="sub">An open source blueprint for a system that ingests an evolving document corpus, retrieves inside a reasoning loop, produces cited analyst output, and proves its own quality with a measurable evaluation gate.</p>
+    <div class="meta">
+      <span class="badge p">Open source stack</span>
+      <span class="badge">Postgres + pgvector</span>
+      <span class="badge">LangGraph</span>
+      <span class="badge">Docling</span>
+      <span class="badge a">Eval-gated</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar" role="tablist" aria-label="Blueprint sections">
+  <div class="tabbar-in">
+    <button class="tab" role="tab" aria-selected="true" aria-controls="p1" id="t1"><span class="num">01</span>Product &amp; Architecture</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p2" id="t2"><span class="num">02</span>Dynamic Ingestion</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p3" id="t3"><span class="num">03</span>Retrieval</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p4" id="t4"><span class="num">04</span>Agent Loop</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p5" id="t5"><span class="num">05</span>Stack &amp; Frontend</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="p6" id="t6"><span class="num">06</span>Evaluation &amp; Plan</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════ TAB 1 ══════════ -->
+<div class="panel active" id="p1" role="tabpanel" aria-labelledby="t1">
+
+<section>
+  <h2>What this product actually is</h2>
+  <p class="lede">A research analyst product is not a chatbot with documents attached. It is a system that produces defensible written analysis over a corpus that keeps changing, where every claim traces back to a source passage and a document version.</p>
+
+  <p>Three capabilities separate it from ordinary retrieval augmented generation. Each one drives a distinct architectural requirement, and skipping any of them produces a demo rather than a product.</p>
+
+  <div class="grid g3">
+    <div class="card">
+      <div class="lbl">Capability 01</div>
+      <h4>Multi-hop synthesis</h4>
+      <p>Answers require combining evidence from several documents, not locating one passage. Retrieval must sit inside the reasoning loop so the system can retrieve again after reading.</p>
+    </div>
+    <div class="card">
+      <div class="lbl">Capability 02</div>
+      <h4>Provenance at claim level</h4>
+      <p>Every sentence of output carries a citation to document, version, page, and passage. An analyst who cannot verify a claim will not use the tool twice.</p>
+    </div>
+    <div class="card">
+      <div class="lbl">Capability 03</div>
+      <h4>Change awareness</h4>
+      <p>New documents change previous conclusions. The system re-runs standing questions against the updated corpus and reports what moved and why.</p>
+    </div>
+  </div>
+
+  <div class="note info">
+    <div class="t"><span class="dot"></span>The defining design decision</div>
+    <p>Change awareness is what makes the system dynamic in a way a user can feel. Automatic indexing alone is invisible: the corpus grows and nothing observable happens. Standing questions turn ingestion into a product surface, because every new document produces a diff against previously answered questions. Build this in phase 3, not as a phase 7 nicety.</p>
+  </div>
+</section>
+
+<section>
+  <h3>Three operating modes</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Mode</th><th>User intent</th><th>Latency budget</th><th>Retrieval pattern</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Ask</strong></td><td>Fact lookup with citation</td><td class="nowrap">2 to 5 s</td><td>Single hop, hybrid, rerank</td><td>Short answer, 1 to 3 sources</td></tr>
+        <tr><td><strong>Investigate</strong></td><td>Structured analysis of a question</td><td class="nowrap">30 s to 4 min</td><td>Planner, 3 to 8 hops, verification pass</td><td>Sectioned report, 15 to 40 sources</td></tr>
+        <tr><td><strong>Monitor</strong></td><td>Tell me when the answer changes</td><td class="nowrap">Async, on ingest</td><td>Standing questions replayed on delta</td><td>Change digest with before and after</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Ask and Investigate share a retrieval core and differ only in the agent budget. Monitor reuses Investigate with a stored question set. One retrieval layer, three product surfaces.</p>
+</section>
+
+<section>
+  <h3>System layers</h3>
+  <div class="layer"><span class="name">Source</span><span class="desc">Object storage or watched directory holding raw PDFs and other source formats. Immutable, append only, the system of record.</span></div>
+  <div class="layer"><span class="name">Ingestion</span><span class="desc">Event driven workers: detect, hash, parse, structure, chunk, enrich, embed, upsert. Idempotent and resumable.</span></div>
+  <div class="layer"><span class="name">Knowledge store</span><span class="desc">Postgres holding documents, versions, chunks, embeddings, extracted claims, and entities. One database, several tables.</span></div>
+  <div class="layer"><span class="name">Retrieval</span><span class="desc">Hybrid dense and lexical search fused with reciprocal rank fusion, followed by cross encoder reranking, with mandatory metadata filters.</span></div>
+  <div class="layer a"><span class="name">Agent</span><span class="desc">Stateful graph: plan, retrieve, read, verify, synthesize. Budgeted, checkpointed, fully traced.</span></div>
+  <div class="layer a"><span class="name">Experience</span><span class="desc">Streaming answers, inline citations, source viewer with passage highlight, evidence panel, ingestion console.</span></div>
+  <div class="layer"><span class="name">Quality</span><span class="desc">Golden question set, retrieval and generation metrics, CI gate, production trace sampling, drift monitor.</span></div>
+</section>
+
+<section>
+  <h3>Non-negotiable behaviours</h3>
+  <div class="grid g2">
+    <div class="card">
+      <h4>Refuse rather than guess</h4>
+      <p>Below a retrieval score floor the system states that the corpus does not cover the question and offers the nearest material. Refusal quality is a measured metric, not an accident.</p>
+    </div>
+    <div class="card">
+      <h4>Currency by default</h4>
+      <p>Retrieval filters to current document versions unless the user explicitly asks for history. Superseded content stays indexed but is unreachable by default.</p>
+    </div>
+    <div class="card">
+      <h4>Extractive bias</h4>
+      <p>The generator quotes and attributes rather than paraphrasing freely. Low temperature, strict grounding prompt, post-hoc citation verification.</p>
+    </div>
+    <div class="card">
+      <h4>Bounded work</h4>
+      <p>Every agent run carries a hop ceiling, a token ceiling, and a wall clock ceiling. Unbounded agents are how cost incidents happen.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ══════════ TAB 2 ══════════ -->
+<div class="panel" id="p2" role="tabpanel" aria-labelledby="t2">
+
+<section>
+  <h2>Dynamic ingestion and automatic indexing</h2>
+  <p class="lede">This is a data engineering problem wearing an AI costume. Treat it as change data capture with an embedding step, and the reliability properties you need follow naturally.</p>
+
+  <div class="flow">
+    <div class="step"><span class="n">01</span><span class="l">Detect</span><span class="d">Storage event or poll</span></div>
+    <div class="step"><span class="n">02</span><span class="l">Hash</span><span class="d">SHA-256 content address</span></div>
+    <div class="step"><span class="n">03</span><span class="l">Parse</span><span class="d">Layout aware to Markdown</span></div>
+    <div class="step"><span class="n">04</span><span class="l">Structure</span><span class="d">Sections, tables, figures</span></div>
+    <div class="step"><span class="n">05</span><span class="l">Chunk</span><span class="d">Section aware, contextualised</span></div>
+    <div class="step acc"><span class="n">06</span><span class="l">Enrich</span><span class="d">Entities, dates, claims</span></div>
+    <div class="step"><span class="n">07</span><span class="l">Embed</span><span class="d">Batch, versioned model</span></div>
+    <div class="step"><span class="n">08</span><span class="l">Upsert</span><span class="d">Idempotent, tombstoned</span></div>
+    <div class="step acc"><span class="n">09</span><span class="l">Replay</span><span class="d">Standing questions rerun</span></div>
+  </div>
+
+  <h3>The four properties that make it safe</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Property</th><th>Mechanism</th><th>What it prevents</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Idempotent</strong></td><td>Content hash as primary key; upsert on <code>(doc_id, chunk_ord)</code></td><td>Duplicate chunks from re-uploads and retries</td></tr>
+        <tr><td><strong>Resumable</strong></td><td>Stage recorded per document; workers resume at last completed stage</td><td>Full reprocessing after a crash mid-corpus</td></tr>
+        <tr><td><strong>Reversible</strong></td><td>Soft delete via <code>status</code> and <code>valid_to</code>, never hard delete</td><td>Silent loss of evidence a past report cited</td></tr>
+        <tr><td><strong>Observable</strong></td><td>Per-document status, parse confidence, dead letter queue</td><td>Documents that quietly never made it into the index</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Data model</h3>
+  <pre><code><span class="c">-- One row per logical document, many rows per revision</span>
+<span class="k">CREATE TABLE</span> documents (
+  doc_id        <span class="f">uuid</span> <span class="k">PRIMARY KEY</span>,
+  source_uri    <span class="f">text</span> <span class="k">NOT NULL</span>,
+  content_hash  <span class="f">char</span>(64) <span class="k">NOT NULL</span>,          <span class="c">-- SHA-256 of raw bytes</span>
+  title         <span class="f">text</span>,
+  category      <span class="f">text</span>,                        <span class="c">-- your corpus taxonomy</span>
+  version_label <span class="f">text</span>,
+  published_at  <span class="f">date</span>,
+  valid_from    <span class="f">date</span>,
+  valid_to      <span class="f">date</span>,                        <span class="c">-- NULL = current</span>
+  supersedes    <span class="f">uuid</span> <span class="k">REFERENCES</span> documents(doc_id),
+  access_tier   <span class="f">text</span> <span class="k">NOT NULL DEFAULT</span> <span class="s">'internal'</span>,
+  parse_status  <span class="f">text</span> <span class="k">NOT NULL DEFAULT</span> <span class="s">'pending'</span>,
+  parse_conf    <span class="f">real</span>,
+  page_count    <span class="f">int</span>,
+  ingested_at   <span class="f">timestamptz</span> <span class="k">DEFAULT</span> now(),
+  <span class="k">UNIQUE</span> (content_hash)
+);
+
+<span class="k">CREATE TABLE</span> chunks (
+  chunk_id      <span class="f">uuid</span> <span class="k">PRIMARY KEY</span>,
+  doc_id        <span class="f">uuid</span> <span class="k">NOT NULL REFERENCES</span> documents(doc_id) <span class="k">ON DELETE CASCADE</span>,
+  chunk_ord     <span class="f">int</span>  <span class="k">NOT NULL</span>,
+  section_path  <span class="f">text</span>[],                      <span class="c">-- ['3','3.2','Capital adequacy']</span>
+  page_from     <span class="f">int</span>,
+  page_to       <span class="f">int</span>,
+  bbox          <span class="f">jsonb</span>,                       <span class="c">-- enables highlight-on-citation</span>
+  content       <span class="f">text</span> <span class="k">NOT NULL</span>,             <span class="c">-- verbatim passage</span>
+  context_head  <span class="f">text</span>,                        <span class="c">-- generated situating sentence</span>
+  token_count   <span class="f">int</span>,
+  embedding     <span class="f">vector</span>(1024),
+  embed_model   <span class="f">text</span> <span class="k">NOT NULL</span>,             <span class="c">-- pinned for reindex safety</span>
+  tsv           <span class="f">tsvector</span> <span class="k">GENERATED ALWAYS AS</span>
+                (to_tsvector(<span class="s">'english'</span>, content)) <span class="k">STORED</span>,
+  <span class="k">UNIQUE</span> (doc_id, chunk_ord)
+);
+
+<span class="k">CREATE INDEX</span> <span class="k">ON</span> chunks <span class="k">USING</span> hnsw (embedding vector_cosine_ops);
+<span class="k">CREATE INDEX</span> <span class="k">ON</span> chunks <span class="k">USING</span> gin (tsv);
+<span class="k">CREATE INDEX</span> <span class="k">ON</span> documents (category, valid_to, access_tier);
+
+<span class="c">-- Analyst-grade addition: extracted, attributable assertions</span>
+<span class="k">CREATE TABLE</span> claims (
+  claim_id    <span class="f">uuid</span> <span class="k">PRIMARY KEY</span>,
+  chunk_id    <span class="f">uuid</span> <span class="k">REFERENCES</span> chunks(chunk_id) <span class="k">ON DELETE CASCADE</span>,
+  subject     <span class="f">text</span>, predicate <span class="f">text</span>, object <span class="f">text</span>,
+  as_of       <span class="f">date</span>,
+  confidence  <span class="f">real</span>,
+  embedding   <span class="f">vector</span>(1024)               <span class="c">-- contradiction detection</span>
+);</code></pre>
+
+  <h3>Chunking policy</h3>
+  <ul>
+    <li><strong>Split on structure, not characters.</strong> Use the heading tree the parser recovered. A chunk that spans two sections is a chunk that retrieves badly and cites confusingly.</li>
+    <li><strong>Target 500 to 900 tokens</strong> with roughly 15 percent overlap at section boundaries only.</li>
+    <li><strong>Never split a table.</strong> Keep it whole and store it as Markdown. If it exceeds the ceiling, chunk by row groups with the header repeated.</li>
+    <li><strong>Prepend a context header.</strong> One or two generated sentences naming the document, section, and date. This measurably improves retrieval on pronoun-heavy and abbreviation-heavy passages, at the cost of a one-time generation pass during ingestion.</li>
+    <li><strong>Carry bounding boxes.</strong> Without them the highlight-on-citation interaction is impossible to build later, and that interaction is the product's signature.</li>
+  </ul>
+
+  <div class="note warn">
+    <div class="t"><span class="dot"></span>The reindex problem, planned for on day one</div>
+    <p>You will change embedding models. When you do, every vector in the store is invalid, and the corpus is unavailable if you reindex in place. Pin <code>embed_model</code> on every chunk row, build the new index in a shadow table, run the golden set against both, then cut over with a single transaction. Budget this as a recurring operation, roughly annual, not as a one-off migration.</p>
+  </div>
+
+  <h3>Failure handling</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Failure</th><th>Detection</th><th>Response</th></tr></thead>
+      <tbody>
+        <tr><td>Scanned or image-only PDF</td><td>Extracted character count per page below threshold</td><td>Route to OCR path, flag lower parse confidence</td></tr>
+        <tr><td>Table extraction garbled</td><td>Row and column count heuristics, cell nullity rate</td><td>Quarantine, human review queue</td></tr>
+        <tr><td>Parser crash</td><td>Worker exception</td><td>Retry with backoff twice, then dead letter queue</td></tr>
+        <tr><td>Embedding provider outage</td><td>API error rate</td><td>Chunk rows persist without vectors; backfill job fills them</td></tr>
+        <tr><td>Document silently missing</td><td>Reconciliation job: source count against indexed count</td><td>Daily alert on divergence</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+
+<!-- ══════════ TAB 3 ══════════ -->
+<div class="panel" id="p3" role="tabpanel" aria-labelledby="t3">
+
+<section>
+  <h2>Retrieval</h2>
+  <p class="lede">Retrieval quality sets the ceiling on everything downstream. A better model cannot rescue evidence that was never retrieved, and the cheapest quality gains in the entire system live in this layer.</p>
+
+  <h3>The pipeline</h3>
+  <div class="flow">
+    <div class="step"><span class="n">01</span><span class="l">Filter</span><span class="d">Currency, tier, category</span></div>
+    <div class="step"><span class="n">02</span><span class="l">Dense</span><span class="d">Vector top 50</span></div>
+    <div class="step"><span class="n">03</span><span class="l">Lexical</span><span class="d">BM25 top 50</span></div>
+    <div class="step"><span class="n">04</span><span class="l">Fuse</span><span class="d">Reciprocal rank fusion</span></div>
+    <div class="step acc"><span class="n">05</span><span class="l">Rerank</span><span class="d">Cross encoder top 8</span></div>
+    <div class="step"><span class="n">06</span><span class="l">Expand</span><span class="d">Neighbour chunks</span></div>
+  </div>
+
+  <h3>Why each stage exists</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Stage</th><th>Failure it fixes</th><th>Typical cost</th></tr></thead>
+      <tbody>
+        <tr><td>Metadata pre-filter</td><td>Citing a superseded revision, or content the user may not see</td><td>Negligible, index-backed</td></tr>
+        <tr><td>Dense vector search</td><td>Vocabulary mismatch between question and document</td><td>Low, HNSW</td></tr>
+        <tr><td>Lexical BM25</td><td>Exact identifiers, clause numbers, product names, rare terms</td><td>Low, GIN index</td></tr>
+        <tr><td>Reciprocal rank fusion</td><td>Either method alone missing the right passage</td><td>Free, pure ranking arithmetic</td></tr>
+        <tr><td>Cross encoder rerank</td><td>Topically similar but non-answering passages ranked high</td><td>Roughly 100 to 200 ms for 50 candidates</td></tr>
+        <tr><td>Neighbour expansion</td><td>Answer split across a chunk boundary</td><td>One indexed lookup</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note ok">
+    <div class="t"><span class="dot"></span>Highest return per hour of work</div>
+    <p>Hybrid retrieval plus a reranker resolves the majority of retrieval failures in a naive system. Do this before graph retrieval, before fine tuning, and before adopting a larger generation model. Measure the delta on the golden set so you can prove it rather than assert it.</p>
+  </div>
+
+  <h3>Fusion and filtering, concretely</h3>
+  <pre><code><span class="k">async def</span> <span class="f">retrieve</span>(q: str, flt: Filters, k: int = 8) -> list[Chunk]:
+    <span class="c"># 1. Mandatory filters. Applied in SQL, never after generation.</span>
+    where = <span class="f">build_predicate</span>(
+        current_only = flt.as_of <span class="k">is None</span>,     <span class="c"># valid_to IS NULL</span>
+        tiers        = flt.user_tiers,            <span class="c"># entitlement</span>
+        categories   = flt.categories,
+    )
+
+    <span class="c"># 2. Two independent recall paths, deliberately over-fetched.</span>
+    dense, lexical = <span class="k">await</span> asyncio.<span class="f">gather</span>(
+        <span class="f">vector_search</span>(<span class="f">embed</span>(q), where, limit=50),
+        <span class="f">bm25_search</span>(q, where, limit=50),
+    )
+
+    <span class="c"># 3. RRF: rank-based, so the two score scales never need calibrating.</span>
+    fused = <span class="f">rrf</span>(dense, lexical, k_const=60)
+
+    <span class="c"># 4. Precision pass. This is where relevance is actually won.</span>
+    scored = <span class="k">await</span> <span class="f">cross_encode</span>(q, fused[:50])
+    top    = [c <span class="k">for</span> c <span class="k">in</span> scored <span class="k">if</span> c.score >= FLOOR][:k]
+
+    <span class="c"># 5. Honest emptiness beats a confident wrong answer.</span>
+    <span class="k">if not</span> top:
+        <span class="k">raise</span> <span class="f">InsufficientEvidence</span>(nearest=scored[:3])
+
+    <span class="k">return</span> <span class="f">expand_neighbours</span>(top)</code></pre>
+
+  <h3>Query transformation, used sparingly</h3>
+  <div class="grid g2">
+    <div class="card">
+      <h4>Decomposition <span class="badge p">use</span></h4>
+      <p>Split a compound analyst question into independent sub-questions and retrieve for each. This is the single highest value transformation for multi-hop work.</p>
+    </div>
+    <div class="card">
+      <h4>Rewrite on failure <span class="badge p">use</span></h4>
+      <p>When the reranker returns nothing above the floor, rewrite once with corpus vocabulary and retry. Cap at one retry per sub-question.</p>
+    </div>
+    <div class="card">
+      <h4>Hypothetical document embedding <span class="badge w">measure first</span></h4>
+      <p>Generate a fake answer and embed that. Helps on vague questions, adds a generation round trip, and sometimes hurts on precise ones. Only keep it if the golden set says so.</p>
+    </div>
+    <div class="card">
+      <h4>Graph retrieval <span class="badge w">defer</span></h4>
+      <p>Entity graphs earn their operational cost only on connect-the-dots questions that hybrid retrieval demonstrably fails. Let the eval data justify it, not enthusiasm.</p>
+    </div>
+  </div>
+
+  <h3>Contradiction detection</h3>
+  <p>An analyst product gains disproportionate credibility from noticing that two sources disagree. The mechanism is cheap once claims are extracted at ingestion: cluster claim embeddings by subject and predicate, flag clusters whose objects diverge, and surface the disagreement with both citations rather than silently picking one. Do not attempt to adjudicate. Present both, dated.</p>
+</section>
+
+</div>
+
+<!-- ══════════ TAB 4 ══════════ -->
+<div class="panel" id="p4" role="tabpanel" aria-labelledby="t4">
+
+<section>
+  <h2>The agent loop</h2>
+  <p class="lede">Agentic means retrieval happens inside the reasoning loop rather than in front of it. The agent decides what to look for next based on what it has already read, and it stops when the evidence is sufficient or the budget is spent.</p>
+
+  <h3>Graph topology</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Node</th><th>Responsibility</th><th>Exit condition</th></tr></thead>
+      <tbody>
+        <tr><td><code>plan</code></td><td>Decompose the question into sub-questions with a stated evidence requirement for each</td><td>Plan produced, or question judged out of scope</td></tr>
+        <tr><td><code>retrieve</code></td><td>Run the hybrid pipeline for the active sub-question</td><td>Evidence above floor, or one rewrite attempted</td></tr>
+        <tr><td><code>read</code></td><td>Extract only passages that bear on the sub-question; discard the rest</td><td>Sub-question marked answered, partial, or unsupported</td></tr>
+        <tr><td><code>reflect</code></td><td>Decide: enough evidence, retrieve again, or new sub-question</td><td>Hop budget or sufficiency reached</td></tr>
+        <tr><td><code>verify</code></td><td>Check each drafted claim against its cited passage; strip unsupported ones</td><td>All claims supported or removed</td></tr>
+        <tr><td><code>synthesize</code></td><td>Compose the report with inline citations and an explicit gaps section</td><td>Output emitted</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>State flows through a single shared object. Nodes never call one another directly; they read and write state, and the runtime routes on conditional edges. This is what makes runs replayable from any checkpoint, which is what makes debugging possible.</p>
+
+  <pre><code><span class="k">class</span> <span class="f">AnalystState</span>(TypedDict):
+    question:      str
+    filters:       Filters
+    sub_questions: list[SubQ]          <span class="c"># plan output, mutated as it runs</span>
+    evidence:      list[Evidence]      <span class="c"># chunk + why it was kept</span>
+    findings:      list[Finding]       <span class="c"># claim + supporting evidence ids</span>
+    gaps:          list[str]           <span class="c"># what the corpus could not answer</span>
+    hops_used:     int
+    tokens_used:   int
+    trace_id:      str
+
+<span class="k">def</span> <span class="f">route_after_reflect</span>(s: AnalystState) -> str:
+    <span class="k">if</span> s[<span class="s">"hops_used"</span>] >= MAX_HOPS:        <span class="k">return</span> <span class="s">"verify"</span>
+    <span class="k">if</span> s[<span class="s">"tokens_used"</span>] >= MAX_TOKENS:    <span class="k">return</span> <span class="s">"verify"</span>
+    <span class="k">if</span> <span class="f">all_answered</span>(s[<span class="s">"sub_questions"</span>]):  <span class="k">return</span> <span class="s">"verify"</span>
+    <span class="k">return</span> <span class="s">"retrieve"</span>
+
+graph.<span class="f">add_conditional_edges</span>(<span class="s">"reflect"</span>, route_after_reflect)</code></pre>
+
+  <h3>Budgets, which are not optional</h3>
+  <div class="grid g3">
+    <div class="card"><div class="metric">8</div><div class="lbl">Max hops</div><p>Runs that need more than eight retrieval rounds are almost always looping on a question the corpus cannot answer.</p></div>
+    <div class="card"><div class="metric">120k</div><div class="lbl">Token ceiling per run</div><p>Enforced in state, checked at every routing decision, not left to the model's discretion.</p></div>
+    <div class="card"><div class="metric">240s</div><div class="lbl">Wall clock ceiling</div><p>On expiry the agent emits partial findings with an explicit incompleteness notice rather than nothing.</p></div>
+  </div>
+
+  <h3>The verification pass</h3>
+  <p>Verification is the step that separates a research product from an autocomplete with footnotes. After drafting, each claim is checked independently against the passage it cites, by a separate call with only that claim and that passage in context. Claims that fail are removed, not softened. The removed claims become entries in the gaps section, which is itself valuable output: it tells the analyst where the corpus is silent.</p>
+
+  <div class="note err">
+    <div class="t"><span class="dot"></span>The failure mode that kills trust</div>
+    <p>A citation that exists but does not support the sentence attached to it. Users spot-check the first two citations, find them plausible, then stop checking. If citation accuracy is 85 percent, the product is worse than no product, because it launders unverified claims through the appearance of rigour. Measure citation accuracy explicitly and gate releases on it.</p>
+  </div>
+
+  <h3>Memory, in three narrow forms</h3>
+  <ul>
+    <li><strong>Run memory.</strong> The state object within a single investigation. Nothing persists after.</li>
+    <li><strong>Standing questions.</strong> Persisted questions replayed on corpus change, with stored prior answers for diffing. This powers Monitor mode.</li>
+    <li><strong>Corpus notes.</strong> Durable observations about the corpus itself, such as which categories are thin or which documents are internally inconsistent. Written by the system, read by the planner.</li>
+  </ul>
+  <p>Resist a general purpose long-term user memory in v1. It introduces non-determinism into evaluation, and you will not be able to tell whether a regression came from a code change or from accumulated state.</p>
+</section>
+
+</div>
+
+<!-- ══════════ TAB 5 ══════════ -->
+<div class="panel" id="p5" role="tabpanel" aria-labelledby="t5">
+
+<section>
+  <h2>Open source stack</h2>
+  <p class="lede">Decisions, not options. Each row states the default, the condition under which you would deviate, and the reason the default wins in the common case.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Layer</th><th>Default</th><th>Deviate when</th><th>Rationale</th></tr></thead>
+      <tbody>
+        <tr><td>Document parsing</td><td><strong>Docling</strong></td><td>GPU available and throughput matters, then Marker</td><td>Strongest self-hostable layout and table fidelity; emits Markdown with structure and coordinates</td></tr>
+        <tr><td>OCR fallback</td><td><strong>Tesseract</strong> or a vision model pass</td><td>High scanned volume justifies a managed OCR service</td><td>Only invoked on low-text pages, so cost stays bounded</td></tr>
+        <tr><td>Store</td><td><strong>Postgres 16 + pgvector</strong></td><td>Beyond roughly 5 to 10 million vectors, or heavy filtered search, then Qdrant</td><td>Vectors, full text, metadata, and job state in one transactional system; one fewer thing to operate</td></tr>
+        <tr><td>Lexical search</td><td><strong>Postgres FTS</strong> with GIN</td><td>Need BM25 tuning knobs, then OpenSearch</td><td>Avoids a second cluster; adequate for corpora in the low millions of chunks</td></tr>
+        <tr><td>Embeddings</td><td><strong>Qwen3-Embedding</strong> (Apache 2.0)</td><td>Latency-critical serving, then a smaller variant</td><td>Top open model on multilingual retrieval benchmarks; permissive licence; self-hostable</td></tr>
+        <tr><td>Reranker</td><td><strong>bge-reranker-v2</strong> cross encoder</td><td>CPU-only serving, then the base size model</td><td>Largest single quality gain per millisecond in the whole pipeline</td></tr>
+        <tr><td>Generation</td><td><strong>API model</strong>, gateway-abstracted</td><td>Data residency forbids egress, then vLLM with a 30B-class open model</td><td>Verification and synthesis are the quality-critical calls; keep the swap a config change</td></tr>
+        <tr><td>Model gateway</td><td><strong>LiteLLM</strong></td><td>Single provider forever</td><td>One interface, retries, fallbacks, and per-tenant spend caps</td></tr>
+        <tr><td>Orchestration</td><td><strong>LangGraph</strong></td><td>Prefer explicit typing throughout, then Pydantic AI</td><td>Durable execution, checkpointing, replay, conditional routing</td></tr>
+        <tr><td>API</td><td><strong>FastAPI</strong> with SSE streaming</td><td>Rarely</td><td>Async native, typed contracts, first-class streaming</td></tr>
+        <tr><td>Workers</td><td><strong>Celery</strong> or <strong>Arq</strong> on Redis</td><td>Already on Kafka, then reuse it</td><td>Retries, backoff, dead letter queues, visible queue depth</td></tr>
+        <tr><td>Observability</td><td><strong>Langfuse</strong>, self-hosted</td><td>Standardised on OpenTelemetry, then Arize Phoenix</td><td>Traces, prompt versions, and eval scores in one place, self-hostable</td></tr>
+        <tr><td>Evaluation</td><td><strong>DeepEval</strong> in CI, <strong>Ragas</strong> on live traces</td><td>Never skip both</td><td>Unit-test discipline at the gate; reference-free monitoring in production</td></tr>
+        <tr><td>Frontend</td><td><strong>Next.js</strong> + Tailwind + shadcn/ui</td><td>Team is Python-only and speed matters, then Streamlit for internal tools only</td><td>Streaming UI, real component control, production-grade output</td></tr>
+        <tr><td>Document viewer</td><td><strong>pdf.js</strong></td><td>Source is HTML rather than PDF</td><td>The only practical way to render highlight-on-citation</td></tr>
+        <tr><td>Packaging</td><td><strong>Docker Compose</strong></td><td>Multi-tenant scale-out, then Kubernetes</td><td>Whole system runs on one machine until it genuinely cannot</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Deployment topology</h3>
+  <div class="grid g3">
+    <div class="card"><div class="lbl">Service 01</div><h4>API</h4><p>FastAPI, stateless, horizontally scalable. Holds no agent state; everything lives in Postgres checkpoints.</p></div>
+    <div class="card"><div class="lbl">Service 02</div><h4>Ingest workers</h4><p>CPU heavy, bursty. Scale to zero between corpus updates. GPU pool only if using a GPU parser.</p></div>
+    <div class="card"><div class="lbl">Service 03</div><h4>Embedding and rerank</h4><p>Separate service so the model can be swapped and versioned independently of application code.</p></div>
+    <div class="card"><div class="lbl">Service 04</div><h4>Postgres</h4><p>Managed. Vectors, text, metadata, job state, agent checkpoints. Point-in-time recovery enabled.</p></div>
+    <div class="card"><div class="lbl">Service 05</div><h4>Redis</h4><p>Queue broker plus retrieval cache. Cache keys include the filter set or you will serve cross-tenant results.</p></div>
+    <div class="card"><div class="lbl">Service 06</div><h4>Langfuse</h4><p>Self-hosted trace and eval store. Also the substrate for the quality dashboard you show stakeholders.</p></div>
+  </div>
+
+  <h3>What makes the frontend visually persuasive</h3>
+  <p>In this product category, aesthetic quality and epistemic quality are the same thing rendered two ways. Beauty here means making the system's reasoning inspectable. Five interactions carry almost all of the perceived quality.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Interaction</th><th>What it communicates</th><th>Upstream requirement</th></tr></thead>
+      <tbody>
+        <tr><td>Streamed answer with citation chips appearing inline</td><td>The system is working, and each claim is anchored</td><td>SSE streaming, citation ids emitted with text</td></tr>
+        <tr><td>Click a citation, PDF opens to the page with the passage highlighted</td><td>Verifiability, immediately</td><td>Bounding boxes captured at ingestion</td></tr>
+        <tr><td>Evidence panel listing every source consulted, including rejected ones</td><td>Thoroughness and honest negative results</td><td>Agent state persisted per run</td></tr>
+        <tr><td>Reasoning timeline showing plan, hops, and the retry decision</td><td>The agent is deliberate, not lucky</td><td>Trace events surfaced to the client</td></tr>
+        <tr><td>Ingestion console with per-document status and queue depth</td><td>The corpus is alive and the pipeline is real</td><td>Status fields written at every stage</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note info">
+    <div class="t"><span class="dot"></span>Coupling worth noticing early</div>
+    <p>Every one of those five interactions depends on a decision made in the ingestion layer, weeks before any UI exists. Choose a parser that discards coordinates and the signature interaction becomes unbuildable without reprocessing the entire corpus. Frontend ambition is an ingestion requirement.</p>
+  </div>
+
+  <h3>Interface principles</h3>
+  <ul>
+    <li><strong>Answer first, apparatus second.</strong> Evidence, trace, and filters are progressive disclosure, not the default view.</li>
+    <li><strong>Show uncertainty as structure.</strong> A gaps section and a contradiction flag are more convincing than a confidence percentage nobody can interpret.</li>
+    <li><strong>Never spin without information.</strong> During a long investigation, stream the plan and each sub-question as it resolves. Perceived latency collapses.</li>
+    <li><strong>Refusals get the same visual weight as answers.</strong> A well-designed "not covered" screen that lists the nearest material is a feature, and it teaches users where the corpus edges are.</li>
+    <li><strong>Restraint over decoration.</strong> Dense information, strict hierarchy, one accent colour, no gratuitous motion. Analyst tools earn trust by looking calm.</li>
+  </ul>
+</section>
+
+</div>
+
+<!-- ══════════ TAB 6 ══════════ -->
+<div class="panel" id="p6" role="tabpanel" aria-labelledby="t6">
+
+<section>
+  <h2>Evaluation</h2>
+  <p class="lede">Without a golden set you cannot tell whether a change helped. You will then tune on impressions for months and slowly get worse while feeling productive. This is the most commonly skipped component and the one that most determines whether the project succeeds.</p>
+
+  <h3>Building the golden set</h3>
+  <ol>
+    <li>Write 100 to 150 questions spanning the corpus categories. Draw them from real analyst questions where possible.</li>
+    <li>For each, record the correct answer <em>and</em> the specific passages that support it. The passages matter more than the answer.</li>
+    <li>Include roughly 15 percent unanswerable questions. These measure refusal, which nothing else does.</li>
+    <li>Include roughly 20 percent multi-hop questions requiring at least three documents.</li>
+    <li>Include questions whose answer changed between document versions. These test currency filtering.</li>
+    <li>Version the set alongside the corpus. A golden set that drifts from its corpus is worse than none.</li>
+  </ol>
+
+  <h3>Metrics that matter, in priority order</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Metric</th><th>Measures</th><th>Gate</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Recall@20</strong></td><td>Did the right passage enter the candidate pool at all</td><td>&ge; 0.90</td><td>CI, offline</td></tr>
+        <tr><td><strong>nDCG@8</strong></td><td>Did reranking put it near the top</td><td>&ge; 0.75</td><td>CI, offline</td></tr>
+        <tr><td><strong>Citation accuracy</strong></td><td>Does each cited passage actually support its claim</td><td>&ge; 0.95</td><td>CI, human-audited sample</td></tr>
+        <tr><td><strong>Faithfulness</strong></td><td>Is every generated statement grounded in retrieved context</td><td>&ge; 0.90</td><td>CI and production sampling</td></tr>
+        <tr><td><strong>Refusal correctness</strong></td><td>Refuses the unanswerable, answers the answerable</td><td>&ge; 0.90 both ways</td><td>CI, offline</td></tr>
+        <tr><td><strong>Currency correctness</strong></td><td>Cites the current version unless history was requested</td><td>1.00</td><td>CI, offline</td></tr>
+        <tr><td><strong>Context precision</strong></td><td>Proportion of retrieved context that was relevant</td><td>Track, no hard gate</td><td>Production traces</td></tr>
+        <tr><td><strong>p95 latency and cost per run</strong></td><td>Whether it is usable and affordable</td><td>Per mode budget</td><td>Production</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Recall sits first deliberately. If the passage never entered the candidate pool, no amount of reranking, prompting, or model upgrading can recover it, and every other metric is measuring the wrong thing.</p>
+
+  <div class="note ok">
+    <div class="t"><span class="dot"></span>The quality loop</div>
+    <p>Golden set runs in CI and blocks merges on regression. Production traces are sampled and scored reference-free, then reviewed weekly. Failures found in production become new golden set entries. The set grows to reflect real usage, and the system's quality becomes a number you can show a stakeholder rather than a claim you defend in a meeting.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Build plan</h2>
+  <p class="lede">Nine phases, each with an exit gate. The gates matter more than the phases: they prevent the standard failure of building the agent before knowing whether retrieval works.</p>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">00</span><span class="phase-t">Corpus reconnaissance</span><span class="badge">2 to 3 days</span></div>
+    <p>Sample 50 documents covering the worst cases. Determine how many are scanned, how table-heavy they are, whether versions and effective dates exist, and whether the categories are meaningful or arbitrary. Parse them and read the output yourself.</p>
+    <div class="gate"><b>Exit gate</b>Parsed Markdown is faithful on 45 of 50 documents, including tables. If not, fix parsing before writing any other code.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">01</span><span class="phase-t">Golden set first</span><span class="badge">3 to 4 days</span></div>
+    <p>Write the questions and record supporting passages before building retrieval. This is counterintuitive and it is the highest leverage sequencing decision in the plan, because it forces you to discover what the corpus can and cannot support while changing course is still cheap.</p>
+    <div class="gate"><b>Exit gate</b>100+ questions with recorded supporting passages, including unanswerable and multi-hop cases.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">02</span><span class="phase-t">Ingestion pipeline</span><span class="badge">1 to 2 weeks</span></div>
+    <p>Content-addressed detection, queue, parse, section-aware chunking, enrichment, embedding, idempotent upsert. Postgres schema with versions, tiers, and bounding boxes. Dead letter queue and reconciliation job.</p>
+    <div class="gate"><b>Exit gate</b>Drop a file into source storage; it is queryable within five minutes. Drop the same file again; nothing duplicates. Kill a worker mid-run; processing resumes.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">03</span><span class="phase-t">Retrieval core, no agent</span><span class="badge">1 week</span></div>
+    <p>Hybrid search with fusion, mandatory filters, cross encoder reranking, neighbour expansion. Query it from a script. Measure every configuration against the golden set and record the results in a table you keep.</p>
+    <div class="gate"><b>Exit gate</b>Recall@20 at or above 0.90 and nDCG@8 at or above 0.75. Do not proceed on a lower number by promising to fix it later.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">04</span><span class="phase-t">Grounded generation and refusal</span><span class="badge">4 to 5 days</span></div>
+    <p>Single-hop answers with inline citations, a score floor that triggers refusal, and the independent verification pass that strips unsupported claims.</p>
+    <div class="gate"><b>Exit gate</b>Citation accuracy at or above 0.95 on a hand-audited sample of 50 answers. Refusal correct on the unanswerable subset.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">05</span><span class="phase-t">Agent loop</span><span class="badge">1 to 2 weeks</span></div>
+    <p>Planner, retrieve, read, reflect, verify, synthesize as a checkpointed graph. Hard budgets on hops, tokens, and wall clock. Full tracing from the first commit, not retrofitted.</p>
+    <div class="gate"><b>Exit gate</b>Multi-hop subset accuracy exceeds the single-hop baseline by a measurable margin. If it does not, the agent is adding cost and latency for nothing.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">06</span><span class="phase-t">Monitor mode</span><span class="badge">4 to 5 days</span></div>
+    <p>Standing questions replayed when the corpus changes, with stored prior answers and a diff. This is where automatic indexing stops being invisible plumbing and becomes the product's most distinctive feature.</p>
+    <div class="gate"><b>Exit gate</b>Adding a document that changes a known answer produces a correct change digest without manual intervention.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">07</span><span class="phase-t">Interface</span><span class="badge">2 weeks</span></div>
+    <p>Streaming answers, citation chips, PDF viewer with passage highlight, evidence panel, reasoning timeline, ingestion console. Build the highlight interaction first; it is the one that changes how people perceive the whole system.</p>
+    <div class="gate"><b>Exit gate</b>A user who has never seen the system verifies a claim back to its source page without instruction.</div>
+  </div>
+
+  <div class="phase">
+    <div class="phase-h"><span class="phase-n">08</span><span class="phase-t">Production hardening</span><span class="badge">1 to 2 weeks</span></div>
+    <p>Authentication and entitlement filters, rate limits, per-tenant spend caps, golden set in CI, production trace sampling, staleness and reconciliation alerts, documented reindex runbook, backup and recovery test.</p>
+    <div class="gate"><b>Exit gate</b>An embedding model swap can be executed end to end in a rehearsal without downtime or quality regression.</div>
+  </div>
+
+  <h3>Risk register</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Risk</th><th>Signal</th><th>Mitigation</th><th>Severity</th></tr></thead>
+      <tbody>
+        <tr><td>Corpus is largely scanned</td><td>Text selection fails in a viewer on sampled files</td><td>Discover in phase 0; budget OCR and roughly double ingestion effort</td><td><span class="badge e">High</span></td></tr>
+        <tr><td>Corpus contradicts itself</td><td>Reviewers disagree with the documents, not the system</td><td>Surface contradictions as output; rescope if remediation is the real need</td><td><span class="badge e">High</span></td></tr>
+        <tr><td>Agent adds latency without accuracy</td><td>Multi-hop subset no better than single hop</td><td>Ship Ask mode alone; keep the agent behind a flag until it earns its place</td><td><span class="badge w">Medium</span></td></tr>
+        <tr><td>Cost per investigation exceeds value</td><td>Token spend per run trending up</td><td>Tighten budgets, cache retrievals, use a smaller model for read and verify nodes</td><td><span class="badge w">Medium</span></td></tr>
+        <tr><td>Quality decays silently after launch</td><td>Nobody notices for weeks</td><td>Scheduled golden set reruns and a visible quality dashboard</td><td><span class="badge w">Medium</span></td></tr>
+        <tr><td>Graph layer built too early</td><td>Weeks spent on entity resolution before recall was measured</td><td>Gate graph work on demonstrated failure of hybrid retrieval</td><td><span class="badge i">Low</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The plan in one paragraph</h3>
+  <p>Sample the corpus and fix parsing before anything else. Write the golden questions before writing retrieval. Build ingestion as an idempotent, content-addressed pipeline that carries version, entitlement, and coordinate metadata on every chunk. Build hybrid retrieval with a reranker and measure it until recall clears 0.90. Add grounded generation with citations, a refusal floor, and an independent verification pass. Only then add the agent loop, with hard budgets and full tracing. Add standing questions so new documents visibly change conclusions. Build the interface around verifiability, with citation click-through to a highlighted source page. Harden last: entitlements, spend caps, evaluation in CI, and a rehearsed reindex path.</p>
+</section>
+
+</div>
+
+</main>
+
+<footer>
+  <div class="foot-in">
+    <span>Dynamic Agentic RAG · Research Analyst Reference Architecture</span>
+    <span>Built for scale by Prasanth Sistla</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('.panel'));
+  function select(i){
+    tabs.forEach(function(t,j){
+      t.setAttribute('aria-selected', j===i ? 'true' : 'false');
+      t.tabIndex = j===i ? 0 : -1;
+    });
+    panels.forEach(function(p,j){ p.classList.toggle('active', j===i); });
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+  tabs.forEach(function(t,i){
+    t.tabIndex = i===0 ? 0 : -1;
+    t.addEventListener('click', function(){ select(i); });
+    t.addEventListener('keydown', function(e){
+      var n = null;
+      if(e.key==='ArrowRight') n = (i+1) % tabs.length;
+      if(e.key==='ArrowLeft')  n = (i-1+tabs.length) % tabs.length;
+      if(e.key==='Home')       n = 0;
+      if(e.key==='End')        n = tabs.length-1;
+      if(n!==null){ e.preventDefault(); select(n); tabs[n].focus(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
