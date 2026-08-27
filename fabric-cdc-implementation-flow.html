@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change Data Capture in Microsoft Fabric: Implementation Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --m-font-primary:'Manrope',system-ui,-apple-system,sans-serif;
+  --m-font-code:'JetBrains Mono','Consolas',monospace;
+  --m-text-xs:.6875rem; --m-text-sm:.8125rem; --m-text-base:.9375rem;
+  --m-text-lg:1.0625rem; --m-text-xl:1.25rem; --m-text-2xl:1.5rem;
+  --m-text-3xl:1.875rem; --m-text-4xl:2.25rem;
+  --m-neutral-0:#FFFFFF; --m-neutral-50:#F8F9FA; --m-neutral-100:#F1F3F5;
+  --m-neutral-200:#E9ECEF; --m-neutral-300:#DEE2E6; --m-neutral-400:#ADB5BD;
+  --m-neutral-500:#868E96; --m-neutral-600:#495057; --m-neutral-700:#343A40;
+  --m-neutral-800:#212529; --m-neutral-900:#16191D; --m-neutral-950:#0D0F12;
+  --m-primary-50:#EEF2FF; --m-primary-100:#E0E7FF; --m-primary-200:#C7D2FE;
+  --m-primary-400:#818CF8; --m-primary-600:#4F46E5; --m-primary-700:#4338CA;
+  --m-primary-900:#312E81;
+  --m-accent-50:#FFFBEB; --m-accent-100:#FEF3C7; --m-accent-500:#F59E0B; --m-accent-700:#B45309;
+  --m-success:#15803D; --m-success-bg:#F0FDF4; --m-success-text:#14532D;
+  --m-warning:#EA580C; --m-warning-bg:#FFF7ED; --m-warning-text:#9A3412;
+  --m-error:#DC2626;   --m-error-bg:#FEF2F2;   --m-error-text:#991B1B;
+  --m-info:#2563EB;    --m-info-bg:#EFF6FF;    --m-info-text:#1E40AF;
+  --m-border:var(--m-neutral-200); --m-border-subtle:var(--m-neutral-100);
+  --m-text:var(--m-neutral-800); --m-text-secondary:var(--m-neutral-600);
+  --m-radius-sm:4px; --m-radius-md:8px; --m-radius-lg:12px; --m-radius-full:9999px;
+  --m-shadow-sm:0 1px 2px rgba(0,0,0,.04); --m-shadow-md:0 2px 8px rgba(0,0,0,.06);
+  --m-ease-out-expo:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--m-font-primary);font-size:var(--m-text-base);
+  line-height:1.6;color:var(--m-text);background:var(--m-neutral-50);
+  -webkit-font-smoothing:antialiased;
+}
+:focus-visible{outline:2px solid var(--m-primary-600);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+
+/* Header */
+header{background:var(--m-neutral-0);border-bottom:1px solid var(--m-border)}
+.hdr{padding:40px 0 28px}
+.eyebrow{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:.04em;
+  font-weight:600;color:var(--m-primary-600);margin-bottom:10px}
+h1{font-size:var(--m-text-4xl);font-weight:800;letter-spacing:-.025em;line-height:1.25}
+.sub{font-size:var(--m-text-lg);color:var(--m-text-secondary);margin-top:10px;max-width:760px}
+.verify{
+  display:flex;gap:10px;align-items:flex-start;margin-top:20px;padding:12px 16px;
+  background:var(--m-warning-bg);border:1px solid #FED7AA;border-left:3px solid var(--m-warning);
+  border-radius:var(--m-radius-md);font-size:var(--m-text-sm);color:var(--m-text);max-width:900px;
+}
+.verify strong{color:var(--m-warning-text)}
+
+/* Tabs */
+.tabbar{background:var(--m-neutral-0);border-bottom:1px solid var(--m-border);
+  position:sticky;top:0;z-index:200;box-shadow:var(--m-shadow-sm)}
+.tablist{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tablist::-webkit-scrollbar{display:none}
+.tab{
+  appearance:none;background:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:var(--m-text-sm);font-weight:600;
+  color:var(--m-text-secondary);padding:16px 18px;min-height:44px;white-space:nowrap;
+  border-bottom:2px solid transparent;transition:color 120ms ease,border-color 120ms ease;
+  display:flex;align-items:center;gap:8px;
+}
+.tab:hover{color:var(--m-text)}
+.tab[aria-selected="true"]{color:var(--m-primary-600);border-bottom-color:var(--m-primary-600)}
+.tnum{font-family:var(--m-font-code);font-size:var(--m-text-xs);
+  background:var(--m-neutral-100);color:var(--m-neutral-600);
+  border-radius:var(--m-radius-sm);padding:2px 6px;font-weight:600}
+.tab[aria-selected="true"] .tnum{background:var(--m-primary-100);color:var(--m-primary-700)}
+
+/* Panels */
+main{padding:40px 0 64px}
+[role="tabpanel"]{animation:fade 250ms var(--m-ease-out-expo)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h2{font-size:var(--m-text-2xl);font-weight:700;letter-spacing:-.015em;margin-bottom:6px}
+.lede{color:var(--m-text-secondary);max-width:820px;margin-bottom:28px}
+h3{font-size:var(--m-text-lg);font-weight:700;letter-spacing:-.015em;margin-bottom:12px}
+.sec{margin-top:36px}
+p+p{margin-top:10px}
+
+/* Cards & grid */
+.card{background:var(--m-neutral-0);border:1px solid var(--m-border);
+  border-radius:var(--m-radius-lg);padding:24px;box-shadow:var(--m-shadow-sm)}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:var(--m-text-xs);
+  font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  padding:3px 9px;border-radius:var(--m-radius-full);white-space:nowrap}
+.b-ga{background:var(--m-success-bg);color:var(--m-success-text);border:1px solid #BBF7D0}
+.b-prev{background:var(--m-warning-bg);color:var(--m-warning-text);border:1px solid #FED7AA}
+.b-ind{background:var(--m-primary-50);color:var(--m-primary-700);border:1px solid var(--m-primary-200)}
+.b-src{background:var(--m-neutral-100);color:var(--m-neutral-700);border:1px solid var(--m-neutral-300)}
+
+/* Tables */
+.tw{overflow-x:auto;border:1px solid var(--m-border);border-radius:var(--m-radius-lg);
+  background:var(--m-neutral-0)}
+table{width:100%;border-collapse:collapse;font-size:var(--m-text-sm);min-width:640px}
+th{font-size:var(--m-text-xs);text-transform:uppercase;letter-spacing:.04em;font-weight:600;
+  color:var(--m-neutral-600);text-align:left;padding:12px 16px;
+  border-bottom:1px solid var(--m-border);background:var(--m-neutral-50)}
+td{padding:12px 16px;border-bottom:1px solid var(--m-border-subtle);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td strong{font-weight:600}
+
+/* Flow */
+.flow{display:flex;flex-direction:column;gap:0}
+.step{display:grid;grid-template-columns:auto 1fr;gap:20px;position:relative}
+.rail{display:flex;flex-direction:column;align-items:center;width:44px}
+.dot{width:36px;height:36px;border-radius:var(--m-radius-full);flex:0 0 36px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--m-font-code);font-size:var(--m-text-sm);font-weight:600;
+  background:var(--m-primary-600);color:#fff}
+.dot.gate{background:var(--m-accent-700)}
+.dot.src{background:var(--m-neutral-700)}
+.line{flex:1;width:2px;background:var(--m-border);min-height:18px}
+.step:last-child .line{background:transparent}
+.body{padding-bottom:24px;min-width:0}
+.body h4{font-size:var(--m-text-base);font-weight:700;margin-bottom:4px;padding-top:7px}
+.body p{color:var(--m-text-secondary);font-size:var(--m-text-sm)}
+.owner{font-size:var(--m-text-xs);font-weight:600;color:var(--m-neutral-600);
+  text-transform:uppercase;letter-spacing:.04em;margin-top:8px;display:block}
+
+/* Lanes */
+.lanes{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:8px}
+.lane{background:var(--m-neutral-0);border:1px solid var(--m-border);
+  border-radius:var(--m-radius-lg);overflow:hidden}
+.lane-hd{padding:14px 20px;border-bottom:1px solid var(--m-border);background:var(--m-neutral-50);
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lane-hd h4{font-size:var(--m-text-base);font-weight:700}
+.lane ol{list-style:none;counter-reset:s;padding:16px 20px}
+.lane ol li{counter-increment:s;position:relative;padding-left:26px;font-size:var(--m-text-sm);
+  margin-bottom:10px;color:var(--m-text)}
+.lane ol li:last-child{margin-bottom:0}
+.lane ol li::before{content:counter(s);position:absolute;left:0;top:1px;
+  font-family:var(--m-font-code);font-size:var(--m-text-xs);font-weight:600;
+  color:var(--m-primary-700);background:var(--m-primary-50);
+  width:18px;height:18px;border-radius:var(--m-radius-sm);
+  display:flex;align-items:center;justify-content:center}
+
+/* Code */
+pre{background:var(--m-neutral-950);color:var(--m-neutral-100);border-radius:var(--m-radius-md);
+  padding:16px 18px;overflow-x:auto;font-family:var(--m-font-code);font-size:var(--m-text-sm);
+  line-height:1.6;margin-top:12px}
+code{font-family:var(--m-font-code);font-size:.92em}
+p code,li code,td code{background:var(--m-neutral-100);color:var(--m-neutral-800);
+  padding:1px 5px;border-radius:var(--m-radius-sm)}
+pre code{background:none;color:inherit;padding:0}
+.cm{color:var(--m-neutral-400)}
+.kw{color:var(--m-primary-400)}
+.st{color:#FCD34D}
+
+/* Callouts */
+.note{display:flex;gap:12px;padding:16px 18px;border-radius:var(--m-radius-md);
+  border:1px solid;border-left-width:3px;font-size:var(--m-text-sm);margin-top:16px}
+.note .ic{font-family:var(--m-font-code);font-weight:600;flex:0 0 auto}
+.n-warn{background:var(--m-warning-bg);border-color:#FED7AA;border-left-color:var(--m-warning)}
+.n-warn .ic{color:var(--m-warning-text)}
+.n-err{background:var(--m-error-bg);border-color:#FECACA;border-left-color:var(--m-error)}
+.n-err .ic{color:var(--m-error-text)}
+.n-info{background:var(--m-info-bg);border-color:#BFDBFE;border-left-color:var(--m-info)}
+.n-info .ic{color:var(--m-info-text)}
+.n-ok{background:var(--m-success-bg);border-color:#BBF7D0;border-left-color:var(--m-success)}
+.n-ok .ic{color:var(--m-success-text)}
+.note strong{font-weight:700}
+
+/* Gate list */
+.gates{list-style:none}
+.gates li{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:14px 0;
+  border-bottom:1px solid var(--m-border-subtle);align-items:start}
+.gates li:last-child{border-bottom:none}
+.chk{width:20px;height:20px;border:2px solid var(--m-primary-600);border-radius:var(--m-radius-sm);
+  margin-top:2px;flex:0 0 20px}
+.gates .q{font-weight:600;display:block}
+.gates .a{font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+
+/* Question list */
+.qlist{list-style:none;counter-reset:q}
+.qlist>li{counter-increment:q;padding:18px 0;border-bottom:1px solid var(--m-border-subtle)}
+.qlist>li:last-child{border-bottom:none}
+.qlist .qh{font-weight:700;font-size:var(--m-text-lg);letter-spacing:-.015em;
+  display:flex;gap:10px;align-items:baseline}
+.qlist .qh::before{content:"Q" counter(q);font-family:var(--m-font-code);
+  font-size:var(--m-text-xs);font-weight:600;color:var(--m-accent-700);
+  background:var(--m-accent-50);padding:3px 7px;border-radius:var(--m-radius-sm);
+  border:1px solid var(--m-accent-100);flex:0 0 auto}
+.qlist p{margin-top:8px;color:var(--m-text-secondary);font-size:var(--m-text-sm);max-width:860px}
+.branch{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.branch span{font-size:var(--m-text-sm);background:var(--m-neutral-50);
+  border:1px solid var(--m-border);border-radius:var(--m-radius-md);padding:8px 12px}
+.branch b{font-weight:700;color:var(--m-primary-700)}
+
+/* misc */
+ul.plain{list-style:none}
+ul.plain li{padding-left:18px;position:relative;font-size:var(--m-text-sm);margin-bottom:8px;
+  color:var(--m-text)}
+ul.plain li::before{content:"";position:absolute;left:2px;top:9px;width:5px;height:5px;
+  border-radius:50%;background:var(--m-primary-400)}
+.kv{font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+.kv b{color:var(--m-text);font-weight:600}
+
+footer{border-top:1px solid var(--m-border);background:var(--m-neutral-0);
+  padding:28px 0;margin-top:32px}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  font-size:var(--m-text-sm);color:var(--m-text-secondary)}
+
+@media (max-width:640px){
+  h1{font-size:var(--m-text-3xl)}
+  .hdr{padding:28px 0 20px}
+  .wrap{padding:0 16px}
+  .step{gap:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+@media print{
+  .tabbar{display:none}
+  [role="tabpanel"][hidden]{display:block!important}
+  .card,.lane,.tw{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hdr">
+    <div class="eyebrow">Data Platform Architecture</div>
+    <h1>Change Data Capture in Microsoft Fabric</h1>
+    <p class="sub">An implementation flow, not a feature list. Six stages from decision gate to production validation, with the divergence points and the failure modes that appear three months after go-live.</p>
+    <div class="verify">
+      <span><strong>Verification note.</strong> Preview status, connector coverage, and replication cadence change on a monthly release cycle. Every item flagged <span class="badge b-prev">Preview</span> below reflects Microsoft Learn documentation as of August 2026. Re-verify against Learn before attaching any of it to a roadmap with a committed go-live date.</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="wrap">
+    <div class="tablist" role="tablist">
+      <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true" tabindex="0"><span class="tnum">01</span>Decide</button>
+      <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1"><span class="tnum">02</span>The Flow</button>
+      <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1"><span class="tnum">03</span>Source Prep</button>
+      <button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1"><span class="tnum">04</span>Fabric Config</button>
+      <button class="tab" role="tab" id="t5" aria-controls="p5" aria-selected="false" tabindex="-1"><span class="tnum">05</span>Propagate</button>
+      <button class="tab" role="tab" id="t6" aria-controls="p6" aria-selected="false" tabindex="-1"><span class="tnum">06</span>Fail Modes</button>
+    </div>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<!-- ═══════════ TAB 1 ═══════════ -->
+<section role="tabpanel" id="p1" aria-labelledby="t1" tabindex="0">
+  <h2>Stage 1: Pick the mechanism</h2>
+  <p class="lede">There is no single CDC feature in Fabric. There are three mechanisms operating at two boundaries. Choosing the wrong one is recoverable in week two and expensive in month six.</p>
+
+  <div class="grid g2">
+    <div class="card">
+      <span class="badge b-ind">Boundary 1</span>
+      <h3 style="margin-top:12px">External source into OneLake</h3>
+      <p class="kv">Mirroring, Copy Job CDC, and Eventstream CDC connectors. This is what most people mean when they ask about CDC in Fabric. It lands changed rows in bronze.</p>
+    </div>
+    <div class="card">
+      <span class="badge b-ind">Boundary 2</span>
+      <h3 style="margin-top:12px">Table to table inside Fabric</h3>
+      <p class="kv">Delta Change Data Feed. This is what most people needed and did not enable, then discovered when silver and gold were still doing full reloads against a near real time bronze.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Three questions, in order</h3>
+    <ol class="qlist">
+      <li>
+        <div class="qh">Is the source on the mirroring list?</div>
+        <p>Mirroring is the default and everything else needs a reason to beat it. Replication compute is free and does not consume capacity units, and storage is free up to one terabyte per CU purchased. That is a hard economic baseline to argue against, and the output lands as Delta in OneLake so Direct Lake works over it immediately.</p>
+        <div class="branch">
+          <span><b>Yes:</b> mirroring, unless Q2 or Q3 overrides</span>
+          <span><b>No:</b> Copy Job CDC, Eventstream CDC, or open mirroring via partner</span>
+        </div>
+      </li>
+      <li>
+        <div class="qh">Do you need the change events, or just current state?</div>
+        <p>Mirroring and Copy Job SCD Type 1 give you a synced replica. They will not tell you what a row looked like before it changed. Audit trails, event driven action, and slowly changing dimension history all require the event itself, not the end state.</p>
+        <div class="branch">
+          <span><b>Current state:</b> mirroring or Copy Job SCD1 merge</span>
+          <span><b>History:</b> Copy Job SCD2, or CDF on top of mirroring</span>
+          <span><b>Event driven:</b> Eventstream CDC</span>
+        </div>
+      </li>
+      <li>
+        <div class="qh">Where does the change go next?</div>
+        <p>Mirroring stops at bronze. Propagating incrementally into silver and gold is a separate problem with a separate mechanism, and skipping it means you built a near real time bronze feeding a nightly full reload. Covered in stage 5.</p>
+        <div class="branch">
+          <span><b>Always:</b> plan the CDF layer before you build bronze</span>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="sec">
+    <h3>Option comparison</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Mechanism</th><th>Source coverage</th><th>Latency</th><th>Authoring effort</th><th>Cost posture</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Mirroring</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Azure SQL DB, SQL MI, SQL Server, Cosmos DB, Azure PostgreSQL, Snowflake, Oracle, Fabric SQL DB, SAP via Datasphere. <span class="badge b-prev">Preview</span> Azure MySQL, BigQuery, SharePoint List</td>
+            <td>Changes published as fast as every 15 seconds</td>
+            <td>None. Fully managed, no pipeline authored</td>
+            <td>Replication compute free, does not consume CU. Storage free to 1 TB per CU. Query billed normally</td>
+          </tr>
+          <tr>
+            <td><strong>Open mirroring</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Anything, via partner (Striim, GoldenGate, CData, Theobald, SNP, Stelo, Qlik class) or your own writer</td>
+            <td>Same replicator engine</td>
+            <td>You land change data to the spec, Fabric merges it</td>
+            <td>Same free replication posture. Partner licensing is yours</td>
+          </tr>
+          <tr>
+            <td><strong>Metadata mirroring</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Azure Databricks Unity Catalog. <span class="badge b-prev">Preview</span> Dremio</td>
+            <td>No replication. Shortcut read latency</td>
+            <td>Catalog sync only, no data movement</td>
+            <td>No copy, no replication cost. Read cost sits on the source</td>
+          </tr>
+          <tr>
+            <td><strong>Copy Job CDC</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Azure SQL DB, SQL MI, on-prem SQL Server. <span class="badge b-prev">Preview</span> Oracle, Snowflake, BigQuery, Fabric Lakehouse</td>
+            <td>Per scheduled or continuous run</td>
+            <td>Low. Wizard driven, SCD1 merge by default</td>
+            <td>Normal Data Factory CU consumption</td>
+          </tr>
+          <tr>
+            <td><strong>Eventstream CDC</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Azure SQL DB, SQL MI, SQL Server on VM, PostgreSQL, MySQL, Cosmos DB. <span class="badge b-prev">Preview</span> MongoDB, Oracle, Mirrored DB Change Feed</td>
+            <td>Streaming, event level</td>
+            <td>Moderate. Debezium based, schema handling decision required</td>
+            <td>Eventstream plus Eventhouse CU</td>
+          </tr>
+          <tr>
+            <td><strong>Delta CDF</strong><br><span class="badge b-ga">GA</span></td>
+            <td>Any Delta table inside Fabric, including mirrored databases</td>
+            <td>Per Delta commit</td>
+            <td>One table property, then read by version or timestamp</td>
+            <td>Storage overhead under <code>_change_data</code>, subject to VACUUM</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note n-info">
+      <span class="ic">i</span>
+      <span>Mixing mechanisms is normal. Mirroring for the SQL estate, Eventstream for the event driven slice, CDF for everything downstream is a defensible standard pattern. The failure is not mixing; it is mixing without a written rule stating which source class lands via which mechanism.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TAB 2 ═══════════ -->
+<section role="tabpanel" id="p2" aria-labelledby="t2" tabindex="0" hidden>
+  <h2>Stage 2: End to end flow</h2>
+  <p class="lede">Converge, gate, diverge into three lanes, reconverge. The source side work is the critical path and sits before any Fabric configuration, which is the opposite of how these projects are usually planned.</p>
+
+  <div class="flow">
+    <div class="step">
+      <div class="rail"><div class="dot">1</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Inventory sources and classify change semantics</h4>
+        <p>Per source table: does it have a reliable primary key, does it experience hard deletes, what is the acceptable staleness, and does anyone downstream need the pre-change value. Tables without a primary key cannot be merged and need a different pattern.</p>
+        <span class="owner">Owner: data architect · Output: source register</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="rail"><div class="dot gate">◆</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Decision gate: mechanism per source class</h4>
+        <p>Run the three questions from stage 1. Record the choice and the falsifier per source class, not per table. A per table decision produces an unmaintainable estate.</p>
+        <span class="owner">Owner: data architect · Output: written routing rule</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="rail"><div class="dot src">2</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Source side enablement and approval</h4>
+        <p>Longest lead item, always. Log reader overhead, transaction log growth, replication slot management, and a change control against a production OLTP system. Start here, in parallel with everything else. Detail in stage 3.</p>
+        <span class="owner">Owner: source DBA · Output: signed change record</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="rail"><div class="dot">3</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Network and identity path</h4>
+        <p>Public endpoint, on-premises data gateway, or Eventstream virtual network injection. Decide the authentication method now: workspace identity is not supported for every source, and discovering that during a build sprint costs a week.</p>
+        <span class="owner">Owner: platform and network · Output: connection tested from Fabric</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="rail"><div class="dot">4</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Workspace topology and capacity assignment</h4>
+        <p>Mirrored databases are workspace items and follow your promotion path. Do not land replication into a workspace that shares capacity with production interactive reporting until you have measured the read pattern.</p>
+        <span class="owner">Owner: platform · Output: dev, test, prod workspaces on assigned capacity</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:8px">Divergence: three lanes</h3>
+  <div class="lanes">
+    <div class="lane">
+      <div class="lane-hd"><h4>Lane A: Mirroring</h4><span class="badge b-ga">GA</span></div>
+      <ol>
+        <li>Create the mirrored database item and authenticate to the source</li>
+        <li>Select whole database or specific tables</li>
+        <li>Set retention under Delta table management before first sync</li>
+        <li>Enable delta change data feed at the same time, not later</li>
+        <li>Start replication and monitor the replication status page</li>
+        <li>Validate row counts and delete propagation against source</li>
+      </ol>
+    </div>
+    <div class="lane">
+      <div class="lane-hd"><h4>Lane B: Copy Job CDC</h4><span class="badge b-ga">GA</span></div>
+      <ol>
+        <li>Create Copy job, connect source, confirm the CDC enabled icon on every selected table</li>
+        <li>Select destination and set update method (Merge or SCD Type 2)</li>
+        <li>Select incremental copy; no watermark column is required for CDC tables</li>
+        <li>Decide column mapping explicitly; the schema evolution behaviour differs with and without it</li>
+        <li>First run performs a full load, subsequent runs are incremental</li>
+        <li>Schedule and validate</li>
+      </ol>
+    </div>
+    <div class="lane">
+      <div class="lane-hd"><h4>Lane C: Eventstream CDC</h4><span class="badge b-ga">GA</span></div>
+      <ol>
+        <li>Add the CDC source connector from Real-Time hub or an eventstream</li>
+        <li>Choose schema handling: analytics ready via DeltaFlow, or raw CDC events</li>
+        <li>Associate an event schema set for schema registry awareness</li>
+        <li>Route to Eventhouse, Lakehouse, or Activator destinations</li>
+        <li>Configure virtual network injection if the source is not publicly reachable</li>
+        <li>Validate event ordering and late arrival handling</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="flow" style="margin-top:28px">
+    <div class="step">
+      <div class="rail"><div class="dot">5</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Reconverge: downstream propagation via CDF</h4>
+        <p>All three lanes land Delta in OneLake. Silver and gold consume changes through Change Data Feed rather than full reloads. Detail in stage 5.</p>
+        <span class="owner">Owner: data engineering · Output: incremental silver load</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="rail"><div class="dot">6</div><div class="line"></div></div>
+      <div class="body">
+        <h4>Validation, monitoring, and parallel run</h4>
+        <p>Reconciliation against source, delete propagation test, latency measurement at peak, capacity metrics baseline. Parallel run until reconciliation passes for a full business cycle, then decommission the old feed with a date.</p>
+        <span class="owner">Owner: joint · Output: signed cutover</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TAB 3 ═══════════ -->
+<section role="tabpanel" id="p3" aria-labelledby="t3" tabindex="0" hidden>
+  <h2>Stage 3: Source side preparation</h2>
+  <p class="lede">The Fabric side of CDC is close to trivial. The project stalls here, in a negotiation with people who own a production transactional system and have no incentive to help you.</p>
+
+  <div class="note n-warn">
+    <span class="ic">!</span>
+    <span><strong>Weakest assumption in the entire plan.</strong> That your source DBAs will enable CDC. Confirm source side approval before you scope the Fabric side. A Fabric estimate that assumes log based capture, delivered to a client whose DBAs then refuse it, is an estimate for a project that does not exist.</span>
+  </div>
+
+  <div class="sec">
+    <h3>Per source requirements</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Source</th><th>Mechanism</th><th>What the DBA actually has to agree to</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>SQL Server / Azure SQL DB / SQL MI</strong></td>
+            <td>Transaction log scan</td>
+            <td>Enabling the capture feature, granting replication permissions, and accepting log reader overhead plus log growth if the reader falls behind. In SQL Server 2025 the engine scans the log at high frequency and publishes per table to the Fabric landing zone.</td>
+          </tr>
+          <tr>
+            <td><strong>Oracle</strong></td>
+            <td>LogMiner</td>
+            <td>Supplemental logging enabled, LogMiner available, and a database user with CDC operation privileges. Supported from 12c (12.1) onward including 19c, 21c, and Autonomous Database.</td>
+          </tr>
+          <tr>
+            <td><strong>PostgreSQL</strong></td>
+            <td>Logical decoding</td>
+            <td>Logical replication configured and a replication slot. An abandoned or stalled slot retains WAL indefinitely and will fill the source disk. This is the single most likely way a CDC pilot takes down a production database.</td>
+          </tr>
+          <tr>
+            <td><strong>Snowflake</strong></td>
+            <td>Streams</td>
+            <td>Grants for <code>CREATE STREAM</code>, <code>SELECT</code>, <code>SHOW TABLES</code>, <code>DESCRIBE</code>. Views and materialized views sync on a twelve hour cadence, not continuously. External, transient, temporary, and dynamic tables are not supported.</td>
+          </tr>
+          <tr>
+            <td><strong>SAP</strong></td>
+            <td>Datasphere replication flow or certified partner</td>
+            <td>Replication flow configured with Group Delta set to None and file type Parquet, load type Initial and Delta. Or a certified extractor (Theobald, SNP, ASAPIO, AecorSoft, Simplement) writing to open mirroring.</td>
+          </tr>
+          <tr>
+            <td><strong>MongoDB / Cosmos DB</strong></td>
+            <td>Change stream</td>
+            <td>Collection level change stream access. Document model means schema handling decisions move downstream rather than disappearing.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Questions to put to the DBA in writing</h3>
+    <ul class="gates">
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">What is the current transaction log growth rate and retention policy?</span><span class="a">Log based capture changes both. If the reader stalls, log truncation stops. You need the headroom number before you turn anything on.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Is there a read replica or secondary we can capture from?</span><span class="a">Some connectors support routing to a readable secondary, which removes most of the objection. It typically constrains the isolation mode, so confirm the combination is supported.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Which tables experience hard deletes?</span><span class="a">This determines whether watermark based incremental copy is even viable as a fallback. Soft delete estates have more options.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">What happens to capture when the source is failed over or patched?</span><span class="a">Resumption behaviour after failover is the thing to test in dev, not discover in production during a Sunday maintenance window.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Who monitors the replication slot or capture job, and against what alert?</span><span class="a">If the answer is nobody, you have designed an outage with a delay fuse.</span></span></li>
+    </ul>
+  </div>
+
+  <div class="note n-err">
+    <span class="ic">×</span>
+    <span><strong>If source side capture is refused,</strong> the honest fallback is watermark based incremental copy, and you must tell the client in writing that deletes will not propagate. Reconciliation will drift and the drift will be discovered by a finance user, not by your pipeline. That conversation is far cheaper before build than after.</span>
+  </div>
+</section>
+
+<!-- ═══════════ TAB 4 ═══════════ -->
+<section role="tabpanel" id="p4" aria-labelledby="t4" tabindex="0" hidden>
+  <h2>Stage 4: Fabric side configuration</h2>
+  <p class="lede">Three lanes, each with the specific settings that are painful to change after first sync.</p>
+
+  <div class="sec">
+    <h3>Lane A: Mirroring</h3>
+    <div class="card">
+      <ul class="plain">
+        <li>Create the mirrored database, authenticate, and select whole database or specific tables.</li>
+        <li><strong>Set retention before first sync.</strong> Mirrored databases created from the portal after mid June 2025 default to <strong>one day</strong>. Older ones default to seven. Mirroring runs VACUUM automatically to remove files no longer referenced by the Delta log.</li>
+        <li><strong>Enable delta change data feed at creation.</strong> Portal: gear icon, Delta table management, enable delta change data feed. CDF is not retroactive, so enabling it in month three loses months one and two.</li>
+        <li>Mirroring creates a SQL analytics endpoint automatically. It is read only. Do not plan writes against it.</li>
+        <li>Mirroring requires a running capacity. Paused or deleted capacity means no replication.</li>
+      </ul>
+      <p style="margin-top:16px" class="kv"><b>Retrofitting CDF onto an existing mirrored database</b> requires the REST API, since the portal toggle applies going forward:</p>
+<pre><code><span class="cm"># 1. Retrieve current definition</span>
+POST /v1/workspaces/{workspaceId}/mirroredDatabases/{id}/getDefinition
+
+<span class="cm"># 2. Base64 decode mirroring.json, add the property under target.typeProperties</span>
+{
+  <span class="st">"type"</span>: <span class="st">"MountedRelationalDatabase"</span>,
+  <span class="st">"typeProperties"</span>: {
+    <span class="st">"defaultSchema"</span>: <span class="st">"dbo"</span>,
+    <span class="st">"format"</span>: <span class="st">"Delta"</span>,
+    <span class="st">"enableDeltaChangeDataFeed"</span>: <span class="kw">true</span>,
+    <span class="st">"retentionInDays"</span>: 7
+  }
+}
+
+<span class="cm"># 3. Re-encode and update, then re-read to confirm</span>
+POST /v1/workspaces/{workspaceId}/mirroredDatabases/{id}/updateDefinition</code></pre>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Lane B: Copy Job CDC</h3>
+    <div class="card">
+      <ul class="plain">
+        <li>The source picker shows a distinct icon for CDC enabled tables. Confirm it appears on every table you select.</li>
+        <li><strong>Never mix CDC enabled and non-CDC tables in one Copy job.</strong> If you do, the job treats all tables as watermark based and deletes silently stop propagating. Split them into separate jobs.</li>
+        <li>Update method: Merge (SCD Type 1) is the default and gives a current state replica. SCD Type 2 <span class="badge b-prev">Preview</span> adds <code>Valid_From</code>, <code>Valid_To</code>, and <code>Is_Current</code> with soft delete handling, applied consistently across all selected tables.</li>
+        <li>The first run is a full load. Subsequent runs are incremental via CDC.</li>
+        <li>Decide column mapping deliberately. With mapping configured, a deleted or renamed mapped source column fails the run. Without mapping, a deleted column simply stops syncing and the run succeeds. Neither behaviour syncs newly added source columns.</li>
+      </ul>
+      <div class="note n-warn"><span class="ic">!</span><span>SCD Type 2 is not supported for Oracle sources, and is not supported if you pre-create the schema in the destination database. Verify before designing a history model around it.</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Lane C: Eventstream CDC</h3>
+    <div class="card">
+      <ul class="plain">
+        <li>Add the source from Real-Time hub or directly in an eventstream. Connectors are Debezium based.</li>
+        <li><strong>Schema handling is the load bearing choice.</strong> DeltaFlow <span class="badge b-prev">Preview</span> transforms raw CDC events into analytics ready streams mirroring the source table structure, enriches with change type and timestamps, and manages destination tables and schema evolution. Raw CDC events gives you the unshaped Debezium payload with optional schema registry autodiscovery.</li>
+        <li>Enable event schema association and point it at a schema set so downstream consumers have a contract.</li>
+        <li>If the source is not publicly reachable, use Eventstream connector virtual network injection. This is supported for the SQL, PostgreSQL, MySQL, Oracle, Cosmos DB, and MongoDB CDC connectors among others.</li>
+        <li>For SQL sources, a snapshot select statement override lets you restrict the initial snapshot to a subset of rows. It affects the snapshot only, not the ongoing log read.</li>
+      </ul>
+      <div class="note n-info"><span class="ic">i</span><span>Choosing raw events because DeltaFlow is preview is a defensible call, but it moves schema evolution handling into your own code permanently. Make that trade consciously rather than by default.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TAB 5 ═══════════ -->
+<section role="tabpanel" id="p5" aria-labelledby="t5" tabindex="0" hidden>
+  <h2>Stage 5: Propagate changes downstream</h2>
+  <p class="lede">The stage most implementations skip. A fifteen second bronze feeding a nightly full reload of silver is not a CDC architecture; it is an expensive landing zone.</p>
+
+  <div class="sec">
+    <h3>Enable Change Data Feed</h3>
+    <div class="card">
+      <p class="kv">CDF is a standard Delta table property. Enable it at creation, or alter an existing table. It captures changes only from the moment it is enabled and does not backfill.</p>
+<pre><code><span class="cm">-- At creation</span>
+<span class="kw">CREATE TABLE</span> sales.orders (
+  order_id <span class="kw">BIGINT</span>, customer_id <span class="kw">BIGINT</span>,
+  order_status <span class="kw">STRING</span>, order_total <span class="kw">DECIMAL</span>(18,2)
+) <span class="kw">USING DELTA</span>
+TBLPROPERTIES (delta.enableChangeDataFeed = <span class="kw">true</span>);
+
+<span class="cm">-- On an existing table</span>
+<span class="kw">ALTER TABLE</span> bronze.orders
+  <span class="kw">SET</span> TBLPROPERTIES (delta.enableChangeDataFeed = <span class="kw">true</span>);</code></pre>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Read the changes</h3>
+    <div class="grid g2">
+      <div class="card">
+        <h4 style="font-size:var(--m-text-base);font-weight:700;margin-bottom:8px">Batch, by version or timestamp</h4>
+<pre><code><span class="cm">-- Bounded version range</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> table_changes(<span class="st">'sales.orders'</span>, 120, 125);
+
+<span class="cm">-- Timestamp range</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> table_changes(
+  <span class="st">'sales.orders'</span>,
+  <span class="kw">TIMESTAMP</span> <span class="st">'2026-05-01T00:00:00Z'</span>,
+  <span class="kw">TIMESTAMP</span> <span class="st">'2026-05-01T23:59:59Z'</span>);</code></pre>
+      </div>
+      <div class="card">
+        <h4 style="font-size:var(--m-text-base);font-weight:700;margin-bottom:8px">Structured Streaming</h4>
+<pre><code>changes = (spark.readStream.format(<span class="st">"delta"</span>)
+    .option(<span class="st">"readChangeFeed"</span>, <span class="st">"true"</span>)
+    .table(<span class="st">"sales.orders"</span>))
+
+(changes.writeStream.format(<span class="st">"delta"</span>)
+    .outputMode(<span class="st">"append"</span>)
+    .option(<span class="st">"checkpointLocation"</span>,
+            <span class="st">"Files/checkpoints/orders_changes"</span>)
+    .toTable(<span class="st">"sales.orders_changes"</span>))</code></pre>
+        <p class="kv" style="margin-top:12px">First stream read processes the full initial snapshot as insert events, then picks up only new changes. You do not seed the target separately.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>CDF output columns</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th><th>Why it matters downstream</th></tr></thead>
+        <tbody>
+          <tr><td><code>_change_type</code></td><td><code>insert</code>, <code>update_preimage</code>, <code>update_postimage</code>, <code>delete</code></td><td>The preimage is what makes SCD Type 2 and audit reconstruction possible without a self join</td></tr>
+          <tr><td><code>_commit_version</code></td><td>Delta table version of the commit</td><td>The natural high water mark for a batch pipeline. Persist it, do not recompute it</td></tr>
+          <tr><td><code>_commit_timestamp</code></td><td>Commit timestamp for that version</td><td>Use only when the consumer tracks wall clock rather than version. Version is safer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Consumption paths from a mirrored database</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Path</th><th>How</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Spark notebooks</td><td>Shortcut the mirrored database into a Lakehouse, then <code>readChangeFeed</code> or <code>table_changes()</code></td><td><span class="badge b-ga">GA</span></td></tr>
+          <tr><td>Copy Job</td><td>Reads CDF changes from a Fabric Lakehouse and replicates incrementally onward. Direct mirrored database support is in development</td><td><span class="badge b-ga">GA via shortcut</span></td></tr>
+          <tr><td>Eventstreams</td><td>Mirrored Database Change Feed connector, discoverable in Real-Time hub, routes to Eventhouse or Activator</td><td><span class="badge b-prev">Preview</span></td></tr>
+          <tr><td>Data pipelines</td><td>No native incremental read from CDF. Wrap a notebook activity</td><td><span class="badge b-src">Workaround</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note n-ok"><span class="ic">✓</span><span>CDF also drives incremental refresh for materialized lake views. Enabling it on source tables has no measurable storage or performance effect for append only workloads, which is the case incremental refresh supports.</span></div>
+  </div>
+</section>
+
+<!-- ═══════════ TAB 6 ═══════════ -->
+<section role="tabpanel" id="p6" aria-labelledby="t6" tabindex="0" hidden>
+  <h2>Stage 6: Failure modes and validation gates</h2>
+  <p class="lede">Four of these belong in the assumptions block of any deliverable. Each fails silently, which is why they surface in month three rather than week one.</p>
+
+  <div class="grid g2">
+    <div class="card" style="border-left:3px solid var(--m-error)">
+      <span class="badge b-src">Silent</span>
+      <h3 style="margin-top:12px">Retention shorter than consumer cadence</h3>
+      <p class="kv">CDF captures nothing before it is enabled, and VACUUM deletes <code>_change_data</code> files outside the retention window. Portal created mirrored databases default to one day retention. A one day retention plus a weekly downstream job equals data loss with no error raised.</p>
+      <p class="kv" style="margin-top:10px"><b>Gate:</b> retention window must exceed the longest downstream consumer interval by a full recovery cycle, not by a margin.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--m-error)">
+      <span class="badge b-src">Silent</span>
+      <h3 style="margin-top:12px">Copy Job degrades to watermark mode</h3>
+      <p class="kv">Selecting CDC enabled and non-CDC tables in the same Copy job causes all tables to be treated as watermark based. Deletes stop propagating and no error is raised.</p>
+      <p class="kv" style="margin-top:10px"><b>Gate:</b> every table in a CDC Copy job shows the CDC enabled icon. Separate jobs otherwise.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--m-warning)">
+      <span class="badge b-src">By design</span>
+      <h3 style="margin-top:12px">Net change only</h3>
+      <p class="kv">Copy Job CDC captures net change, not full change history. A row changed five times between runs yields the final state, not five events. Full change capture is stated as coming later.</p>
+      <p class="kv" style="margin-top:10px"><b>Gate:</b> if audit or compliance requires every intermediate state, route through Eventstream or CDF, not Copy Job.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--m-warning)">
+      <span class="badge b-src">Operational</span>
+      <h3 style="margin-top:12px">Paused capacity halts replication</h3>
+      <p class="kv">Mirroring requires a running capacity. Paused or deleted capacity means nothing replicates, although the background compute does not consume CU while it runs.</p>
+      <p class="kv" style="margin-top:10px"><b>Gate:</b> test resumption behaviour after an extended pause in dev before any non-production capacity pause schedule goes live.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h3>Secondary failure modes</h3>
+    <ul class="plain">
+      <li><strong>Small file accumulation under <code>_change_data</code>.</strong> CDF writes extra files as part of change history, not the active snapshot. High churn tables need a maintenance schedule, and that schedule interacts with retention.</li>
+      <li><strong>Custom capture instances are not supported</strong> in Copy Job CDC; only the default capture instance. Estates that already run named capture instances for other consumers need a plan.</li>
+      <li><strong>CDF status on Fabric Lakehouse tables cannot be autodetected</strong> by Copy Job. You must know and track it yourself.</li>
+      <li><strong>Snowflake views and materialized views sync every twelve hours,</strong> not continuously. A dashboard built on a mirrored view is a twice daily dashboard regardless of what the mirroring page says about latency.</li>
+      <li><strong>Shortcut based patterns move the failure domain, they do not remove it.</strong> An outage in the source store is an outage in your gold layer.</li>
+    </ul>
+  </div>
+
+  <div class="sec">
+    <h3>Validation gates before cutover</h3>
+    <ul class="gates">
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Row count reconciliation passes across a full business cycle</span><span class="a">Not a single point in time check. Month end and period close are where drift appears.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Delete propagation verified explicitly</span><span class="a">Delete a test row at source, confirm it disappears in bronze and is handled correctly in silver. This is the single test that separates real CDC from watermark copy.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Latency measured at the peak concurrency hour, not the average</span><span class="a">Replication latency depends on source region, change volume and frequency, network bandwidth, and gateway compute. Measure it where the constraint actually binds.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Schema change rehearsed, not assumed</span><span class="a">Add a column, drop a column, change a type at source in dev. Confirm the observed behaviour matches what you documented for the mechanism you chose.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Capacity metrics baseline captured before go-live</span><span class="a">Any sizing produced before instrumentation is an estimate. Label it as one, set a review date, and revisit after two weeks of production load.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Preview components flagged with a stated consequence</span><span class="a">For each preview item on the critical path, write down what happens to the roadmap if it stays preview for another year. If that answer is unacceptable, it does not belong on the critical path.</span></span></li>
+      <li><span class="chk" aria-hidden="true"></span><span><span class="q">Decommission date for the replaced feed is written and owned</span><span class="a">If the old extract keeps running, the business case that justified this work never closes.</span></span></li>
+    </ul>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>Change Data Capture in Microsoft Fabric · Implementation flow · August 2026</span>
+    <span>Built for scale by Prasanth Sistla</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function select(tab){
+    tabs.forEach(function(t){
+      var sel = t === tab;
+      t.setAttribute('aria-selected', sel ? 'true' : 'false');
+      t.tabIndex = sel ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !sel;
+    });
+    window.scrollTo({top:0, behavior:'auto'});
+  }
+  tabs.forEach(function(tab, i){
+    tab.addEventListener('click', function(){ select(tab); tab.focus(); });
+    tab.addEventListener('keydown', function(e){
+      var n = null;
+      if(e.key === 'ArrowRight') n = tabs[(i+1) % tabs.length];
+      else if(e.key === 'ArrowLeft') n = tabs[(i-1+tabs.length) % tabs.length];
+      else if(e.key === 'Home') n = tabs[0];
+      else if(e.key === 'End') n = tabs[tabs.length-1];
+      if(n){ e.preventDefault(); select(n); n.focus(); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
