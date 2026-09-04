@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instrument. A design reference for a balanced data application.</title>
+<meta name="description" content="Design reference: precision-instrument character, typography as hero, contrast-verified light and dark themes, density modes, components, states, layouts, voice, and quality gates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════ TOKENS ═══════════ */
+:root{
+  --font:'Geist',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+
+  /* type scale, 1.2 ratio anchored at 15px, display steps loosened */
+  --t-xs:11px;--t-sm:13px;--t-base:15px;--t-lg:17px;--t-xl:20px;--t-2xl:24px;--t-3xl:30px;--t-4xl:38px;--t-5xl:48px;--t-6xl:64px;
+  --lead-tight:1.1;--lead-snug:1.3;--lead-normal:1.55;--lead-relaxed:1.7;
+  --track-display:-0.04em;--track-heading:-0.025em;--track-title:-0.015em;--track-label:0.02em;
+
+  /* graphite neutrals (cool, low chroma) */
+  --n0:#FFFFFF;--n50:#FAFAFB;--n100:#F3F4F6;--n200:#E6E7EB;--n300:#D5D7DD;--n400:#A9ADB7;--n500:#8A8E99;--n600:#4B4E57;--n700:#33353C;--n800:#1E1F24;--n900:#131418;--n950:#0C0D10;
+
+  /* primary, indigo re-tuned toward violet; single hue does the work */
+  --p50:#EEEEFD;--p100:#DFDFFB;--p200:#C3C2F6;--p300:#A3A2F0;--p400:#8583F0;--p500:#6360E6;--p600:#4A46D9;--p700:#3F3BC4;--p800:#3431A0;--p900:#2B2980;
+
+  /* attention amber: prod indicators, pinned, "look here". never decorative */
+  --a600:#B45309;--a400:#FBBF24;--a50:#FFFBEB;
+
+  /* semantic: border/icon tone, text tone, tint */
+  --ok:#15803D;--ok-t:#14532D;--ok-bg:#F0FDF4;
+  --wn:#EA580C;--wn-t:#9A3412;--wn-bg:#FFF7ED;
+  --er:#DC2626;--er-t:#991B1B;--er-bg:#FEF2F2;
+  --in:#2563EB;--in-t:#1E40AF;--in-bg:#EFF6FF;
+
+  /* semantic aliases: the only names components use */
+  --bg:var(--n0);--surface:var(--n50);--surface-2:var(--n100);--border:var(--n200);--border-strong:var(--n300);--hairline:var(--n100);
+  --text:var(--n900);--text-2:var(--n600);--text-3:var(--n500);
+  --primary:var(--p600);--primary-hover:var(--p700);--primary-tint:var(--p50);--primary-fg:#FFFFFF;
+  --attention:var(--a600);--attention-tint:var(--a50);
+  --code-bg:var(--n950);--code-fg:var(--n100);
+  --ring:0 0 0 1px var(--border);--ring-strong:0 0 0 1px var(--border-strong);
+  --lift-1:0 1px 2px rgba(19,20,24,.05);--lift-2:0 4px 12px rgba(19,20,24,.08);--lift-3:0 12px 32px rgba(19,20,24,.12);
+
+  --r-1:4px;--r-2:6px;--r-3:8px;--r-4:12px;--r-pill:999px;
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;--sp-10:40px;--sp-12:48px;--sp-16:64px;--sp-20:80px;
+  --ease-out:cubic-bezier(.16,1,.3,1);--ease-in:cubic-bezier(.7,0,.84,0);
+  --t-fast:120ms ease;--t-base:180ms ease;--t-enter:220ms var(--ease-out);--t-exit:140ms var(--ease-in);
+  --control-h:36px;--control-h-sm:30px;--control-h-lg:42px;--touch:44px;
+  --sidebar:232px;--content-max:1280px;--prose:640px;--toc:212px;
+}
+.dark{
+  --bg:var(--n950);--surface:var(--n900);--surface-2:var(--n800);--border:#23252B;--border-strong:#33353C;--hairline:#1A1B20;
+  --text:#E8E9ED;--text-2:#A2A6B1;--text-3:#767A85;
+  --primary:var(--p400);--primary-hover:var(--p300);--primary-tint:rgba(133,131,240,.14);--primary-fg:var(--n950);
+  --attention:var(--a400);--attention-tint:rgba(251,191,36,.10);
+  --code-bg:var(--n900);
+  --ok:#4ADE80;--ok-t:#86EFAC;--ok-bg:rgba(74,222,128,.10);
+  --wn:#FB923C;--wn-t:#FDBA74;--wn-bg:rgba(251,146,60,.10);
+  --er:#F87171;--er-t:#FCA5A5;--er-bg:rgba(248,113,113,.10);
+  --in:#60A5FA;--in-t:#93C5FD;--in-bg:rgba(96,165,250,.10);
+  --lift-1:0 1px 2px rgba(0,0,0,.3);--lift-2:0 4px 12px rgba(0,0,0,.4);--lift-3:0 12px 32px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+.compact{--control-h:30px;--control-h-sm:26px;--control-h-lg:36px;--t-base:14px;--sp-cell:6px 10px}
+:root{--sp-cell:10px 12px}
+
+/* ═══════════ BASE ═══════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{font-family:var(--font);font-size:var(--t-lg);line-height:var(--lead-relaxed);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";transition:background var(--t-base),color var(--t-base)}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+::selection{background:var(--p100);color:var(--p900)}
+.dark ::selection{background:var(--p800);color:var(--p100)}
+a{color:var(--primary);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--primary) 35%,transparent)}
+a:hover{border-bottom-color:var(--primary)}
+code,kbd,pre,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+p+p{margin-top:var(--sp-3)}
+h2,h3,h4{font-weight:600;color:var(--text)}
+.skip{position:absolute;left:12px;top:-64px;padding:8px 12px;background:var(--primary);color:var(--primary-fg);border-radius:var(--r-2);z-index:900;font-weight:600;font-size:var(--t-sm)}
+.skip:focus{top:12px}
+.icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ═══════════ CHROME ═══════════ */
+.topbar{position:sticky;top:0;z-index:300;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 var(--sp-6);background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:var(--t-sm);letter-spacing:var(--track-title)}
+.brand-mark{width:18px;height:18px;border-radius:5px;background:var(--primary);position:relative}
+.brand-mark::after{content:"";position:absolute;right:3px;bottom:3px;width:5px;height:5px;border-radius:1.5px;background:var(--n0)}
+.brand .v{font-family:var(--mono);font-weight:400;color:var(--text-3);font-size:var(--t-xs);margin-left:4px}
+.ctrls{display:flex;gap:var(--sp-2);align-items:center}
+
+.shell{display:grid;grid-template-columns:var(--toc) minmax(0,1fr);max-width:var(--content-max);margin:0 auto;gap:var(--sp-12);padding:0 var(--sp-6)}
+.toc{position:sticky;top:68px;align-self:start;padding:var(--sp-6) 0;font-size:var(--t-sm)}
+.toc ol{list-style:none}
+.toc a{display:flex;justify-content:space-between;padding:5px 10px;border-radius:var(--r-2);color:var(--text-2);border:0}
+.toc a .n{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-3)}
+.toc a:hover{background:var(--surface);color:var(--text)}
+.toc a.active{background:var(--primary-tint);color:var(--primary);font-weight:500}
+.toc a.active .n{color:var(--primary)}
+main{padding:0 0 var(--sp-20);min-width:0}
+@media (max-width:960px){.shell{grid-template-columns:1fr;gap:0}.toc{display:none}}
+
+/* ═══════════ HERO (typography is the hero) ═══════════ */
+.hero{padding:var(--sp-16) 0 var(--sp-12);border-bottom:1px solid var(--border)}
+.hero .kicker{font-family:var(--mono);font-size:var(--t-sm);color:var(--text-3);display:flex;gap:var(--sp-4);flex-wrap:wrap}
+.hero h1{margin-top:var(--sp-5);font-size:clamp(40px,7vw,var(--t-6xl));font-weight:600;line-height:.98;letter-spacing:var(--track-display);max-width:14ch;text-wrap:balance}
+.hero h1 .dim{color:var(--text-3);font-weight:500}
+.hero .lede{margin-top:var(--sp-6);font-size:var(--t-xl);line-height:var(--lead-snug);color:var(--text-2);max-width:34ch;text-wrap:pretty}
+.hero .facts{margin-top:var(--sp-8);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-4);max-width:760px}
+.hero .facts div{border-top:1px solid var(--border);padding-top:var(--sp-3)}
+.hero .facts b{display:block;font-family:var(--mono);font-weight:500;font-size:var(--t-xl);letter-spacing:-.01em}
+.hero .facts span{font-size:var(--t-sm);color:var(--text-2)}
+@media (max-width:640px){.hero .facts{grid-template-columns:repeat(2,1fr)}}
+
+/* ═══════════ SECTIONS ═══════════ */
+section.s{padding:var(--sp-16) 0 var(--sp-4);border-bottom:1px solid var(--hairline)}
+section.s>header{display:grid;grid-template-columns:52px 1fr;gap:var(--sp-4);align-items:baseline;max-width:820px}
+section.s>header .n{font-family:var(--mono);font-size:var(--t-sm);color:var(--text-3)}
+section.s>header h2{font-size:var(--t-4xl);letter-spacing:var(--track-heading);line-height:var(--lead-tight);text-wrap:balance}
+section.s>header p{grid-column:2;margin-top:var(--sp-3);color:var(--text-2);max-width:var(--prose);font-size:var(--t-lg)}
+h3{font-size:var(--t-2xl);letter-spacing:var(--track-title);margin:var(--sp-12) 0 var(--sp-3);line-height:var(--lead-snug)}
+h4{font-size:var(--t-base);margin:var(--sp-6) 0 var(--sp-2)}
+.prose{max-width:var(--prose);color:var(--text)}
+.prose ul,.prose ol{padding-left:22px;margin-top:var(--sp-2)}
+.prose li+li{margin-top:6px}
+.callout{margin-top:var(--sp-5);padding:var(--sp-4) var(--sp-5);border:1px solid var(--border);border-left:3px solid var(--attention);border-radius:0 var(--r-3) var(--r-3) 0;font-size:var(--t-base);max-width:var(--prose);background:var(--surface)}
+.spec{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-3);margin-top:var(--sp-2);line-height:1.6}
+.grid{display:grid;gap:var(--sp-4)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:960px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* panel = card without ceremony */
+.panel{background:var(--bg);box-shadow:var(--ring);border-radius:var(--r-3);padding:var(--sp-5)}
+.panel h4{margin:0 0 var(--sp-1);font-size:var(--t-base)}
+.panel p{font-size:var(--t-sm);color:var(--text-2);line-height:var(--lead-normal)}
+.panel .foot{margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--hairline);font-size:var(--t-sm);color:var(--text)}
+.pov{counter-reset:pov}
+.pov .panel{position:relative;padding-left:56px}
+.pov .panel::before{counter-increment:pov;content:counter(pov,decimal-leading-zero);position:absolute;left:var(--sp-5);top:var(--sp-5);font-family:var(--mono);font-size:var(--t-sm);color:var(--text-3)}
+
+/* ═══════════ TYPE SPECIMEN ═══════════ */
+.spec-list{border-top:1px solid var(--border)}
+.spec-row{display:grid;grid-template-columns:200px 1fr;gap:var(--sp-5);align-items:baseline;padding:var(--sp-4) 0;border-bottom:1px solid var(--hairline)}
+.spec-row .k{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-3);line-height:1.7}
+.spec-row .k b{display:block;font-weight:500;color:var(--text-2)}
+@media (max-width:640px){.spec-row{grid-template-columns:1fr;gap:var(--sp-1)}}
+.d6{font-size:var(--t-6xl);font-weight:600;letter-spacing:var(--track-display);line-height:.98}
+.d5{font-size:var(--t-5xl);font-weight:600;letter-spacing:var(--track-display);line-height:1.02}
+.d4{font-size:var(--t-4xl);font-weight:600;letter-spacing:var(--track-heading);line-height:1.1}
+.d3{font-size:var(--t-3xl);font-weight:600;letter-spacing:var(--track-heading);line-height:1.15}
+.d2{font-size:var(--t-2xl);font-weight:600;letter-spacing:var(--track-title);line-height:1.25}
+.d1{font-size:var(--t-xl);font-weight:500;letter-spacing:var(--track-title);line-height:1.3}
+.numgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@media (max-width:600px){.numgrid{grid-template-columns:1fr}}
+.numgrid .panel{padding:var(--sp-4) var(--sp-5)}
+.numgrid .lbl{font-size:var(--t-xs);color:var(--text-3);font-family:var(--mono);margin-bottom:var(--sp-2)}
+.numgrid .rows div{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--hairline);font-size:var(--t-base)}
+.numgrid .rows div:last-child{border:0}
+.tab-nums{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.prop-nums{font-variant-numeric:proportional-nums}
+
+/* ═══════════ COLOUR ═══════════ */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--sp-3)}
+.sw{border-radius:var(--r-3);overflow:hidden;box-shadow:var(--ring);font-size:var(--t-xs)}
+.sw .chip{height:52px;display:flex;align-items:flex-end;padding:6px 8px;font-family:var(--mono);font-size:10px}
+.sw .lbl{padding:8px 10px;background:var(--bg)}
+.sw .lbl b{display:block;font-weight:500;font-size:var(--t-sm)}
+.sw .lbl span{font-family:var(--mono);color:var(--text-3)}
+.ramp{display:grid;grid-template-columns:repeat(11,1fr);border-radius:var(--r-3);overflow:hidden;box-shadow:var(--ring)}
+.ramp div{height:40px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-family:var(--mono);font-size:9px}
+.pairs{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+.pairs th{text-align:left;font-weight:500;font-size:var(--t-xs);color:var(--text-3);padding:8px 10px;border-bottom:1px solid var(--border)}
+.pairs td{padding:8px 10px;border-bottom:1px solid var(--hairline);vertical-align:middle}
+.pairs td.m{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-2)}
+.pairs .demo{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:500}
+
+/* ═══════════ SPACE / RADIUS / ELEVATION ═══════════ */
+.space-row{display:flex;align-items:flex-end;gap:var(--sp-5);flex-wrap:wrap;padding:var(--sp-2) 0}
+.space-row div{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--mono);font-size:var(--t-xs);color:var(--text-3)}
+.space-row i{display:block;background:var(--primary-tint);box-shadow:inset 0 0 0 1px var(--p300)}
+.radii{display:flex;gap:var(--sp-4);flex-wrap:wrap}
+.radii div{width:96px;height:64px;box-shadow:var(--ring);display:grid;place-items:center;font-family:var(--mono);font-size:var(--t-xs);color:var(--text-2);background:var(--surface)}
+.lifts{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-4)}
+@media (max-width:700px){.lifts{grid-template-columns:repeat(2,1fr)}}
+.lifts div{height:84px;border-radius:var(--r-3);background:var(--bg);display:grid;place-items:center;font-family:var(--mono);font-size:var(--t-xs);color:var(--text-2)}
+
+/* ═══════════ CONTROLS ═══════════ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--control-h);padding:0 14px;border-radius:var(--r-2);font:inherit;font-size:var(--t-sm);font-weight:500;line-height:1;border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast),box-shadow var(--t-fast)}
+.btn-primary{background:var(--primary);color:var(--primary-fg);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),var(--lift-1)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--bg);color:var(--text);box-shadow:var(--ring),var(--lift-1)}
+.btn-secondary:hover{background:var(--surface);box-shadow:var(--ring-strong),var(--lift-1)}
+.btn-ghost{background:transparent;color:var(--text-2)}
+.btn-ghost:hover{background:var(--surface);color:var(--text)}
+.btn-danger{background:var(--bg);color:var(--er-t);box-shadow:0 0 0 1px var(--er)}
+.btn-danger:hover{background:var(--er-bg)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{height:var(--control-h-sm);padding:0 10px;font-size:var(--t-xs)}
+.btn-lg{height:var(--control-h-lg);padding:0 18px;font-size:var(--t-base)}
+.btn .spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.iconb{width:var(--control-h);padding:0}
+.row{display:flex;flex-wrap:wrap;gap:var(--sp-3);align-items:center}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font-family:var(--mono);font-size:10px;font-weight:500;color:var(--text-2);background:var(--surface);box-shadow:var(--ring);border-radius:var(--r-1)}
+
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:500;font-size:var(--t-sm)}
+.field .hint{font-size:var(--t-sm);color:var(--text-2)}
+.input,.select,.textarea{font:inherit;font-size:var(--t-sm);color:var(--text);background:var(--bg);border:0;box-shadow:var(--ring-strong);border-radius:var(--r-2);padding:0 12px;height:var(--control-h);width:100%;transition:box-shadow var(--t-fast)}
+.textarea{height:auto;padding:10px 12px;min-height:84px;resize:vertical;line-height:1.5}
+.input:focus,.select:focus,.textarea:focus{outline:none;box-shadow:0 0 0 1px var(--primary),0 0 0 4px var(--primary-tint)}
+.input[aria-invalid="true"]{box-shadow:0 0 0 1px var(--er)}
+.input[aria-invalid="true"]:focus{box-shadow:0 0 0 1px var(--er),0 0 0 4px var(--er-bg)}
+.input::placeholder{color:var(--text-3)}
+.err{display:flex;gap:6px;align-items:center;font-size:var(--t-sm);color:var(--er-t)}
+.search{position:relative}
+.search .icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3)}
+.search .input{padding-left:32px;padding-right:44px}
+.search .kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%)}
+.check{display:flex;gap:10px;align-items:center;font-size:var(--t-sm);min-height:32px}
+.check input{width:16px;height:16px;accent-color:var(--p600)}
+.dark .check input{accent-color:var(--p400)}
+.switch{position:relative;width:34px;height:20px;border-radius:999px;background:var(--n300);transition:background var(--t-fast);flex:none}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:var(--lift-1);transition:transform var(--t-fast)}
+.switch.on{background:var(--primary)}
+.switch.on::after{transform:translateX(14px)}
+.seg{display:inline-flex;padding:2px;background:var(--surface-2);border-radius:var(--r-2);gap:2px}
+.seg button{font:inherit;font-size:var(--t-xs);font-weight:500;color:var(--text-2);background:transparent;border:0;padding:0 10px;height:26px;border-radius:4px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--text);box-shadow:var(--ring),var(--lift-1)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 8px;border-radius:var(--r-pill);font-size:var(--t-xs);font-weight:500;letter-spacing:var(--track-label);box-shadow:inset 0 0 0 1px currentColor;background:transparent;opacity:.95}
+.badge i{width:5px;height:5px;border-radius:50%;background:currentColor}
+.b-neutral{color:var(--text-2)}.b-primary{color:var(--primary)}.b-attn{color:var(--attention)}.b-ok{color:var(--ok-t)}.b-wn{color:var(--wn-t)}.b-er{color:var(--er-t)}
+.badge.fill{box-shadow:none}
+.b-ok.fill{background:var(--ok-bg)}.b-wn.fill{background:var(--wn-bg)}.b-er.fill{background:var(--er-bg)}.b-primary.fill{background:var(--primary-tint)}
+
+.alert{display:grid;grid-template-columns:18px 1fr auto;gap:12px;padding:12px 14px;border-radius:var(--r-3);font-size:var(--t-sm);align-items:start;box-shadow:inset 0 0 0 1px}
+.alert .icon{width:18px;height:18px;margin-top:1px}
+.alert b{display:block;font-weight:500}
+.alert p{color:var(--text);line-height:1.5;margin-top:1px}
+.alert .act{font:inherit;font-weight:500;background:none;border:0;color:inherit;cursor:pointer;padding:0;height:auto;text-decoration:underline;text-underline-offset:3px}
+.al-ok{background:var(--ok-bg);color:var(--ok-t)}.al-in{background:var(--in-bg);color:var(--in-t)}.al-wn{background:var(--wn-bg);color:var(--wn-t)}.al-er{background:var(--er-bg);color:var(--er-t)}
+
+.tbl-wrap{box-shadow:var(--ring);border-radius:var(--r-3);overflow:auto;background:var(--bg)}
+.tbl{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+.tbl th{text-align:left;font-size:var(--t-xs);font-weight:500;color:var(--text-3);padding:var(--sp-cell);border-bottom:1px solid var(--border);background:var(--surface);white-space:nowrap;position:sticky;top:0}
+.tbl td{padding:var(--sp-cell);border-bottom:1px solid var(--hairline);vertical-align:middle;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:var(--surface)}
+.tbl .r{text-align:right}
+.tbl td.m{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-2)}
+.tbl td.m.strong{color:var(--text)}
+.tbl a{border:0;font-weight:500}
+.tbl .chk{width:32px}
+.tbl tr.sel td{background:var(--primary-tint)}
+.pager{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-top:1px solid var(--border);font-size:var(--t-xs);color:var(--text-2);font-family:var(--mono)}
+
+.code-head{display:flex;justify-content:space-between;align-items:center;background:var(--n900);color:var(--n400);font-family:var(--mono);font-size:var(--t-xs);padding:6px 12px;border-radius:var(--r-3) var(--r-3) 0 0;border-bottom:1px solid var(--n800)}
+pre.code{background:var(--code-bg);color:var(--code-fg);border-radius:0 0 var(--r-3) var(--r-3);padding:14px 16px;font-size:13px;line-height:1.6;overflow-x:auto;tab-size:2}
+pre.code .cm{color:var(--n500)}pre.code .kw{color:var(--p300)}pre.code .st{color:var(--a400)}pre.code .fn{color:#7DD3FC}
+.copy{font:inherit;color:inherit;background:transparent;border:1px solid var(--n700);border-radius:4px;padding:2px 8px;cursor:pointer;height:22px}
+.copy:hover{color:var(--n100);border-color:var(--n500)}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border)}
+.tab{font:inherit;font-size:var(--t-sm);font-weight:500;color:var(--text-2);background:none;border:0;padding:0 12px;height:38px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--text);border-bottom-color:var(--primary)}
+.tab:hover{color:var(--text)}
+.tabpanel{padding:var(--sp-4) 2px;font-size:var(--t-sm);color:var(--text-2)}
+.tabpanel[hidden]{display:none}
+
+.menu{width:240px;background:var(--bg);box-shadow:var(--ring),var(--lift-2);border-radius:var(--r-3);padding:4px;font-size:var(--t-sm)}
+.menu div{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:4px;color:var(--text)}
+.menu div:hover,.menu div.hi{background:var(--surface)}
+.menu div .kbd{font-size:10px}
+.menu hr{border:0;border-top:1px solid var(--hairline);margin:4px 0}
+.menu .dn{color:var(--er-t)}
+.tip{display:inline-block;background:var(--n900);color:var(--n0);font-size:var(--t-xs);padding:5px 8px;border-radius:var(--r-2);max-width:240px;box-shadow:var(--lift-2)}
+.dark .tip{background:var(--n200);color:var(--n900)}
+.progress{height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--primary);width:64%;border-radius:999px}
+.crumb{display:flex;gap:8px;font-size:var(--t-sm);color:var(--text-3);align-items:center}
+.crumb b{color:var(--text);font-weight:500}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--primary-tint);color:var(--primary);display:inline-grid;place-items:center;font-size:var(--t-xs);font-weight:600}
+.stack{display:flex}.stack .avatar{box-shadow:0 0 0 2px var(--bg);margin-left:-8px}.stack .avatar:first-child{margin:0}
+
+/* command palette */
+.cmdk{max-width:560px;background:var(--bg);box-shadow:var(--ring),var(--lift-3);border-radius:var(--r-4);overflow:hidden}
+.cmdk .in{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);font-size:var(--t-base)}
+.cmdk .in span{color:var(--text-3)}
+.cmdk .grp{font-family:var(--mono);font-size:10px;color:var(--text-3);padding:8px 14px 4px}
+.cmdk .it{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;font-size:var(--t-sm)}
+.cmdk .it.hi{background:var(--surface)}
+.cmdk .it .l{display:flex;gap:10px;align-items:center}
+.cmdk .it .l .icon{color:var(--text-3)}
+.cmdk .ft{display:flex;gap:14px;padding:8px 14px;border-top:1px solid var(--border);font-size:var(--t-xs);color:var(--text-3)}
+
+/* states */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.sk{background:linear-gradient(90deg,var(--n200) 25%,var(--n100) 50%,var(--n200) 75%);background-size:200% 100%;animation:shimmer 1.6s ease-in-out infinite;border-radius:var(--r-1);height:12px}
+.dark .sk{background-image:linear-gradient(90deg,var(--n800) 25%,var(--n700) 50%,var(--n800) 75%)}
+.empty{text-align:center;padding:var(--sp-8) var(--sp-5);border:1px dashed var(--border-strong);border-radius:var(--r-3)}
+.empty h4{margin:0 0 4px;font-size:var(--t-base)}
+.empty p{font-size:var(--t-sm);color:var(--text-2);margin:0 auto var(--sp-4);max-width:32ch}
+.toast{position:fixed;right:var(--sp-6);bottom:var(--sp-6);z-index:500;max-width:400px;display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--bg);box-shadow:var(--ring),var(--lift-3);border-radius:var(--r-3);font-size:var(--t-sm);transform:translateY(12px);opacity:0;pointer-events:none;transition:transform var(--t-exit),opacity var(--t-exit)}
+.toast.show{transform:none;opacity:1;pointer-events:auto;transition:transform var(--t-enter),opacity var(--t-enter)}
+.toast b{display:block;font-weight:500}
+.toast span{color:var(--text-2);font-size:var(--t-xs)}
+.toast .undo{margin-left:auto;font:inherit;font-weight:500;color:var(--primary);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap}
+
+/* ═══════════ COMPOSED SCREEN ═══════════ */
+.screen{box-shadow:var(--ring),var(--lift-2);border-radius:var(--r-4);overflow:hidden;background:var(--bg);display:grid;grid-template-rows:44px 1fr;font-size:var(--t-sm)}
+.screen .tb{display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--border)}
+.screen .tb .ws{font-weight:500}
+.screen .tb .env{margin-left:auto;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--attention);color:var(--attention)}
+.screen .body{display:grid;grid-template-columns:184px 1fr;min-height:520px}
+.screen .sb{border-right:1px solid var(--border);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.screen .sb a{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r-2);color:var(--text-2);border:0;font-weight:400}
+.screen .sb a.on{background:var(--primary-tint);color:var(--primary);font-weight:500}
+.screen .sb .sec{font-family:var(--mono);font-size:10px;color:var(--text-3);padding:12px 10px 4px}
+.screen .mn{padding:22px 24px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.screen .ph{display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.screen .ph h1{font-size:var(--t-3xl);font-weight:600;letter-spacing:var(--track-heading);line-height:1.05;margin-top:4px}
+.screen .ph h1 .dim{color:var(--text-3);font-weight:500}
+.screen .ph .sub{font-size:var(--t-sm);color:var(--text-2);margin-top:8px}
+.screen .mets{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.screen .met{padding:12px 14px;box-shadow:var(--ring);border-radius:var(--r-3)}
+.screen .met .l{font-size:var(--t-xs);color:var(--text-2)}
+.screen .met .v{font-family:var(--mono);font-size:var(--t-2xl);font-weight:500;letter-spacing:-.02em;line-height:1.1;margin-top:4px}
+.screen .met .d{font-family:var(--mono);font-size:10px;margin-top:6px;color:var(--ok-t)}
+.screen .met .d.bad{color:var(--er-t)}
+.screen .filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:820px){.screen .body{grid-template-columns:1fr}.screen .sb{display:none}.screen .mets{grid-template-columns:repeat(2,1fr)}}
+
+/* wireframes */
+.wf{box-shadow:var(--ring);border-radius:var(--r-3);overflow:hidden;background:var(--surface);font-size:10px;font-family:var(--mono);color:var(--text-3)}
+.wf .bar{height:28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 10px;gap:8px}
+.wf .bar i,.wf .side i{display:block;height:6px;border-radius:3px;background:var(--n200)}
+.dark .wf .bar i,.dark .wf .side i{background:var(--n700)}
+.wf .side i:first-child{background:var(--primary)}
+.wf .body{display:grid;grid-template-columns:56px 1fr;min-height:176px}
+.wf .side{background:var(--bg);border-right:1px solid var(--border);padding:8px 6px;display:flex;flex-direction:column;gap:6px}
+.wf .main{padding:10px;display:flex;flex-direction:column;gap:8px}
+.wf .blk{background:var(--bg);box-shadow:var(--ring);border-radius:4px;padding:6px 8px}
+.wf .r{display:grid;gap:8px}
+
+/* voice table */
+.voice{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+.voice th{text-align:left;font-weight:500;font-size:var(--t-xs);color:var(--text-3);padding:8px 10px;border-bottom:1px solid var(--border)}
+.voice td{padding:10px;border-bottom:1px solid var(--hairline);vertical-align:top}
+.voice td.no{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--er)}
+.voice td.yes{font-weight:500}
+
+/* checklists */
+.chk-list{list-style:none;max-width:var(--prose)}
+.chk-list li{display:grid;grid-template-columns:18px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:var(--t-base)}
+.chk-list li .icon{width:18px;height:18px;color:var(--ok);margin-top:4px}
+.chk-list b{font-weight:500}
+.chk-list em{display:block;font-style:normal;color:var(--text-2);font-size:var(--t-sm)}
+.gates{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+@media (max-width:700px){.gates{grid-template-columns:1fr}}
+.gates ul{list-style:none;font-size:var(--t-sm)}
+.gates li{padding:7px 0;border-bottom:1px solid var(--hairline);display:grid;grid-template-columns:1fr auto;gap:12px}
+.gates li:last-child{border:0}
+.gates li span:last-child{font-family:var(--mono);font-size:var(--t-xs);color:var(--text-2);white-space:nowrap}
+
+footer{padding:var(--sp-10) 0 0;font-size:var(--t-sm);color:var(--text-2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:var(--t-xs)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Instrument <span class="v">design reference 1.0</span></div>
+  <div class="ctrls">
+    <div class="seg" role="group" aria-label="Density">
+      <button type="button" aria-pressed="true" data-density="comfortable">Comfortable</button>
+      <button type="button" aria-pressed="false" data-density="compact">Compact</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" id="themeToggle" aria-pressed="false">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <span>Dark</span>
+    </button>
+  </div>
+</header>
+
+<div class="shell">
+<nav class="toc" aria-label="Sections">
+  <ol>
+    <li><a href="#pov">Point of view<span class="n">01</span></a></li>
+    <li><a href="#type">Typography<span class="n">02</span></a></li>
+    <li><a href="#colour">Colour<span class="n">03</span></a></li>
+    <li><a href="#structure">Space and structure<span class="n">04</span></a></li>
+    <li><a href="#components">Components<span class="n">05</span></a></li>
+    <li><a href="#states">States<span class="n">06</span></a></li>
+    <li><a href="#screen">Composed screen<span class="n">07</span></a></li>
+    <li><a href="#layouts">Layouts<span class="n">08</span></a></li>
+    <li><a href="#voice">Voice<span class="n">09</span></a></li>
+    <li><a href="#features">Features<span class="n">10</span></a></li>
+    <li><a href="#gates">Gates<span class="n">11</span></a></li>
+    <li><a href="#tokens">Tokens<span class="n">12</span></a></li>
+  </ol>
+</nav>
+
+<main id="main">
+  <div class="hero">
+    <div class="kicker"><span>Instrument</span><span>reference 1.0</span><span>2026-09</span></div>
+    <h1>Precision you can read at a glance. <span class="dim">Calm you can work in all day.</span></h1>
+    <p class="lede">A design reference for an application that is read in and operated in equally. Type does the talking; everything else stays out of the way.</p>
+    <div class="facts">
+      <div><b>2</b><span>typefaces, one for words, one for data</span></div>
+      <div><b>1</b><span>hue carries every action and link</span></div>
+      <div><b>4.5:1</b><span>minimum text contrast, both themes, enforced in CI</span></div>
+      <div><b>0</b><span>animations that the user did not trigger</span></div>
+    </div>
+  </div>
+
+  <!-- 01 POV -->
+  <section class="s" id="pov">
+    <header><span class="n">01</span><h2>Point of view</h2><p>Five commitments. Each one closes an argument that would otherwise reopen on every screen.</p></header>
+    <div class="grid g2 pov" style="margin-top:var(--sp-8)">
+      <div class="panel"><h4>Type is the interface</h4><p>Hierarchy comes from size, weight, and tracking. No eyebrows, no decorative labels, no icons standing in for words. A screen with the colour removed still reads correctly.</p></div>
+      <div class="panel"><h4>Structure is drawn, not implied</h4><p>Hairlines and one-pixel rings define regions. Shadow is reserved for things that float: menus, palettes, toasts. Nothing on the page plane casts one.</p></div>
+      <div class="panel"><h4>One hue works; amber points</h4><p>Indigo is every action, link, focus, and selection. Amber appears only when the system needs the eye now: the production indicator, a pinned item. If amber is decorating, it is wrong.</p></div>
+      <div class="panel"><h4>Data sits in mono</h4><p>Identifiers, timestamps, counts, and durations are set in the monospace face with tabular figures. Columns align without effort and numbers stop jittering when they update.</p></div>
+      <div class="panel"><h4>Density is the user's choice</h4><p>Comfortable and compact are first-class modes, persisted per user. The header toggle switches this document; the application does the same.</p></div>
+      <div class="panel"><h4>Accessibility is enforced, not reviewed</h4><p>Contrast is checked at the token layer, focus and keyboard at the component layer, motion at the root. A screen inherits compliance by construction.</p></div>
+    </div>
+  </section>
+
+  <!-- 02 TYPE -->
+  <section class="s" id="type">
+    <header><span class="n">02</span><h2>Typography</h2><p>Geist for the interface, JetBrains Mono for data and code. Two families, four weights, one scale. Display sizes tighten letter-spacing to -0.04em; body stays neutral.</p></header>
+
+    <h3>Scale</h3>
+    <div class="spec-list">
+      <div class="spec-row"><div class="k"><b>Display 64</b>600 / 0.98 / -0.04em<br>page hero only, once per product</div><div class="d6">Runs today</div></div>
+      <div class="spec-row"><div class="k"><b>Display 48</b>600 / 1.02 / -0.04em<br>overview headline, empty states</div><div class="d5">Capacity planning</div></div>
+      <div class="spec-row"><div class="k"><b>Heading 38</b>600 / 1.1 / -0.025em<br>section headings in docs</div><div class="d4">Workspace settings</div></div>
+      <div class="spec-row"><div class="k"><b>Heading 30</b>600 / 1.15 / -0.025em<br>page titles in the app</div><div class="d3">Members and roles</div></div>
+      <div class="spec-row"><div class="k"><b>Title 24</b>600 / 1.25 / -0.015em<br>modal titles, panel heads</div><div class="d2">Rotate service credential</div></div>
+      <div class="spec-row"><div class="k"><b>Title 20</b>500 / 1.3 / -0.015em<br>card titles, group heads</div><div class="d1">Recent activity</div></div>
+      <div class="spec-row"><div class="k"><b>Body 15</b>400 / 1.55<br>application prose, forms</div><div style="font-size:var(--t-base);line-height:1.55;max-width:60ch">Application body at fifteen pixels with a measure near sixty characters. Secondary copy drops to the second text tone, never the third, because the third fails contrast below fourteen pixels.</div></div>
+      <div class="spec-row"><div class="k"><b>Small 13</b>400 / 1.5<br>table cells, hints, menus</div><div style="font-size:var(--t-sm);color:var(--text-2)">Supporting text, table cells, menu items, and hints. Still 4.5:1 in both themes.</div></div>
+      <div class="spec-row"><div class="k"><b>Micro 11</b>500 / 1.4<br>badges, table headers, counts</div><div style="font-size:var(--t-xs);font-weight:500;color:var(--text-3);letter-spacing:.02em">Only for 3:1-tolerant contexts: badges with a ring, headers with a border, metadata the user is not required to read.</div></div>
+      <div class="spec-row"><div class="k"><b>Mono 13</b>400 / 1.5 / tabular<br>ids, timestamps, code, counts</div><div class="mono" style="font-size:13px">run_20260904_0417 &nbsp;1,284,930 rows &nbsp;00:04:12 &nbsp;eastus2</div></div>
+    </div>
+
+    <h3>Numerals</h3>
+    <div class="numgrid">
+      <div class="panel"><div class="lbl">tabular, mono: values align and stay still when they change</div><div class="rows tab-nums"><div><span>bronze_ingest_crm</span><span>1,284,930</span></div><div><span>silver_customer_scd2</span><span>312,004</span></div><div><span>gold_lending_kpis</span><span>11,812</span></div></div></div>
+      <div class="panel"><div class="lbl">proportional, sans: fine in prose, wrong in a column</div><div class="rows prop-nums" style="font-family:var(--font)"><div><span>bronze_ingest_crm</span><span>1,284,930</span></div><div><span>silver_customer_scd2</span><span>312,004</span></div><div><span>gold_lending_kpis</span><span>11,812</span></div></div></div>
+    </div>
+    <div class="callout">Rule: any number a user might compare against another number is mono and tabular. A number inside a sentence stays in the sans. Metric values use the mono face at display sizes so the tile reads as an instrument, not a headline.</div>
+
+    <h3>Measure and rhythm</h3>
+    <div class="prose">
+      <ul>
+        <li>Prose measure 60 to 68 characters (640px at 15px). Docs measure 68 to 72 at 17px.</li>
+        <li>Headings never sit alone: a heading is always followed by content within 12px, and preceded by at least 32px.</li>
+        <li>Two consecutive type sizes never differ by less than 2px; if they do, one of them is a weight change, not a size change.</li>
+        <li>Truncate with an ellipsis only on identifiers; wrap everything a human wrote.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 03 COLOUR -->
+  <section class="s" id="colour">
+    <header><span class="n">03</span><h2>Colour</h2><p>Cool graphite neutrals, one indigo, one amber, four semantics. Every text pairing below is listed with its ratio; the theme toggle proves the dark set.</p></header>
+
+    <h3>Neutral ramp</h3>
+    <div class="ramp">
+      <div style="background:#FFFFFF;color:#4B4E57">0</div><div style="background:#FAFAFB;color:#4B4E57">50</div><div style="background:#F3F4F6;color:#4B4E57">100</div><div style="background:#E6E7EB;color:#33353C">200</div><div style="background:#D5D7DD;color:#33353C">300</div><div style="background:#A9ADB7;color:#131418">400</div><div style="background:#8A8E99;color:#131418">500</div><div style="background:#4B4E57;color:#F3F4F6">600</div><div style="background:#33353C;color:#F3F4F6">700</div><div style="background:#1E1F24;color:#F3F4F6">800</div><div style="background:#0C0D10;color:#F3F4F6">950</div>
+    </div>
+    <p class="spec">Chroma is held near zero with a slight cool cast so indigo reads warm by comparison. 900 (#131418) is body text, not pure black; 950 is the dark-mode base.</p>
+
+    <h3>Primary and attention</h3>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#4A46D9;color:#fff">600</div><div class="lbl"><b>Primary</b><span>#4A46D9 &nbsp;6.9:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#3F3BC4;color:#fff">700</div><div class="lbl"><b>Primary hover</b><span>#3F3BC4 &nbsp;8.4:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#8583F0;color:#0C0D10">400</div><div class="lbl"><b>Primary, dark</b><span>#8583F0 &nbsp;7.1:1 on 950</span></div></div>
+      <div class="sw"><div class="chip" style="background:#EEEEFD;color:#4A46D9">50</div><div class="lbl"><b>Primary tint</b><span>#EEEEFD &nbsp;selection, active nav</span></div></div>
+      <div class="sw"><div class="chip" style="background:#B45309;color:#fff">600</div><div class="lbl"><b>Attention</b><span>#B45309 &nbsp;5.0:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#FBBF24;color:#0C0D10">400</div><div class="lbl"><b>Attention, dark</b><span>#FBBF24 &nbsp;11.6:1 on 950</span></div></div>
+    </div>
+
+    <h3>Semantic pairs</h3>
+    <table class="pairs">
+      <thead><tr><th>State</th><th>Border and icon</th><th>Text</th><th>Tint</th><th>Rendered</th></tr></thead>
+      <tbody>
+        <tr><td>Success</td><td class="m">#15803D 5.0:1</td><td class="m">#14532D 9.1:1</td><td class="m">#F0FDF4</td><td><span class="demo" style="background:var(--ok-bg);color:var(--ok-t);box-shadow:inset 0 0 0 1px var(--ok)">Published</span></td></tr>
+        <tr><td>Warning</td><td class="m">#EA580C 3.6:1 (large only)</td><td class="m">#9A3412 7.3:1</td><td class="m">#FFF7ED</td><td><span class="demo" style="background:var(--wn-bg);color:var(--wn-t);box-shadow:inset 0 0 0 1px var(--wn)">Expires soon</span></td></tr>
+        <tr><td>Error</td><td class="m">#DC2626 4.8:1</td><td class="m">#991B1B 8.3:1</td><td class="m">#FEF2F2</td><td><span class="demo" style="background:var(--er-bg);color:var(--er-t);box-shadow:inset 0 0 0 1px var(--er)">Failed</span></td></tr>
+        <tr><td>Info</td><td class="m">#2563EB 5.2:1</td><td class="m">#1E40AF 8.7:1</td><td class="m">#EFF6FF</td><td><span class="demo" style="background:var(--in-bg);color:var(--in-t);box-shadow:inset 0 0 0 1px var(--in)">New</span></td></tr>
+      </tbody>
+    </table>
+    <div class="callout">Three rules that prevent most colour bugs. Text always uses the text tone, never the border tone. State is always colour plus a word or dot. The warning border tone is never used as text; it exists for icons and rings only.</div>
+  </section>
+
+  <!-- 04 STRUCTURE -->
+  <section class="s" id="structure">
+    <header><span class="n">04</span><h2>Space and structure</h2><p>A 4px grid, four radii that encode tier, and a ring-based elevation model where the page plane is flat and only floating things cast shadows.</p></header>
+
+    <h3>Spacing</h3>
+    <div class="space-row">
+      <div><i style="width:4px;height:4px"></i>4</div><div><i style="width:8px;height:8px"></i>8</div><div><i style="width:12px;height:12px"></i>12</div><div><i style="width:16px;height:16px"></i>16</div><div><i style="width:20px;height:20px"></i>20</div><div><i style="width:24px;height:24px"></i>24</div><div><i style="width:32px;height:32px"></i>32</div><div><i style="width:40px;height:40px"></i>40</div><div><i style="width:48px;height:48px"></i>48</div><div><i style="width:64px;height:64px"></i>64</div>
+    </div>
+    <p class="spec">control internals 8 to 12 &nbsp;/ panel padding 20 &nbsp;/ group gap 16 &nbsp;/ section gap 32 to 48 &nbsp;/ page gutter 24, 32 above 1280</p>
+
+    <h3>Radius encodes tier</h3>
+    <div class="radii">
+      <div style="border-radius:4px">4 chips, kbd</div><div style="border-radius:6px">6 controls</div><div style="border-radius:8px">8 panels, tables</div><div style="border-radius:12px">12 modals, palette</div><div style="border-radius:999px">pill</div>
+    </div>
+
+    <h3>Elevation</h3>
+    <div class="lifts">
+      <div style="box-shadow:var(--ring)">ring: page plane</div>
+      <div style="box-shadow:var(--ring),var(--lift-1)">lift 1: controls</div>
+      <div style="box-shadow:var(--ring),var(--lift-2)">lift 2: menus</div>
+      <div style="box-shadow:var(--ring),var(--lift-3)">lift 3: modals, palette</div>
+    </div>
+    <p class="spec">A ring is a 1px box-shadow, not a border, so it never changes layout and stacks cleanly with lift. Panels on the page plane have a ring and no lift. Dark mode raises lift opacity and keeps the ring.</p>
+
+    <h3>Motion</h3>
+    <div class="prose"><p>120ms for hover and toggles, 180ms for standard transitions, 220ms ease-out for entering, 140ms ease-in for exiting. Motion answers a user action and shows what changed. There are no page-load sequences, no scroll reveals, no ambient loops; the skeleton shimmer is the single exception and it stops under reduced motion.</p></div>
+  </section>
+
+  <!-- 05 COMPONENTS -->
+  <section class="s" id="components">
+    <header><span class="n">05</span><h2>Components</h2><p>Rendered from the tokens in this file. Each carries the spec that matters when rebuilt in a framework. Switch density in the header to see controls and tables respond.</p></header>
+
+    <h3>Buttons</h3>
+    <div class="row">
+      <button class="btn btn-primary">Save changes</button>
+      <button class="btn btn-secondary">Cancel</button>
+      <button class="btn btn-ghost">View history</button>
+      <button class="btn btn-danger">Delete workspace</button>
+      <button class="btn btn-primary" disabled><span class="spin" aria-hidden="true"></span>Saving</button>
+      <button class="btn btn-secondary iconb" aria-label="More actions"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+    </div>
+    <div class="row" style="margin-top:var(--sp-3)">
+      <button class="btn btn-primary btn-sm">Small</button>
+      <button class="btn btn-primary">Default</button>
+      <button class="btn btn-primary btn-lg">Large</button>
+      <button class="btn btn-secondary"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add member</button>
+      <span class="kbd">Ctrl</span><span class="kbd">S</span>
+    </div>
+    <p class="spec">6px radius / 500 weight / heights 30, 36, 42 (26, 30, 36 compact) / 44px hit area on touch via padding / one primary per view / the label is the verb the toast will repeat</p>
+
+    <h3>Inputs</h3>
+    <div class="grid g2">
+      <div class="field"><label for="i1">Workspace name</label><input class="input" id="i1" value="Lending analytics" aria-describedby="i1h"><span class="hint" id="i1h">Shown to every member. The URL does not change.</span></div>
+      <div class="field"><label for="i2">Retention, days</label><input class="input mono" id="i2" value="400" aria-invalid="true" aria-describedby="i2e"><span class="err" id="i2e"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>Enter a value from 1 to 365.</span></div>
+      <div class="field"><label for="i3">Search</label><div class="search"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="input" id="i3" placeholder="Pipelines, datasets, members"><span class="kbd">/</span></div></div>
+      <div class="field"><label for="i4">Default region</label><select class="select" id="i4"><option>East US 2</option><option>West Europe</option><option>Australia East</option></select></div>
+      <div class="field" style="grid-column:1/-1"><label for="i5">Description</label><textarea class="textarea" id="i5">Nightly load from the CRM extract, then SCD2 into silver_customer.</textarea></div>
+      <div class="field"><span style="font-size:var(--t-sm);font-weight:500">Notifications</span><label class="check"><input type="checkbox" checked>Email on failed run</label><label class="check"><input type="checkbox">Weekly usage summary</label></div>
+      <div class="field"><span style="font-size:var(--t-sm);font-weight:500">Modes</span><label class="check"><span class="switch on" role="switch" aria-checked="true" tabindex="0"></span>Require approval for production</label><label class="check"><span class="switch" role="switch" aria-checked="false" tabindex="0"></span>Allow external sharing</label></div>
+    </div>
+    <p class="spec">labels above, placeholders never label / 1px ring, focus adds a 4px tint ring / errors name the fix / numeric inputs are mono / switches for immediate effect, checkboxes for form submission</p>
+
+    <h3>Segmented control, badges, breadcrumb, avatars, progress</h3>
+    <div class="row">
+      <div class="seg" role="group" aria-label="View"><button aria-pressed="true">Table</button><button aria-pressed="false">Board</button><button aria-pressed="false">Timeline</button></div>
+      <span class="badge b-neutral">Draft</span><span class="badge b-primary">Beta</span><span class="badge b-attn">Pinned</span>
+      <span class="badge b-ok fill"><i></i>Healthy</span><span class="badge b-wn fill"><i></i>Degraded</span><span class="badge b-er fill"><i></i>Failed</span>
+    </div>
+    <div class="row" style="margin-top:var(--sp-4)">
+      <div class="crumb"><span>Pipelines</span><span>/</span><span>silver_customer_scd2</span><span>/</span><b>Run 0417</b></div>
+      <div class="stack"><span class="avatar">PS</span><span class="avatar" style="background:var(--wn-bg);color:var(--wn-t)">AK</span><span class="avatar" style="background:var(--ok-bg);color:var(--ok-t)">JR</span></div>
+      <div style="width:200px"><div class="progress"><i></i></div><div class="spec" style="margin-top:4px">64% &nbsp;step 5 of 7</div></div>
+    </div>
+
+    <h3>Alerts</h3>
+    <div class="grid g2">
+      <div class="alert al-ok"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><div><b>Deployment complete</b><p>14 items published to production.</p></div><button class="act">Dismiss</button></div>
+      <div class="alert al-in"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><div><b>Background operations now shown</b><p>Capacity utilisation includes them from today.</p></div><button class="act">Learn more</button></div>
+      <div class="alert al-wn"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><div><b>Credential expires in 3 days</b><p>Rotate before Friday to avoid a failed run.</p></div><button class="act">Rotate</button></div>
+      <div class="alert al-er"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><div><b>Run failed at step 4 of 7</b><p><code>dim_customer</code> was not found. Check the connection and retry.</p></div><button class="act">Retry</button></div>
+    </div>
+    <p class="spec">1px inset ring in the border tone / title in the text tone, body in neutral / one inline action, text-styled / an alert that requires action stays in the page; a toast is for outcomes that did not need waiting for</p>
+
+    <h3>Table</h3>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th class="chk"><input type="checkbox" aria-label="Select all"></th><th>Pipeline</th><th>Status</th><th class="r">Rows</th><th class="r">Duration</th><th>Started</th><th>Owner</th><th></th></tr></thead>
+        <tbody>
+          <tr><td class="chk"><input type="checkbox" aria-label="Select bronze_ingest_crm"></td><td><a href="#">bronze_ingest_crm</a></td><td><span class="badge b-ok fill"><i></i>Healthy</span></td><td class="m strong r">1,284,930</td><td class="m r">04:12</td><td class="m">04:17</td><td>Data platform</td><td class="r"><button class="btn btn-ghost btn-sm iconb" aria-label="Actions for bronze_ingest_crm" style="width:26px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td></tr>
+          <tr class="sel"><td class="chk"><input type="checkbox" checked aria-label="Select silver_customer_scd2"></td><td><a href="#">silver_customer_scd2</a></td><td><span class="badge b-wn fill"><i></i>Degraded</span></td><td class="m strong r">312,004</td><td class="m r">11:48</td><td class="m">04:31</td><td>Data platform</td><td class="r"><button class="btn btn-ghost btn-sm iconb" aria-label="Actions for silver_customer_scd2" style="width:26px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td></tr>
+          <tr><td class="chk"><input type="checkbox" aria-label="Select gold_lending_kpis"></td><td><a href="#">gold_lending_kpis</a></td><td><span class="badge b-er fill"><i></i>Failed</span></td><td class="m strong r">0</td><td class="m r">00:52</td><td class="m">05:02</td><td>Finance analytics</td><td class="r"><button class="btn btn-ghost btn-sm iconb" aria-label="Actions for gold_lending_kpis" style="width:26px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td></tr>
+          <tr><td class="chk"><input type="checkbox" aria-label="Select gold_risk_scores"></td><td><a href="#">gold_risk_scores</a></td><td><span class="badge b-ok fill"><i></i>Healthy</span></td><td class="m strong r">11,812</td><td class="m r">01:07</td><td class="m">05:10</td><td>Risk</td><td class="r"><button class="btn btn-ghost btn-sm iconb" aria-label="Actions for gold_risk_scores" style="width:26px"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td></tr>
+        </tbody>
+      </table>
+      <div class="pager"><span>1 selected of 4</span><span>rows 1 to 4 of 128 &nbsp; &lt; &nbsp; 1 &nbsp; 2 &nbsp; 3 &nbsp; &gt;</span></div>
+    </div>
+    <p class="spec">sentence-case 11px headers, sticky / numbers right-aligned in mono, tabular / hover tint only, selection uses the primary tint / row menu is an icon button with an accessible name / horizontal scroll inside the ring on narrow screens</p>
+
+    <h3>Menu, tooltip, tabs</h3>
+    <div class="grid g3">
+      <div class="menu" role="menu" aria-label="Row actions"><div class="hi" role="menuitem">Open<span class="kbd">Enter</span></div><div role="menuitem">Re-run<span class="kbd">R</span></div><div role="menuitem">Copy run id<span class="kbd">C</span></div><hr><div role="menuitem">Pin to overview</div><div role="menuitem" class="dn">Delete run</div></div>
+      <div><span class="tip">Rows written to the target after deduplication</span><p class="spec">tooltips: 300ms delay, 240px max, never the only place a control is explained</p></div>
+      <div>
+        <div class="tabs" role="tablist" aria-label="Run detail"><button class="tab" role="tab" aria-selected="true" aria-controls="tp1" id="tt1">Overview</button><button class="tab" role="tab" aria-selected="false" aria-controls="tp2" id="tt2" tabindex="-1">Logs</button><button class="tab" role="tab" aria-selected="false" aria-controls="tp3" id="tt3" tabindex="-1">Lineage</button></div>
+        <div class="tabpanel" role="tabpanel" id="tp1" aria-labelledby="tt1">Summary, the failing step if any, the one most useful next action.</div>
+        <div class="tabpanel" role="tabpanel" id="tp2" aria-labelledby="tt2" hidden>Streaming log with level filter and copy-all.</div>
+        <div class="tabpanel" role="tabpanel" id="tp3" aria-labelledby="tt3" hidden>Upstream and downstream, as a list before a graph.</div>
+      </div>
+    </div>
+
+    <h3>Command palette</h3>
+    <div class="cmdk" role="dialog" aria-label="Command palette">
+      <div class="in"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Type a command or search</span></div>
+      <div class="grp">Actions</div>
+      <div class="it hi"><span class="l"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Re-run silver_customer_scd2</span><span class="kbd">R</span></div>
+      <div class="it"><span class="l"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New pipeline</span><span class="kbd">N</span></div>
+      <div class="grp">Go to</div>
+      <div class="it"><span class="l"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>Capacity</span><span class="kbd">G C</span></div>
+      <div class="it"><span class="l"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Members</span><span class="kbd">G M</span></div>
+      <div class="ft"><span>Enter to run</span><span>Arrows to move</span><span>Esc to close</span></div>
+    </div>
+    <p class="spec">Ctrl or Cmd K anywhere / actions above navigation / every item shows its shortcut so the palette teaches the keyboard / lift 3, 12px radius, 560px max</p>
+
+    <h3>Code</h3>
+    <div class="code-head"><span>deploy.yaml</span><button class="copy" type="button" data-copy="c1">Copy</button></div>
+<pre class="code" id="c1"><span class="cm"># one workspace per environment, promoted by pipeline</span>
+<span class="kw">workspaces</span>:
+  <span class="kw">dev</span>:  <span class="st">"ws-lending-dev"</span>
+  <span class="kw">test</span>: <span class="st">"ws-lending-test"</span>
+  <span class="kw">prod</span>: <span class="st">"ws-lending-prod"</span>
+<span class="kw">approvals</span>:
+  <span class="kw">prod</span>: <span class="fn">required</span></pre>
+    <p class="spec">always dark in both themes / 13px mono, 1.6 / filename and copy in the head / diff and log views add a line-number gutter in the third text tone</p>
+  </section>
+
+  <!-- 06 STATES -->
+  <section class="s" id="states">
+    <header><span class="n">06</span><h2>States</h2><p>Loading, empty, error, and success are the screens most users meet first. A component is not finished until all four exist and read consistently.</p></header>
+    <div class="grid g3" style="margin-top:var(--sp-8)">
+      <div class="panel"><h4>Loading</h4><div style="display:flex;flex-direction:column;gap:10px;margin:var(--sp-3) 0"><div class="sk" style="width:55%"></div><div class="sk"></div><div class="sk" style="width:80%"></div><div class="sk" style="width:35%"></div></div><p>Skeleton in the shape of the content. Under 300ms show nothing at all; a flash of skeleton is worse than a short wait.</p></div>
+      <div class="panel"><h4>Empty</h4><div class="empty" style="margin-top:var(--sp-3)"><h4>No pipelines yet</h4><p>Create one from a template or import a definition.</p><button class="btn btn-primary btn-sm">Create pipeline</button></div></div>
+      <div class="panel"><h4>Success</h4><p>Confirm with the verb the button used. Toast, five seconds, dismissible, with undo where the action is reversible.</p><button class="btn btn-secondary btn-sm" id="toastBtn" style="margin-top:var(--sp-3)">Publish</button><div class="foot">Optimistic by default: the row updates before the server confirms, and reverts with an error toast if it does not.</div></div>
+    </div>
+  </section>
+
+  <!-- 07 COMPOSED SCREEN -->
+  <section class="s" id="screen">
+    <header><span class="n">07</span><h2>Composed screen</h2><p>The proof. Every component above, assembled into the overview a user sees each morning. Nothing here was styled for the screenshot.</p></header>
+    <div class="screen" style="margin-top:var(--sp-8)" aria-label="Overview screen example">
+      <div class="tb"><span class="brand-mark" aria-hidden="true"></span><span class="ws">Lending analytics</span><span class="env">prod</span><span class="avatar" style="width:24px;height:24px;font-size:10px">PS</span></div>
+      <div class="body">
+        <nav class="sb" aria-label="Primary"><a class="on" href="#" aria-current="page">Overview</a><a href="#">Runs</a><a href="#">Pipelines</a><a href="#">Datasets</a><a href="#">Lineage</a><div class="sec">admin</div><a href="#">Members</a><a href="#">Capacity</a><a href="#">Settings</a></nav>
+        <div class="mn">
+          <div class="ph"><div><div class="crumb"><span>Thursday 4 September</span></div><h1>Runs <span class="dim">today</span></h1><div class="sub">Four pipelines executed since 04:00. One needs your attention.</div></div><div class="row"><button class="btn btn-secondary">Filter</button><button class="btn btn-primary">New run</button></div></div>
+          <div class="alert al-er" style="grid-template-columns:18px 1fr auto"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><div><b>gold_lending_kpis failed at step 4 of 7</b><p><code>dim_customer</code> was not found in silver. Upstream run silver_customer_scd2 is degraded.</p></div><button class="act">Open run</button></div>
+          <div class="mets">
+            <div class="met"><div class="l">Rows processed</div><div class="v">1.61M</div><div class="d">+12.4% vs yesterday</div></div>
+            <div class="met"><div class="l">Median duration</div><div class="v">04:12</div><div class="d">-38s</div></div>
+            <div class="met"><div class="l">Failed steps</div><div class="v">1</div><div class="d bad">gold_lending_kpis</div></div>
+            <div class="met"><div class="l">Capacity used</div><div class="v">61%</div><div class="d">peak 84% at 04:40</div></div>
+          </div>
+          <div class="filters"><div class="seg" role="group" aria-label="Range"><button aria-pressed="true">Today</button><button aria-pressed="false">7d</button><button aria-pressed="false">30d</button></div><span class="badge b-neutral">Owner: any</span><span class="badge b-neutral">Status: any</span><span style="margin-left:auto" class="spec">updated 05:12</span></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Pipeline</th><th>Status</th><th class="r">Rows</th><th class="r">Duration</th><th>Started</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr><td><a href="#">bronze_ingest_crm</a></td><td><span class="badge b-ok fill"><i></i>Healthy</span></td><td class="m strong r">1,284,930</td><td class="m r">04:12</td><td class="m">04:17</td><td>Data platform</td></tr>
+                <tr><td><a href="#">silver_customer_scd2</a></td><td><span class="badge b-wn fill"><i></i>Degraded</span></td><td class="m strong r">312,004</td><td class="m r">11:48</td><td class="m">04:31</td><td>Data platform</td></tr>
+                <tr><td><a href="#">gold_lending_kpis</a></td><td><span class="badge b-er fill"><i></i>Failed</span></td><td class="m strong r">0</td><td class="m r">00:52</td><td class="m">05:02</td><td>Finance analytics</td></tr>
+                <tr><td><a href="#">gold_risk_scores</a></td><td><span class="badge b-ok fill"><i></i>Healthy</span></td><td class="m strong r">11,812</td><td class="m r">01:07</td><td class="m">05:10</td><td>Risk</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="spec">What to notice: the failure is the first thing after the title, not a red badge in row three; the metric tiles are mono at display size; amber appears once, on the environment; no card casts a shadow.</p>
+  </section>
+
+  <!-- 08 LAYOUTS -->
+  <section class="s" id="layouts">
+    <header><span class="n">08</span><h2>Layouts</h2><p>Four patterns cover a balanced application. Pick per screen; a fifth pattern is a design review.</p></header>
+    <div class="grid g2" style="margin-top:var(--sp-8)">
+      <div>
+        <div class="wf"><div class="bar"><i style="width:44px"></i><i style="width:90px;margin-left:auto"></i></div><div class="body"><div class="side"><i></i><i></i><i></i><i></i></div><div class="main"><div class="blk">title, one primary action</div><div class="r" style="grid-template-columns:repeat(4,1fr)"><div class="blk">m</div><div class="blk">m</div><div class="blk">m</div><div class="blk">m</div></div><div class="blk" style="flex:1;min-height:56px">table, filters above, pager below</div></div></div></div>
+        <h4>Overview and list</h4><p style="font-size:var(--t-sm);color:var(--text-2)">Sidebar 232px (collapses to icons at 56px), top bar 52px, content fluid to 1280px. Metrics only when they change a decision; otherwise the table starts higher.</p>
+      </div>
+      <div>
+        <div class="wf"><div class="bar"><i style="width:30px"></i><i style="width:6px"></i><i style="width:70px"></i></div><div class="body" style="grid-template-columns:1fr 64px"><div class="main"><div class="blk">record title, status, actions</div><div class="blk">tabs</div><div class="blk" style="flex:1;min-height:56px">tab content, 720px max</div></div><div class="side" style="border-left:1px solid var(--border);border-right:0"><i style="background:var(--n200)"></i><i></i><i></i><i></i></div></div></div>
+        <h4>Record</h4><p style="font-size:var(--t-sm);color:var(--text-2)">Title, status badge, and actions in one row; tabs beneath; a 240px right rail for metadata the user checks but rarely edits, with copyable identifiers.</p>
+      </div>
+      <div>
+        <div class="wf"><div class="bar"><i style="width:44px"></i></div><div class="body" style="grid-template-columns:56px 1fr"><div class="side"><i></i><i></i><i></i></div><div class="main" style="align-items:center"><div class="blk" style="width:70%">section heading</div><div class="blk" style="width:70%;min-height:40px">fields, one column, 560px</div><div class="blk" style="width:70%">section heading</div><div class="blk" style="width:70%;min-height:28px">fields</div><div class="blk" style="width:70%;text-align:right">sticky save bar on change</div></div></div></div>
+        <h4>Settings and forms</h4><p style="font-size:var(--t-sm);color:var(--text-2)">One column at 560px, sections separated by 32px and a title. Pairs that read as one (start, end) may share a row. Save appears only when something changed.</p>
+      </div>
+      <div>
+        <div class="wf"><div class="bar"><i style="width:44px"></i><i style="width:60px;margin-left:auto"></i></div><div class="body" style="grid-template-columns:1fr"><div class="main" style="padding:16px 40px"><div class="blk" style="border:0;box-shadow:none;background:transparent;font-size:16px;color:var(--text);font-family:var(--font);font-weight:600">display headline, 48px</div><div class="blk" style="width:60%">two-sentence lede</div><div class="r" style="grid-template-columns:2fr 1fr 1fr"><div class="blk" style="min-height:44px">dominant block</div><div class="blk">m</div><div class="blk">m</div></div></div></div></div>
+        <h4>Landing and reports</h4><p style="font-size:var(--t-sm);color:var(--text-2)">Where reading dominates: display type, a short lede, then a bento with one dominant block. This is the only layout that uses display 48 and the only place a grid has unequal cells.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 VOICE -->
+  <section class="s" id="voice">
+    <header><span class="n">09</span><h2>Voice</h2><p>Words are design content. The interface speaks in plain verbs, names things by what the user understands, and never apologises.</p></header>
+    <table class="voice" style="margin-top:var(--sp-8)">
+      <thead><tr><th style="width:22%">Context</th><th>Not this</th><th>This</th></tr></thead>
+      <tbody>
+        <tr><td>Primary button</td><td class="no">Submit</td><td class="yes">Save changes</td></tr>
+        <tr><td>Confirmation toast</td><td class="no">Success! Your changes were saved successfully.</td><td class="yes">Saved</td></tr>
+        <tr><td>Destructive confirm</td><td class="no">Are you sure?</td><td class="yes">Delete "ws-lending-test" and its 14 pipelines? Type the name to confirm.</td></tr>
+        <tr><td>Error</td><td class="no">Something went wrong. Please try again later.</td><td class="yes">Run failed at step 4: dim_customer not found in silver. Retry after the upstream run completes.</td></tr>
+        <tr><td>Empty state</td><td class="no">Nothing to show here.</td><td class="yes">No runs in the last 7 days. Widen the range or start one.</td></tr>
+        <tr><td>Field hint</td><td class="no">Please enter a valid value.</td><td class="yes">1 to 365 days. Default is 90.</td></tr>
+        <tr><td>Navigation label</td><td class="no">Webhook configuration</td><td class="yes">Notifications</td></tr>
+        <tr><td>Status</td><td class="no">In progress...</td><td class="yes">Running, step 5 of 7</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">Sentence case everywhere, including buttons and table headers. Numbers as numerals. The verb on the button is the verb in the toast is the verb in the audit log.</div>
+  </section>
+
+  <!-- 10 FEATURES -->
+  <section class="s" id="features">
+    <header><span class="n">10</span><h2>Features a technical audience expects</h2><p>Absent, any of these reads as immaturity. Present, none of them will be mentioned.</p></header>
+    <div class="grid g2" style="margin-top:var(--sp-8);gap:var(--sp-8)">
+      <ul class="chk-list">
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>SSO and roles on day one</b><em>Entra ID or OIDC; roles visible on the member list.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Audit log</b><em>Who, what, when, from where. Filterable, exportable, linked from every record.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Undo over confirm</b><em>Reversible actions undo from the toast; only irreversible ones confirm, by typed name.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Environment switch with an unmistakable prod state</b><em>The one place amber is always on.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Public status page and dated changelog</b></span></li>
+      </ul>
+      <ul class="chk-list">
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Command palette and a shortcut sheet</b><em>Every shortcut is shown next to its action, so the UI teaches the keyboard.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Deep links</b><em>Filters, tabs, selection, and range live in the URL.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>API and CLI parity, export everywhere</b><em>Anything the UI does, the API does; every table exports CSV and JSON; every id copies.</em></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Density and theme, persisted per user</b></span></li>
+        <li><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Agent-ready surface</b><em>Stable accessible names and data attributes, an OpenAPI spec, and a tool manifest so AI agents operate the product without scraping it.</em></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 11 GATES -->
+  <section class="s" id="gates">
+    <header><span class="n">11</span><h2>Quality gates</h2><p>Run in CI. A failure blocks merge. Numbers, not adjectives.</p></header>
+    <div class="gates" style="margin-top:var(--sp-8)">
+      <div class="panel"><h4>Accessibility, WCAG 2.2 AA</h4><ul>
+        <li><span>axe critical or serious issues, every route</span><span>0</span></li>
+        <li><span>Text contrast, both themes</span><span>≥ 4.5:1</span></li>
+        <li><span>UI and focus indicator contrast</span><span>≥ 3:1</span></li>
+        <li><span>Keyboard pass on core flows, focus visible, no traps</span><span>manual, per release</span></li>
+        <li><span>Touch targets</span><span>≥ 44 px</span></li>
+        <li><span>Icon-only controls with an accessible name</span><span>100%</span></li>
+        <li><span>Animation under prefers-reduced-motion</span><span>≤ 10 ms</span></li>
+        <li><span>Screen-reader smoke test, three core flows</span><span>per release</span></li>
+      </ul></div>
+      <div class="panel"><h4>Performance and engineering</h4><ul>
+        <li><span>LCP, mid-tier mobile</span><span>&lt; 2.0 s</span></li>
+        <li><span>INP</span><span>&lt; 200 ms</span></li>
+        <li><span>CLS</span><span>&lt; 0.05</span></li>
+        <li><span>Initial JS, app shell, compressed</span><span>&lt; 150 KB</span></li>
+        <li><span>Font families per page, self-hosted and subset</span><span>≤ 2</span></li>
+        <li><span>Lists virtualised past, tables paginated past</span><span>200 / 1,000 rows</span></li>
+        <li><span>Raw hex or px outside tokens in components</span><span>lint: 0</span></li>
+        <li><span>Stories per interactive component (loading, empty, error, success)</span><span>4</span></li>
+        <li><span>Theme contrast script on every semantic pair</span><span>build fails &lt; 4.5:1</span></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- 12 TOKENS -->
+  <section class="s" id="tokens">
+    <header><span class="n">12</span><h2>Tokens</h2><p>The semantic layer components are allowed to reference. Primitives sit behind these and are never used directly in a component.</p></header>
+    <div style="margin-top:var(--sp-8)">
+    <div class="code-head"><span>tokens.css (semantic layer)</span><button class="copy" type="button" data-copy="c2">Copy</button></div>
+<pre class="code" id="c2"><span class="cm">/* surfaces and lines */</span>
+--bg  --surface  --surface-2  --border  --border-strong  --hairline
+<span class="cm">/* text */</span>
+--text  --text-2  --text-3
+<span class="cm">/* action and attention */</span>
+--primary  --primary-hover  --primary-tint  --primary-fg  --attention  --attention-tint
+<span class="cm">/* semantic: border/icon, text, tint */</span>
+--ok --ok-t --ok-bg   --wn --wn-t --wn-bg   --er --er-t --er-bg   --in --in-t --in-bg
+<span class="cm">/* elevation */</span>
+--ring  --ring-strong  --lift-1  --lift-2  --lift-3
+<span class="cm">/* shape, motion, sizing */</span>
+--r-1 4  --r-2 6  --r-3 8  --r-4 12  --r-pill
+--t-fast 120  --t-base 180  --t-enter 220 ease-out  --t-exit 140 ease-in
+--control-h 36 (30 compact)  --touch 44  --sidebar 232  --content-max 1280  --prose 640
+<span class="cm">/* type */</span>
+--font Geist  --mono JetBrains Mono
+--t-xs 11  --t-sm 13  --t-base 15  --t-lg 17  --t-xl 20  --t-2xl 24  --t-3xl 30  --t-4xl 38  --t-5xl 48  --t-6xl 64
+--track-display -0.04em  --track-heading -0.025em  --track-title -0.015em</pre>
+    </div>
+    <div class="callout">The full property block with hex values and the dark overrides is the first 60 lines of this file's stylesheet; copy it as-is into a project and delete the demo styles beneath.</div>
+  </section>
+
+  <footer>
+    <span>Built for scale by Prasanth Sistla</span>
+    <span>Instrument reference 1.0 &nbsp; light and dark verified &nbsp; comfortable and compact verified</span>
+  </footer>
+</main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;color:var(--ok);margin-top:2px"><path d="M20 6 9 17l-5-5"/></svg><div><b>Published</b><span>Live in production. Undo available for 30 seconds.</span></div><button class="undo" type="button">Undo</button></div>
+
+<script>
+(function(){
+  var root=document.documentElement, tbtn=document.getElementById('themeToggle');
+  function setTheme(d){root.classList.toggle('dark',d);tbtn.setAttribute('aria-pressed',String(d));tbtn.querySelector('span').textContent=d?'Light':'Dark';}
+  setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  tbtn.addEventListener('click',function(){setTheme(!root.classList.contains('dark'));});
+
+  document.querySelectorAll('[data-density]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-density]').forEach(function(x){x.setAttribute('aria-pressed','false');});
+      b.setAttribute('aria-pressed','true');
+      root.classList.toggle('compact',b.getAttribute('data-density')==='compact');
+    });
+  });
+
+  var tabs=[].slice.call(document.querySelectorAll('[role=tab]'));
+  function activate(t){tabs.forEach(function(x){var on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;document.getElementById(x.getAttribute('aria-controls')).hidden=!on;});t.focus();}
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){activate(t);});
+    t.addEventListener('keydown',function(e){var n=null;
+      if(e.key==='ArrowRight')n=tabs[(i+1)%tabs.length];else if(e.key==='ArrowLeft')n=tabs[(i-1+tabs.length)%tabs.length];else if(e.key==='Home')n=tabs[0];else if(e.key==='End')n=tabs[tabs.length-1];
+      if(n){e.preventDefault();activate(n);}});
+  });
+
+  document.querySelectorAll('.switch').forEach(function(s){
+    function flip(){var on=!s.classList.contains('on');s.classList.toggle('on',on);s.setAttribute('aria-checked',String(on));}
+    s.addEventListener('click',flip);
+    s.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();flip();}});
+  });
+
+  var toast=document.getElementById('toast'),timer;
+  document.getElementById('toastBtn').addEventListener('click',function(){toast.classList.add('show');clearTimeout(timer);timer=setTimeout(function(){toast.classList.remove('show');},5000);});
+  toast.querySelector('.undo').addEventListener('click',function(){toast.classList.remove('show');});
+
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click',function(){var t=document.getElementById(b.getAttribute('data-copy')).innerText;
+      if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy';},1500);});}});
+  });
+
+  var links=[].slice.call(document.querySelectorAll('.toc a'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id);});}});},{rootMargin:'-15% 0px -75% 0px'});
+    links.forEach(function(a){var s=document.querySelector(a.getAttribute('href'));if(s)io.observe(s);});
+  }
+})();
+</script>
+</body>
+</html>
